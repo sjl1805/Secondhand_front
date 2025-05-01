@@ -85,29 +85,3 @@ export function bindEmail(data) {
     data
   })
 }
-
-/**
- * 发送验证码
- * @param {Object} data - 验证码信息
- * @param {string} data.type - 类型（phone/email）
- * @param {string} data.target - 目标（手机号/邮箱）
- * @returns {Promise}
- */
-export function sendVerifyCode(data) {
-  return request({
-    url: '/user/verifycode',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 获取登录记录
- * @returns {Promise}
- */
-export function getLoginRecords() {
-  return request({
-    url: '/user/login/records',
-    method: 'get'
-  })
-} 

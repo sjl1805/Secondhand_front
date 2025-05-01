@@ -17,6 +17,20 @@ export function getAdminUserList(params) {
 }
 
 /**
+ * 搜索用户
+ * @param {Object} params - 查询参数
+ * @param {string} params.keyword - 搜索关键词
+ * @returns {Promise}
+ */
+export function searchUser(params) {
+  return request({
+    url: '/admin/user/search',
+    method: 'get',
+    params
+  })
+}
+
+/**
  * 修改用户状态
  * @param {number} userId - 用户ID
  * @param {Object} params - 修改参数
@@ -68,4 +82,4 @@ export function getAdminList() {
     url: '/admin/user/admins',
     method: 'get'
   })
-} 
+}
