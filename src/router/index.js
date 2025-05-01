@@ -262,7 +262,7 @@ router.beforeEach((to, from, next) => {
   }
   
   // 需要管理员权限但用户不是管理员
-  if (to.meta.requireAdmin && role !== 'admin') {
+  if (to.meta.requireAdmin && !(role === 9 || role === '9')) {
     ElMessage.error('没有访问权限')
     next({ path: '/' })
     return

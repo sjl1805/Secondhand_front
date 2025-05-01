@@ -180,7 +180,7 @@ const userAvatar = computed(() => {
 // 是否有管理后台权限
 const hasAdminAccess = computed(() => {
   // 根据数据库中的角色定义：role 9表示管理员
-  return isLoggedIn && role === '9'
+  return isLoggedIn && (role === 9 || role === '9')
 })
 
 // 分类状态

@@ -69,52 +69,38 @@
             <template #title>控制面板</template>
           </el-menu-item>
           
-          <el-sub-menu index="users">
-            <template #title>
-              <el-icon><User /></el-icon>
-              <span>用户管理</span>
-            </template>
-            <el-menu-item index="/admin/users/list">用户列表</el-menu-item>
-            <el-menu-item index="/admin/users/verify">实名认证</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/admin/users">
+            <el-icon><User /></el-icon>
+            <template #title>用户管理</template>
+          </el-menu-item>
           
-          <el-sub-menu index="products">
+          <el-sub-menu index="product-menu">
             <template #title>
               <el-icon><Goods /></el-icon>
               <span>商品管理</span>
             </template>
-            <el-menu-item index="/admin/products/list">商品列表</el-menu-item>
-            <el-menu-item index="/admin/products/category">分类管理</el-menu-item>
-            <el-menu-item index="/admin/products/audit">商品审核</el-menu-item>
+            <el-menu-item index="/admin/products">商品列表</el-menu-item>
+            <el-menu-item index="/admin/categories">分类管理</el-menu-item>
           </el-sub-menu>
           
-          <el-sub-menu index="orders">
-            <template #title>
-              <el-icon><List /></el-icon>
-              <span>订单管理</span>
-            </template>
-            <el-menu-item index="/admin/orders/list">订单列表</el-menu-item>
-            <el-menu-item index="/admin/orders/refund">退款管理</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/admin/orders">
+            <el-icon><List /></el-icon>
+            <template #title>订单管理</template>
+          </el-menu-item>
           
-          <el-sub-menu index="system">
-            <template #title>
-              <el-icon><Setting /></el-icon>
-              <span>系统设置</span>
-            </template>
-            <el-menu-item index="/admin/system/config">系统配置</el-menu-item>
-            <el-menu-item index="/admin/system/banner">轮播图管理</el-menu-item>
-            <el-menu-item index="/admin/system/notice">系统公告</el-menu-item>
-          </el-sub-menu>
+          <el-menu-item index="/admin/settings">
+            <el-icon><Setting /></el-icon>
+            <template #title>系统设置</template>
+          </el-menu-item>
           
           <el-menu-item index="/admin/statistics">
             <el-icon><Histogram /></el-icon>
             <template #title>数据统计</template>
           </el-menu-item>
           
-          <el-menu-item index="/admin/message">
-            <el-icon><Message /></el-icon>
-            <template #title>消息管理</template>
+          <el-menu-item index="/admin/notifications">
+            <el-icon><Bell /></el-icon>
+            <template #title>通知管理</template>
           </el-menu-item>
         </el-menu>
       </el-aside>
@@ -212,13 +198,14 @@ const breadcrumbs = computed(() => {
       // 特殊处理一些路径
       if (path === 'dashboard') title = '控制面板'
       else if (path === 'users') title = '用户管理'
-      else if (path === 'list' && paths[i-1] === 'users') title = '用户列表'
-      else if (path === 'verify') title = '实名认证'
       else if (path === 'products') title = '商品管理'
+      else if (path === 'product') title = '商品详情'
       else if (path === 'orders') title = '订单管理'
-      else if (path === 'system') title = '系统设置'
+      else if (path === 'order') title = '订单详情'
+      else if (path === 'categories') title = '分类管理'
+      else if (path === 'settings') title = '系统设置'
       else if (path === 'statistics') title = '数据统计'
-      else if (path === 'message') title = '消息管理'
+      else if (path === 'notifications') title = '通知管理'
       
       result.push({ title, path: currentPath })
     }
@@ -230,7 +217,7 @@ const breadcrumbs = computed(() => {
 // 是否为管理员
 const isAdmin = computed(() => {
   // 根据数据库中的角色定义：role 9表示管理员
-  return isLoggedIn && role === '9'
+  return isLoggedIn && (role === 9 || role === '9')
 })
 
 // 处理头像路径

@@ -390,18 +390,60 @@ export const useStatisticsStore = defineStore('statistics', () => {
         timeUnit: 'day'
       }
       
-      // 获取各种统计数据
-      await Promise.all([
-        fetchUserRegisterStatistics(params),
-        fetchOrderStatistics(params),
-        fetchTransactionStatistics(params),
-        fetchCategoryProductStatistics(),
-        fetchProductStatusStatistics(),
-        fetchOrderStatusStatistics(),
-        fetchHotProductsStatistics(),
-        fetchActiveSellersStatistics(),
-        fetchActiveBuyersStatistics()
-      ])
+      // 分别获取各种统计数据，避免一个失败导致所有失败
+      try {
+        await fetchUserRegisterStatistics(params)
+      } catch (error) {
+        console.error('获取用户注册统计失败', error)
+      }
+      
+      try {
+        await fetchOrderStatistics(params)
+      } catch (error) {
+        console.error('获取订单统计失败', error)
+      }
+      
+      try {
+        await fetchTransactionStatistics(params)
+      } catch (error) {
+        console.error('获取交易额统计失败', error)
+      }
+      
+      try {
+        await fetchCategoryProductStatistics()
+      } catch (error) {
+        console.error('获取分类商品统计失败', error)
+      }
+      
+      try {
+        await fetchProductStatusStatistics()
+      } catch (error) {
+        console.error('获取商品状态统计失败', error)
+      }
+      
+      try {
+        await fetchOrderStatusStatistics()
+      } catch (error) {
+        console.error('获取订单状态统计失败', error)
+      }
+      
+      try {
+        await fetchHotProductsStatistics()
+      } catch (error) {
+        console.error('获取热门商品统计失败', error)
+      }
+      
+      try {
+        await fetchActiveSellersStatistics()
+      } catch (error) {
+        console.error('获取活跃卖家统计失败', error)
+      }
+      
+      try {
+        await fetchActiveBuyersStatistics()
+      } catch (error) {
+        console.error('获取活跃买家统计失败', error)
+      }
       
       return true
     } catch (error) {
