@@ -219,18 +219,6 @@ const adminRoutes = [
         name: 'AdminNotifications',
         component: () => import('@/views/admin/Notifications.vue'),
         meta: { title: '系统通知管理' }
-      },
-      {
-        path: 'statistics',
-        name: 'AdminStatistics',
-        component: () => import('@/views/admin/Statistics.vue'),
-        meta: { title: '数据统计' }
-      },
-      {
-        path: 'settings',
-        name: 'AdminSettings',
-        component: () => import('@/views/admin/Settings.vue'),
-        meta: { title: '系统设置' }
       }
     ]
   }

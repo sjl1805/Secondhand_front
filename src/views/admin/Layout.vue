@@ -88,16 +88,6 @@
             <template #title>订单管理</template>
           </el-menu-item>
           
-          <el-menu-item index="/admin/settings">
-            <el-icon><Setting /></el-icon>
-            <template #title>系统设置</template>
-          </el-menu-item>
-          
-          <el-menu-item index="/admin/statistics">
-            <el-icon><Histogram /></el-icon>
-            <template #title>数据统计</template>
-          </el-menu-item>
-          
           <el-menu-item index="/admin/notifications">
             <el-icon><Bell /></el-icon>
             <template #title>通知管理</template>
@@ -203,8 +193,6 @@ const breadcrumbs = computed(() => {
       else if (path === 'orders') title = '订单管理'
       else if (path === 'order') title = '订单详情'
       else if (path === 'categories') title = '分类管理'
-      else if (path === 'settings') title = '系统设置'
-      else if (path === 'statistics') title = '数据统计'
       else if (path === 'notifications') title = '通知管理'
       
       result.push({ title, path: currentPath })

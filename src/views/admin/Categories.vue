@@ -23,7 +23,6 @@
         </template>
       </el-table-column>
       <el-table-column prop="sort" label="排序" width="100" />
-      <el-table-column prop="level" label="层级" width="100" />
       <el-table-column prop="status" label="状态" width="100">
         <template #default="scope">
           <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
@@ -108,7 +107,7 @@ const userStore = useUserStore()
 const categoryStore = useAdminCategoryStore()
 
 // 设置管理员权限
-categoryStore.setAdminRole(userStore.role === 'admin')
+categoryStore.setAdminRole(userStore.role === '9' || userStore.role === 9)
 
 // 表单相关
 const categoryFormRef = ref(null)
@@ -249,8 +248,8 @@ const refreshCategories = async () => {
 
 // 页面加载时获取分类列表
 onMounted(async () => {
-  if (!userStore.isLoggedIn || userStore.role !== 'admin') {
-    ElMessage.warning('您需要管理员权限才能管理分类')
+  if (!userStore.isLoggedIn) {
+    ElMessage.error('请先登录')
     return
   }
   await categoryStore.initCategories()
