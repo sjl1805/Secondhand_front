@@ -5,6 +5,7 @@ import request from '@/utils/request'
  * @param {Object} data - 消息内容
  * @param {number} data.receiverId - 接收者ID
  * @param {string} data.content - 消息内容
+ * @param {string} data.type - 消息类型 (TEXT, IMAGE, PRODUCT, ORDER)
  * @param {number} [data.relatedProductId] - 相关商品ID
  * @param {number} [data.relatedOrderId] - 相关订单ID
  * @returns {Promise}
@@ -30,14 +31,14 @@ export function getMessageDetail(messageId) {
 }
 
 /**
- * 获取聊天记录
+ * 获取与特定用户的聊天历史
  * @param {number} targetUserId - 目标用户ID
- * @param {Object} params - 查询参数
+ * @param {Object} [params] - 查询参数
  * @param {number} [params.page=1] - 页码
  * @param {number} [params.size=20] - 每页数量
  * @returns {Promise}
  */
-export function getChatHistory(targetUserId, params) {
+export function getChatHistory(targetUserId, params = {}) {
   return request({
     url: `/message/chat/${targetUserId}`,
     method: 'get',
@@ -46,7 +47,7 @@ export function getChatHistory(targetUserId, params) {
 }
 
 /**
- * 获取消息列表
+ * 获取消息列表（按联系人分组）
  * @returns {Promise}
  */
 export function getMessageList() {
@@ -69,7 +70,7 @@ export function markAsRead(messageId) {
 }
 
 /**
- * 标记所有消息为已读
+ * 标记与某用户的所有消息为已读
  * @param {number} targetUserId - 目标用户ID
  * @returns {Promise}
  */
@@ -101,4 +102,27 @@ export function deleteMessage(messageId) {
     url: `/message/${messageId}`,
     method: 'delete'
   })
-} 
+}
+
+/**
+ * 获取最新联系人列表
+ * @returns {Promise}
+ */
+export function getContactList() {
+  return request({
+    url: '/message/contacts',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取用户基本信息
+ * @param {number} userId - 用户ID
+ * @returns {Promise}
+ */
+export function getUserBasicInfo(userId) {
+  return request({
+    url: `/user/basic/${userId}`,
+    method: 'get'
+  })
+}

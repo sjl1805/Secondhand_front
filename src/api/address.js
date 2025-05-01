@@ -2,7 +2,7 @@ import request from '@/utils/request'
 
 /**
  * 获取用户地址列表
- * @returns {Promise}
+ * @returns {Promise} - 返回地址列表
  */
 export function getAddressList() {
   return request({
@@ -14,7 +14,7 @@ export function getAddressList() {
 /**
  * 获取地址详情
  * @param {number} id - 地址ID
- * @returns {Promise}
+ * @returns {Promise} - 返回地址详情
  */
 export function getAddressDetail(id) {
   return request({
@@ -24,20 +24,13 @@ export function getAddressDetail(id) {
 }
 
 /**
- * 添加新地址
- * @param {Object} data - 地址信息
- * @param {string} data.name - 收货人姓名
- * @param {string} data.phone - 联系电话
- * @param {string} data.province - 省份
- * @param {string} data.city - 城市
- * @param {string} data.district - 区/县
- * @param {string} data.detailAddress - 详细地址
- * @param {boolean} data.isDefault - 是否默认地址
- * @returns {Promise}
+ * 添加地址
+ * @param {Object} data - 地址数据
+ * @returns {Promise} - 返回添加结果
  */
 export function addAddress(data) {
   return request({
-    url: '/address',
+    url: '/address/add',
     method: 'post',
     data
   })
@@ -45,20 +38,12 @@ export function addAddress(data) {
 
 /**
  * 更新地址
- * @param {Object} data - 地址信息
- * @param {number} data.id - 地址ID
- * @param {string} data.name - 收货人姓名
- * @param {string} data.phone - 联系电话
- * @param {string} data.province - 省份
- * @param {string} data.city - 城市
- * @param {string} data.district - 区/县
- * @param {string} data.detailAddress - 详细地址
- * @param {boolean} data.isDefault - 是否默认地址
- * @returns {Promise}
+ * @param {Object} data - 地址数据
+ * @returns {Promise} - 返回更新结果
  */
 export function updateAddress(data) {
   return request({
-    url: '/address',
+    url: '/address/update',
     method: 'put',
     data
   })
@@ -67,11 +52,11 @@ export function updateAddress(data) {
 /**
  * 删除地址
  * @param {number} id - 地址ID
- * @returns {Promise}
+ * @returns {Promise} - 返回删除结果
  */
 export function deleteAddress(id) {
   return request({
-    url: `/address/${id}`,
+    url: `/address/delete/${id}`,
     method: 'delete'
   })
 }
@@ -79,11 +64,11 @@ export function deleteAddress(id) {
 /**
  * 设置默认地址
  * @param {number} id - 地址ID
- * @returns {Promise}
+ * @returns {Promise} - 返回设置结果
  */
 export function setDefaultAddress(id) {
   return request({
-    url: `/address/${id}/default`,
+    url: `/address/default/${id}`,
     method: 'put'
   })
 } 

@@ -23,12 +23,12 @@
       <div class="product-meta">
         <span class="product-condition">{{ getConditionText(product.condition) }}</span>
         <span class="product-views">
-          <el-icon><View /></el-icon> {{ formatNumber(product.views || 0) }}
+          <el-icon><View /></el-icon> {{ formatNumber(product.viewCount || 0) }}
         </span>
       </div>
       <div class="seller-info">
         <el-avatar :size="20" :src="product.sellerAvatar || defaultAvatar"></el-avatar>
-        <span class="seller-name">{{ product.sellerName }}</span>
+        <span class="seller-name">{{ product.sellerName || product.nickname }}</span>
         <span class="publish-time">{{ formatTime(product.createTime) }}</span>
       </div>
     </div>
@@ -36,9 +36,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductStore } from '@/stores/product'
+import { useFileStore } from '@/stores/file'
 import { Picture, View } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -53,6 +54,7 @@ const router = useRouter()
 
 // 商品Store
 const productStore = useProductStore()
+const fileStore = useFileStore()
 
 // 接收商品数据
 const props = defineProps({
@@ -66,6 +68,50 @@ const props = defineProps({
 const defaultImage = 'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png'
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
+// 确保商品数据已处理
+const ensureProductProcessed = () => {
+  try {
+    if (!props.product) return
+    
+    // 检查图片数据是否已处理
+    if (!props.product.coverImage && props.product.imageUrls) {
+      productStore.processProductData(props.product)
+    }
+    
+    // 检查直接的 JSON 情况，images 属性已存在但可能格式不正确
+    if (props.product.images && typeof props.product.images === 'string') {
+      try {
+        props.product.images = JSON.parse(props.product.images)
+      } catch (e) {
+        // 如果不能解析为数组，则设置为空数组
+        props.product.images = []
+      }
+    }
+    
+    // 确保 viewCount 有效
+    if (props.product.viewCount === undefined || props.product.viewCount === null) {
+      props.product.viewCount = 0
+    }
+    
+    // 确保 condition 有效
+    if (props.product.condition === undefined || props.product.condition === null) {
+      props.product.condition = 1 // 默认为全新
+    }
+  } catch (error) {
+    console.error('处理商品数据时出错:', error)
+  }
+}
+
+// 监视商品数据变化
+watch(() => props.product, () => {
+  ensureProductProcessed()
+}, { immediate: true, deep: true })
+
+// 在组件挂载后处理当前商品数据
+onMounted(() => {
+  ensureProductProcessed()
+})
+
 // 格式化价格
 const formatPrice = (price) => {
   if (!price && price !== 0) return '--'
@@ -74,6 +120,7 @@ const formatPrice = (price) => {
 
 // 格式化数字（上千显示k）
 const formatNumber = (num) => {
+  if (!num && num !== 0) return '0'
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'k'
   }

@@ -109,6 +109,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       
       const res = await getFavoriteList(queryParams)
       if (res.code === 200) {
+        // 直接使用返回的数据作为收藏列表
         favoriteList.value = res.data.records || []
         pagination.value = {
           current: res.data.current,

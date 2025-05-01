@@ -6,11 +6,18 @@ import {
   getProductList, 
   getUserProducts, 
   updateProductStatus, 
-  deleteProduct 
+  deleteProduct,
+  incrementViewCount as incrementProductView,
+  getSellerProducts
 } from '@/api/product'
+import { useFileStore } from '@/stores/file'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from './user'
 
 export const useProductStore = defineStore('product', () => {
+  // 引入文件存储
+  const fileStore = useFileStore()
+  
   // 状态
   const productDetail = ref(null)
   const productList = ref([])
@@ -43,10 +50,64 @@ export const useProductStore = defineStore('product', () => {
     5: '明显使用痕迹'
   }
   
+  // 计算属性
+  const isLoading = computed(() => loading.value)
+  
+  // 处理商品数据，格式化图片URL等
+  const processProductData = (product) => {
+    if (!product) return null
+    
+    // 处理图片URL
+    if (product.imageUrls && Array.isArray(product.imageUrls)) {
+      product.images = product.imageUrls.map(url => fileStore.getFullUrl(url))
+      // 设置封面图
+      product.coverImage = product.images[0] || null
+    } else {
+      product.images = []
+      product.coverImage = null
+    }
+    
+    // 处理用户头像
+    if (product.avatar) {
+      product.sellerAvatar = fileStore.getFullUrl(product.avatar)
+    }
+    
+    // 发布者名称处理，使用昵称代替userId
+    if (product.nickname) {
+      product.sellerName = product.nickname
+    }
+    
+    // 添加状态文本
+    if (product.status && productStatusMap[product.status]) {
+      product.statusText = productStatusMap[product.status]
+    }
+    
+    return product
+  }
+  
+  // 处理商品列表数据
+  const processProductList = (list) => {
+    if (!list || !Array.isArray(list)) return []
+    return list.map(item => processProductData(item))
+  }
+  
   // 发布商品
   const submitProduct = async (productData) => {
     loading.value = true
     try {
+      // 准备图片路径格式
+      if (productData.images && Array.isArray(productData.images)) {
+        // 只保留路径部分，不需要完整URL
+        productData.imageUrls = productData.images.map(img => {
+          // 如果是完整URL，则提取路径部分
+          if (typeof img === 'string' && img.startsWith('http')) {
+            const url = new URL(img)
+            return url.pathname
+          }
+          return img
+        })
+      }
+      
       const res = await publishProduct(productData)
       if (res.code === 200) {
         ElMessage.success('商品发布成功')
@@ -66,8 +127,9 @@ export const useProductStore = defineStore('product', () => {
     try {
       const res = await getProductDetail(productId)
       if (res.code === 200) {
-        productDetail.value = res.data
-        return res.data
+        // 处理商品数据
+        productDetail.value = processProductData(res.data)
+        return productDetail.value
       }
     } catch (error) {
       console.error('获取商品详情失败', error)
@@ -90,13 +152,17 @@ export const useProductStore = defineStore('product', () => {
       
       const res = await getProductList(queryParams)
       if (res.code === 200) {
-        productList.value = res.data.records || []
+        // 处理商品列表数据
+        productList.value = processProductList(res.data.records || [])
         productPagination.value = {
           current: res.data.current,
           size: res.data.size,
           total: res.data.total
         }
-        return res.data
+        return {
+          ...res.data,
+          records: productList.value
+        }
       }
     } catch (error) {
       console.error('获取商品列表失败', error)
@@ -119,17 +185,48 @@ export const useProductStore = defineStore('product', () => {
       
       const res = await getUserProducts(queryParams)
       if (res.code === 200) {
-        userProducts.value = res.data.records || []
+        // 处理商品列表数据
+        userProducts.value = processProductList(res.data.records || [])
         userProductPagination.value = {
           current: res.data.current,
           size: res.data.size,
           total: res.data.total
         }
-        return res.data
+        return {
+          ...res.data,
+          records: userProducts.value
+        }
       }
     } catch (error) {
       console.error('获取用户商品失败', error)
       ElMessage.error('获取用户商品失败')
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  // 获取指定卖家的商品列表
+  const fetchSellerProducts = async (params = {}) => {
+    loading.value = true
+    try {
+      // 确保有userId参数
+      if (!params.userId) {
+        throw new Error('缺少卖家用户ID')
+      }
+      
+      const res = await getSellerProducts(params)
+      if (res.code === 200) {
+        // 处理商品列表数据
+        const processedProducts = processProductList(res.data.records || [])
+        return {
+          ...res.data,
+          records: processedProducts
+        }
+      }
+    } catch (error) {
+      console.error('获取卖家商品失败', error)
+      ElMessage.error('获取卖家商品失败')
+      return null
     } finally {
       loading.value = false
     }
@@ -181,21 +278,32 @@ export const useProductStore = defineStore('product', () => {
   }
   
   // 高级搜索商品
-  const advancedSearchProducts = async (params = {}) => {
+  const searchProducts = async (params = {}) => {
+    loading.value = true
     try {
-      const res = await advancedSearchProducts(params)
+      // 导入API中的advancedSearchProducts函数
+      const { advancedSearchProducts: searchAPI } = await import('@/api/product')
+      
+      const res = await searchAPI(params)
       if (res.code === 200) {
-        productList.value = res.data.records || []
+        // 处理商品列表数据
+        productList.value = processProductList(res.data.records || [])
         productPagination.value = {
           current: res.data.current,
           size: res.data.size,
           total: res.data.total
+        }
+        return {
+          ...res.data,
+          records: productList.value
         }
       }
     } catch (error) {
       console.error('高级搜索商品失败', error)
       ElMessage.error(error.message || '高级搜索商品失败')
       return false
+    } finally {
+      loading.value = false
     }
   }
     
@@ -240,6 +348,17 @@ export const useProductStore = defineStore('product', () => {
     userProductPagination.value.size = size
     userProductPagination.value.current = 1 // 重置到第一页
     fetchUserProducts()
+  }
+  
+  // 增加商品浏览次数
+  const incrementViewCount = async (productId) => {
+    try {
+      await incrementProductView(productId)
+      return true
+    } catch (error) {
+      console.error('增加浏览次数失败:', error)
+      return false
+    }
   }
   
   // 计算属性：按状态分组的用户商品
@@ -308,13 +427,17 @@ export const useProductStore = defineStore('product', () => {
     fetchProductDetail,
     fetchProductList,
     fetchUserProducts,
+    fetchSellerProducts,
     changeProductStatus,
     removeProduct,
     changeProductPage,
     changeProductPageSize,
     changeUserProductPage,
     changeUserProductPageSize,
+    incrementViewCount,
     resetState,
-    advancedSearchProducts
+    advancedSearchProducts: searchProducts,
+    processProductData,
+    processProductList
   }
 })

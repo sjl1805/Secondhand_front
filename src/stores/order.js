@@ -8,7 +8,9 @@ import {
   getBuyerOrders, 
   getSellerOrders, 
   shipOrder, 
-  receiveOrder 
+  receiveOrder,
+  payOrder,
+  getPaymentStatus
 } from '@/api/order'
 import { ElMessage } from 'element-plus'
 
@@ -18,6 +20,7 @@ export const useOrderStore = defineStore('order', () => {
   const buyerOrders = ref([])
   const sellerOrders = ref([])
   const loading = ref(false)
+  const paymentResult = ref(null)
   const buyerPagination = ref({
     current: 1,
     size: 10,
@@ -36,6 +39,20 @@ export const useOrderStore = defineStore('order', () => {
     3: '待收货',
     4: '已完成',
     5: '已取消'
+  }
+  
+  // 支付方式映射
+  const paymentMethodMap = {
+    1: '支付宝',
+    2: '微信支付',
+    3: '银行卡'
+  }
+  
+  // 支付状态映射
+  const paymentStatusMap = {
+    1: '待支付',
+    2: '支付成功',
+    3: '支付失败'
   }
   
   // 创建订单
@@ -226,6 +243,55 @@ export const useOrderStore = defineStore('order', () => {
     }
   }
   
+  // 支付订单
+  const submitPayment = async (orderId, paymentData) => {
+    loading.value = true
+    try {
+      const res = await payOrder(orderId, paymentData)
+      if (res.code === 200) {
+        paymentResult.value = res.data
+        
+        // 更新订单详情
+        if (orderDetail.value && orderDetail.value.id === orderId) {
+          orderDetail.value.status = 2 // 待发货
+          orderDetail.value.statusText = orderStatusMap[2]
+          orderDetail.value.paymentMethod = paymentData.paymentMethod
+          orderDetail.value.paymentMethodText = paymentMethodMap[paymentData.paymentMethod]
+          orderDetail.value.paymentStatus = 2 // 支付成功
+          orderDetail.value.paymentStatusText = paymentStatusMap[2]
+        }
+        
+        // 更新订单列表
+        updateOrderListStatus(orderId, 2)
+        
+        ElMessage.success('支付成功')
+        return res.data
+      }
+    } catch (error) {
+      console.error('支付失败', error)
+      ElMessage.error(error.message || '支付失败')
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  // 查询支付状态
+  const checkPaymentStatus = async (orderId) => {
+    loading.value = true
+    try {
+      const res = await getPaymentStatus(orderId)
+      if (res.code === 200) {
+        paymentResult.value = res.data
+        return res.data
+      }
+    } catch (error) {
+      console.error('查询支付状态失败', error)
+      ElMessage.error('查询支付状态失败')
+    } finally {
+      loading.value = false
+    }
+  }
+  
   // 辅助方法：更新订单列表中的状态
   const updateOrderListStatus = (orderId, status) => {
     // 更新买家订单列表
@@ -346,6 +412,7 @@ export const useOrderStore = defineStore('order', () => {
     orderDetail.value = null
     buyerOrders.value = []
     sellerOrders.value = []
+    paymentResult.value = null
     buyerPagination.value = {
       current: 1,
       size: 10,
@@ -363,9 +430,12 @@ export const useOrderStore = defineStore('order', () => {
     buyerOrders,
     sellerOrders,
     loading,
+    paymentResult,
     buyerPagination,
     sellerPagination,
     orderStatusMap,
+    paymentMethodMap,
+    paymentStatusMap,
     groupedBuyerOrders,
     groupedSellerOrders,
     orderStatusCounts,
@@ -377,6 +447,8 @@ export const useOrderStore = defineStore('order', () => {
     fetchSellerOrders,
     sellerShipOrder,
     buyerReceiveOrder,
+    submitPayment,
+    checkPaymentStatus,
     changeBuyerPage,
     changeBuyerPageSize,
     changeSellerPage,

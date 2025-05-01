@@ -194,4 +194,34 @@ export function receiveOrder(orderId) {
     url: `/order/${orderId}/receive`,
     method: 'put'
   })
+}
+
+/**
+ * 支付订单
+ * @param {number} orderId - 订单ID
+ * @param {Object} data - 支付数据
+ * @param {number} data.amount - 支付金额
+ * @param {number} data.paymentMethod - 支付方式: 1-支付宝 2-微信支付 3-银行卡
+ * @param {string} [data.paymentAccount] - 支付账号信息（加密后的）
+ * @param {string} [data.message] - 订单留言
+ * @returns {Promise}
+ */
+export function payOrder(orderId, data) {
+  return request({
+    url: `/order/${orderId}/payment`,
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 查询支付状态
+ * @param {number} orderId - 订单ID
+ * @returns {Promise}
+ */
+export function getPaymentStatus(orderId) {
+  return request({
+    url: `/order/${orderId}/payment/status`,
+    method: 'get'
+  })
 } 

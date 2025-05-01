@@ -1,37 +1,5 @@
 <template>
   <div class="home-container">
-    <!-- 轮播图 -->
-    <div class="banner-section">
-      <el-carousel :interval="4000" type="card" height="300px">
-        <el-carousel-item v-for="(banner, index) in banners" :key="index">
-          <div class="banner-item" :style="{ backgroundImage: `url(${banner.image})` }">
-            <div class="banner-content">
-              <h2>{{ banner.title }}</h2>
-              <p>{{ banner.description }}</p>
-              <el-button type="primary" @click="$router.push(banner.link)">{{ banner.buttonText }}</el-button>
-            </div>
-          </div>
-        </el-carousel-item>
-      </el-carousel>
-    </div>
-    
-    <!-- 分类导航 -->
-    <div class="category-section container">
-      <h2 class="section-title">商品分类</h2>
-      <div class="category-grid">
-        <div
-          v-for="category in topCategories"
-          :key="category.id"
-          class="category-card"
-          @click="$router.push(`/category/${category.id}`)"
-        >
-          <el-icon :size="40">
-            <component :is="category.icon || 'Goods'" />
-          </el-icon>
-          <span class="category-name">{{ category.name }}</span>
-        </div>
-      </div>
-    </div>
     
     <!-- 推荐商品 -->
     <div class="recommend-section container" v-if="isLoggedIn">
@@ -109,7 +77,7 @@
     <div class="popular-section container">
       <div class="section-header">
         <h2 class="section-title">热门商品</h2>
-        <router-link to="/products?sort=views" class="view-more">
+        <router-link to="/products?sort=viewCount" class="view-more">
           查看更多 <el-icon><ArrowRight /></el-icon>
         </router-link>
       </div>
@@ -136,29 +104,6 @@
         />
       </div>
     </div>
-    
-    <!-- 商品分类展示 -->
-    <div v-for="category in displayCategories" :key="category.id" class="category-products-section container">
-      <div class="section-header">
-        <h2 class="section-title">{{ category.name }}</h2>
-        <router-link :to="`/category/${category.id}`" class="view-more">
-          查看更多 <el-icon><ArrowRight /></el-icon>
-        </router-link>
-      </div>
-      
-      <div class="product-grid">
-        <product-card
-          v-for="product in categoryProducts[category.id] || []"
-          :key="product.id"
-          :product="product"
-        />
-        
-        <el-empty 
-          v-if="(categoryProducts[category.id] || []).length === 0"
-          :description="`暂无${category.name}商品`" 
-        />
-      </div>
-    </div>
   </div>
 </template>
 
@@ -168,6 +113,7 @@ import { useProductStore } from '@/stores/product'
 import { useCategoryStore } from '@/stores/category'
 import { useRecommendationStore } from '@/stores/recommendation'
 import { useUserStore } from '@/stores/user'
+import { useFileStore } from '@/stores/file'
 import ProductCard from '@/components/product/ProductCard.vue'
 import { ArrowRight, Refresh } from '@element-plus/icons-vue'
 
@@ -176,6 +122,7 @@ const productStore = useProductStore()
 const categoryStore = useCategoryStore()
 const recommendationStore = useRecommendationStore()
 const userStore = useUserStore()
+const fileStore = useFileStore()
 
 // 用户状态
 const isLoggedIn = computed(() => userStore.isLoggedIn)
@@ -204,21 +151,21 @@ const banners = ref([
     description: '各类学习资料、文学书籍低至五折',
     buttonText: '立即查看',
     link: '/category/3',
-    image: 'https://img.alicdn.com/imgextra/i1/O1CN01ky3XVT25XswkRRKa2_!!6000000007544-0-tps-1920-400.jpg'
+    image: fileStore.getFullUrl('/images/products/banner-books.jpg')
   },
   {
     title: '数码产品',
     description: '精选二手数码设备，品质保障',
     buttonText: '查看详情',
     link: '/category/1',
-    image: 'https://img.alicdn.com/imgextra/i2/O1CN01Q8Wp8P28yLkuSfMdp_!!6000000008002-0-tps-1920-400.jpg'
+    image: fileStore.getFullUrl('/images/products/banner-digital.jpg')
   },
   {
     title: '服装鞋帽',
     description: '潮流服装、经典款式，总有你喜欢的',
     buttonText: '浏览商品',
     link: '/category/2',
-    image: 'https://img.alicdn.com/imgextra/i3/O1CN01qPuDmn1abucdlIsJK_!!6000000003350-0-tps-1920-400.jpg'
+    image: fileStore.getFullUrl('/images/products/banner-clothing.jpg')
   }
 ])
 
@@ -247,7 +194,7 @@ const fetchPopularProducts = async () => {
   const params = {
     page: 1,
     size: 8,
-    sort: 'views,desc',
+    sort: 'viewCount,desc',
     status: 1 // 在售状态
   }
   
@@ -305,7 +252,13 @@ onMounted(async () => {
   
   // 如果用户已登录，获取推荐
   if (isLoggedIn.value) {
-    recommendationStore.fetchUserBasedRecommendations()
+    const recommendations = await recommendationStore.fetchUserBasedRecommendations()
+    // 确保推荐商品数据已处理
+    if (recommendations && Array.isArray(recommendations)) {
+      recommendations.forEach(product => {
+        productStore.processProductData(product)
+      })
+    }
   }
 })
 </script>

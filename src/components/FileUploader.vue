@@ -173,17 +173,13 @@ const uploadAvatar = async () => {
 
 // 预览文件
 const previewFile = (file) => {
-  const type = file.type
-  const filename = file.path.split('/').pop()
-  previewUrl.value = fileStore.getPreviewUrl(type, filename)
+  previewUrl.value = fileStore.getPreviewUrl(file.path)
   previewVisible.value = true
 }
 
 // 下载文件
 const downloadFileAction = (file) => {
-  const type = file.type
-  const filename = file.path.split('/').pop()
-  fileStore.downloadFile(type, filename)
+  fileStore.downloadFile(file.path)
 }
 
 // 删除文件

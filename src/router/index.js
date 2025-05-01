@@ -29,12 +29,6 @@ const publicRoutes = [
         meta: { title: '商品列表' }
       },
       {
-        path: '/category/:id',
-        name: 'CategoryProducts',
-        component: () => import('@/views/CategoryProducts.vue'),
-        meta: { title: '分类商品' }
-      },
-      {
         path: '/search',
         name: 'SearchResults',
         component: () => import('@/views/SearchResults.vue'),

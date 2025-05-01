@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import * as fileApi from '../api/file'
-import { FILE_TYPES } from '../api/config'
+import { FILE_TYPES, API_BASE_URL } from '../api/config'
 
 export const useFileStore = defineStore('file', {
   state: () => ({
@@ -39,6 +39,60 @@ export const useFileStore = defineStore('file', {
 
   actions: {
     /**
+     * 格式化文件路径，确保符合后端格式
+     * @param {string} path - 文件路径
+     * @returns {string} 格式化后的路径
+     */
+    formatFilePath(path) {
+      // 如果路径为空，返回空字符串
+      if (!path) return ''
+      
+      // 确保路径以斜杠开头
+      if (!path.startsWith('/')) {
+        path = '/' + path
+      }
+      
+      return path
+    },
+    
+    /**
+     * 从文件路径中提取文件类型和文件名
+     * @param {string} path - 文件路径，如 /images/avatars/filename.jpg
+     * @returns {Object} 包含类型和文件名的对象
+     */
+    extractFileInfo(path) {
+      if (!path) return { type: null, filename: null }
+      
+      // 移除开头的斜杠并分割路径
+      const normalizedPath = path.startsWith('/') ? path.substring(1) : path
+      const parts = normalizedPath.split('/')
+      
+      // 确保路径格式正确
+      if (parts.length < 3 || parts[0] !== 'images') {
+        return { type: null, filename: null }
+      }
+      
+      // 获取类型和文件名
+      const type = parts[1] // avatars 或 products
+      const filename = parts[parts.length - 1]
+      
+      return { type, filename }
+    },
+    
+    /**
+     * 获取完整的文件URL
+     * @param {string} path - 文件路径
+     * @returns {string} 完整URL
+     */
+    getFullUrl(path) {
+      if (!path) return ''
+      
+      // 确保路径格式正确
+      const formattedPath = this.formatFilePath(path)
+      return `${API_BASE_URL}/static${formattedPath}`
+    },
+    
+    /**
      * 上传商品图片
      * @param {File} file - 要上传的图片文件
      * @returns {Promise<Object>} 包含图片信息的Promise对象
@@ -52,10 +106,14 @@ export const useFileStore = defineStore('file', {
         const response = await fileApi.uploadProductImage(file)
         const fileData = response.data
         
+        // 格式化路径
+        const path = this.formatFilePath(fileData.path)
+        const url = this.getFullUrl(path)
+        
         // 添加到已上传文件列表
         this.uploadedFiles.unshift({
-          path: fileData.path,
-          url: fileData.url,
+          path: path,
+          url: url,
           type: FILE_TYPES.PRODUCT,
           name: file.name,
           size: file.size,
@@ -63,7 +121,11 @@ export const useFileStore = defineStore('file', {
         })
         
         this.uploadProgress = 100
-        return fileData
+        return {
+          ...fileData,
+          path: path,
+          url: url
+        }
       } catch (error) {
         this.error = error.message || '上传商品图片失败'
         throw error
@@ -86,10 +148,14 @@ export const useFileStore = defineStore('file', {
         const response = await fileApi.uploadAvatar(file)
         const fileData = response.data
         
+        // 格式化路径
+        const path = this.formatFilePath(fileData.path)
+        const url = this.getFullUrl(path)
+        
         // 添加到已上传文件列表
         this.uploadedFiles.unshift({
-          path: fileData.path,
-          url: fileData.url,
+          path: path,
+          url: url,
           type: FILE_TYPES.AVATAR,
           name: file.name,
           size: file.size,
@@ -97,7 +163,11 @@ export const useFileStore = defineStore('file', {
         })
         
         this.uploadProgress = 100
-        return fileData
+        return {
+          ...fileData,
+          path: path,
+          url: url
+        }
       } catch (error) {
         this.error = error.message || '上传头像失败'
         throw error
@@ -114,10 +184,11 @@ export const useFileStore = defineStore('file', {
     async deleteFile(path) {
       try {
         this.error = null
-        const response = await fileApi.deleteFile(path)
+        const formattedPath = this.formatFilePath(path)
+        const response = await fileApi.deleteFile(formattedPath)
         
         // 从已上传文件列表中移除
-        this.uploadedFiles = this.uploadedFiles.filter(file => file.path !== path)
+        this.uploadedFiles = this.uploadedFiles.filter(file => file.path !== formattedPath)
         
         return response.code === 200
       } catch (error) {
@@ -128,31 +199,40 @@ export const useFileStore = defineStore('file', {
     
     /**
      * 获取文件预览URL
+     * @param {string} path - 文件路径
+     * @returns {string} 预览URL
+     */
+    getPreviewUrl(path) {
+      return this.getFullUrl(path)
+    },
+    
+    /**
+     * 根据类型和文件名获取预览URL
      * @param {string} type - 文件类型
      * @param {string} filename - 文件名
      * @returns {string} 预览URL
      */
-    getPreviewUrl(type, filename) {
-      return fileApi.getPreviewUrl(type, filename)
+    getPreviewUrlByTypeAndName(type, filename) {
+      const path = `/images/${type}/${filename}`
+      return this.getFullUrl(path)
     },
     
     /**
      * 获取文件下载URL
-     * @param {string} type - 文件类型
-     * @param {string} filename - 文件名
+     * @param {string} path - 文件路径
      * @returns {string} 下载URL
      */
-    getDownloadUrl(type, filename) {
-      return fileApi.getDownloadUrl(type, filename)
+    getDownloadUrl(path) {
+      return this.getFullUrl(path)
     },
     
     /**
      * 下载文件
-     * @param {string} type - 文件类型
-     * @param {string} filename - 文件名
+     * @param {string} path - 文件路径
      */
-    downloadFile(type, filename) {
-      fileApi.downloadFile(type, filename)
+    downloadFile(path) {
+      const url = this.getFullUrl(path)
+      window.open(url, '_blank')
     },
     
     /**
@@ -163,7 +243,8 @@ export const useFileStore = defineStore('file', {
     async getFileInfo(path) {
       try {
         this.error = null
-        const response = await fileApi.getFileInfo(path)
+        const formattedPath = this.formatFilePath(path)
+        const response = await fileApi.getFileInfo(formattedPath)
         this.previewFile = response.data
         return this.previewFile
       } catch (error) {

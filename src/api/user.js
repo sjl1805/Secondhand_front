@@ -23,8 +23,91 @@ export function getUserInfo() {
  */
 export function updateUserInfo(data) {
   return request({
-    url: '/user/info',
+    url: '/user/update',
     method: 'put',
     data
+  })
+}
+
+/**
+ * 获取卖家信息
+ * @param {number} sellerId - 卖家ID
+ * @returns {Promise}
+ */
+export function getSellerInfo(sellerId) {
+  return request({
+    url: `/user/seller/${sellerId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 修改密码
+ * @param {Object} data - 密码信息
+ * @param {string} data.oldPassword - 旧密码
+ * @param {string} data.newPassword - 新密码
+ * @returns {Promise}
+ */
+export function updatePassword(data) {
+  return request({
+    url: '/user/password',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 绑定手机号
+ * @param {Object} data - 手机信息
+ * @param {string} data.phone - 手机号
+ * @param {string} data.code - 验证码
+ * @returns {Promise}
+ */
+export function bindPhone(data) {
+  return request({
+    url: '/user/bind/phone',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 绑定邮箱
+ * @param {Object} data - 邮箱信息
+ * @param {string} data.email - 邮箱
+ * @param {string} data.code - 验证码
+ * @returns {Promise}
+ */
+export function bindEmail(data) {
+  return request({
+    url: '/user/bind/email',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 发送验证码
+ * @param {Object} data - 验证码信息
+ * @param {string} data.type - 类型（phone/email）
+ * @param {string} data.target - 目标（手机号/邮箱）
+ * @returns {Promise}
+ */
+export function sendVerifyCode(data) {
+  return request({
+    url: '/user/verifycode',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取登录记录
+ * @returns {Promise}
+ */
+export function getLoginRecords() {
+  return request({
+    url: '/user/login/records',
+    method: 'get'
   })
 } 

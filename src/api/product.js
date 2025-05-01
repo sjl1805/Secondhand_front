@@ -106,6 +106,44 @@ export function publishProduct(data) {
 }
 
 /**
+ * 获取商品列表
+ * @param {Object} params - 查询参数
+ * @param {number} params.page - 页码
+ * @param {number} params.size - 每页数量
+ * @param {number} params.categoryId - 分类ID
+ * @param {string} params.keyword - 搜索关键词
+ * @returns {Promise}
+ */
+export function getProductList(params) {
+  return request({
+    url: '/product/list',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 获取指定卖家的商品列表
+ * @param {Object} params - 查询参数
+ * @param {number} params.userId - 卖家用户ID
+ * @param {number} params.page - 页码
+ * @param {number} params.size - 每页数量
+ * @param {number} params.status - 商品状态：1-在售 2-已售 3-下架
+ * @returns {Promise}
+ */
+export function getSellerProducts(params) {
+  return request({
+    url: `/product/seller/${params.userId}`,
+    method: 'get',
+    params: {
+      page: params.page,
+      size: params.size,
+      status: params.status
+    }
+  })
+}
+
+/**
  * 获取商品详情
  * @param {number} productId - 商品ID
  * @returns {Promise}
@@ -114,23 +152,6 @@ export function getProductDetail(productId) {
   return request({
     url: `/product/${productId}`,
     method: 'get'
-  })
-}
-
-/**
- * 获取商品列表
- * @param {Object} params - 查询参数
- * @param {number} [params.page=1] - 页码
- * @param {number} [params.size=10] - 每页数量
- * @param {number} [params.categoryId] - 分类ID
- * @param {string} [params.keyword] - 搜索关键词
- * @returns {Promise}
- */
-export function getProductList(params) {
-  return request({
-    url: '/product/list',
-    method: 'get',
-    params
   })
 }
 
@@ -173,7 +194,7 @@ export function deleteProduct(productId) {
     url: `/product/${productId}`,
     method: 'delete'
   })
-} 
+}
 
 /**
  * 高级搜索商品
@@ -193,5 +214,17 @@ export function advancedSearchProducts(params) {
     url: '/product/advanced-search',
     method: 'get',
     params
+  })
+}
+
+/**
+ * 增加商品浏览次数
+ * @param {number} productId - 商品ID
+ * @returns {Promise}
+ */
+export function incrementViewCount(productId) {
+  return request({
+    url: `/product/${productId}/view`,
+    method: 'put'
   })
 }

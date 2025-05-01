@@ -41,7 +41,7 @@
           <template v-else>
             <el-dropdown trigger="click">
               <div class="user-avatar">
-                <el-avatar :src="avatar || defaultAvatar" :size="40" />
+                <el-avatar :src="userAvatar" :size="40" />
                 <span class="nickname">{{ nickname || username }}</span>
               </div>
               <template #dropdown>
@@ -136,10 +136,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useCategoryStore } from '@/stores/category'
+import { useFileStore } from '@/stores/file'
 import { Search, UserFilled, Goods, Star, List, Message, Setting, Plus, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 
@@ -149,6 +150,15 @@ const router = useRouter()
 // 用户状态
 const userStore = useUserStore()
 const { isLoggedIn, username, nickname, avatar, role, logout } = userStore
+
+// 文件存储
+const fileStore = useFileStore()
+
+// 处理头像路径
+const userAvatar = computed(() => {
+  if (!avatar) return defaultAvatar
+  return fileStore.getFullUrl(avatar)
+})
 
 // 默认头像
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
@@ -247,7 +257,7 @@ onMounted(async () => {
 
 .search-bar {
   flex: 1;
-  max-width: 500px;
+  max-width: 450px;
   margin-right: 30px;
 }
 
