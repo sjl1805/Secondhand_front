@@ -201,7 +201,7 @@
     <!-- 支付确认对话框 -->
     <el-dialog v-model="paymentDialogVisible" title="支付确认" width="400px" :close-on-click-modal="false" :close-on-press-escape="false">
       <div v-if="currentOrder" class="payment-confirm">
-        <p class="payment-amount">支付订单: <span class="price">￥{{ currentOrder.totalAmount.toFixed(2) }}</span></p>
+        <p class="payment-amount">支付订单: <span class="price">￥{{ currentOrder && currentOrder.totalAmount ? currentOrder.totalAmount.toFixed(2) : '0.00' }}</span></p>
         
         <!-- 支付方式选择 -->
         <div class="payment-methods">
@@ -462,8 +462,22 @@ const viewOrderDetail = (orderId) => {
 
 // 去支付
 const payOrder = (order) => {
+  if (!order || !order.id) {
+    ElMessage.error('订单数据无效，无法支付')
+    return
+  }
+  
   // 保存当前订单
   currentOrder.value = order
+  
+  // 确保总金额存在
+  if (!currentOrder.value.totalAmount) {
+    if (order.product && order.product.price) {
+      currentOrder.value.totalAmount = order.product.price
+    } else {
+      currentOrder.value.totalAmount = 0
+    }
+  }
   
   // 重置支付状态
   paymentStatus.value = 0
@@ -495,10 +509,12 @@ const confirmPayment = async () => {
   try {
     // 构建支付数据
     const paymentData = {
-      amount: currentOrder.value.totalAmount,
+      amount: currentOrder.value.totalAmount || 0,
       paymentMethod: paymentMethod.value,
       message: currentOrder.value.message || ''
     }
+    
+    console.log('支付数据:', currentOrder.value.id, paymentData)
     
     // 调用支付API
     const paymentResult = await orderStore.submitPayment(currentOrder.value.id, paymentData)

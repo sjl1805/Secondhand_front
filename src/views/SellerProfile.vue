@@ -212,7 +212,7 @@ const handleContact = () => {
   }
   
   // 跳转到聊天页面
-  router.push(`/chat/${sellerId.value}`)
+  router.push(`/user/chat/${sellerId.value}`)
 }
 
 // 页面加载时

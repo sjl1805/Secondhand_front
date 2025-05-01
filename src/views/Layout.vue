@@ -39,6 +39,13 @@
           
           <!-- 已登录状态 -->
           <template v-else>
+            <!-- 通知图标 -->
+            <div class="notification-icon" @click="$router.push('/user/notifications')">
+              <el-badge :is-dot="unreadCount > 0" :hidden="unreadCount <= 0">
+                <el-icon :size="22"><Bell /></el-icon>
+              </el-badge>
+            </div>
+            
             <el-dropdown trigger="click">
               <div class="user-avatar">
                 <el-avatar :src="userAvatar" :size="40" />
@@ -61,9 +68,14 @@
                   <el-dropdown-item @click="$router.push('/user/messages')">
                     <el-icon><Message /></el-icon> 消息中心
                   </el-dropdown-item>
+                  <el-dropdown-item @click="$router.push('/user/notifications')">
+                    <el-icon><Bell /></el-icon> 
+                    系统通知
+                    <el-badge v-if="unreadCount > 0" :value="unreadCount" type="danger" />
+                  </el-dropdown-item>
                   
                   <!-- 管理员入口 -->
-                  <el-dropdown-item v-if="role === 'admin'" @click="$router.push('/admin/dashboard')">
+                  <el-dropdown-item v-if="hasAdminAccess" @click="$router.push('/admin/dashboard')">
                     <el-icon><Setting /></el-icon> 管理后台
                   </el-dropdown-item>
                   
@@ -141,7 +153,8 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useCategoryStore } from '@/stores/category'
 import { useFileStore } from '@/stores/file'
-import { Search, UserFilled, Goods, Star, List, Message, Setting, Plus, SwitchButton } from '@element-plus/icons-vue'
+import { useNotificationStore } from '@/stores/notification'
+import { Search, UserFilled, Goods, Star, List, Message, Setting, Plus, SwitchButton, Bell } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 
 // 路由实例
@@ -154,14 +167,21 @@ const { isLoggedIn, username, nickname, avatar, role, logout } = userStore
 // 文件存储
 const fileStore = useFileStore()
 
+// 通知状态
+const notificationStore = useNotificationStore()
+const unreadCount = computed(() => notificationStore.unreadCount)
+
 // 处理头像路径
 const userAvatar = computed(() => {
   if (!avatar) return defaultAvatar
   return fileStore.getFullUrl(avatar)
 })
 
-// 默认头像
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+// 是否有管理后台权限
+const hasAdminAccess = computed(() => {
+  // 根据数据库中的角色定义：role 9表示管理员
+  return isLoggedIn && role === '9'
+})
 
 // 分类状态
 const categoryStore = useCategoryStore()
@@ -194,15 +214,20 @@ const handleLogout = async () => {
   }
 }
 
-// 页面加载时获取分类
+// 页面加载时获取分类和未读通知数量
 onMounted(async () => {
   try {
     // 确保 topCategories 存在且为空数组时才加载分类
     if (!topCategories || !topCategories.value || topCategories.value.length === 0) {
       await fetchCategoryTree()
     }
+    
+    // 如果用户已登录，获取未读通知数量
+    if (isLoggedIn) {
+      await notificationStore.fetchUnreadNotificationCount()
+    }
   } catch (error) {
-    console.error('加载分类失败:', error)
+    console.error('加载数据失败:', error)
   }
 })
 </script>
@@ -269,6 +294,17 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.notification-icon {
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.notification-icon:hover {
+  background-color: #f5f7fa;
 }
 
 .user-avatar {

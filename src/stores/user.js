@@ -48,7 +48,6 @@ export const useUserStore = defineStore('user', () => {
   // 登录
   const userLogin = async (loginForm) => {
     try {
-      // 将captchaCode转换为captcha、captchaKey保持不变，与后端字段匹配
       const data = {
         username: loginForm.username,
         password: loginForm.password,
@@ -70,7 +69,6 @@ export const useUserStore = defineStore('user', () => {
   // 注册
   const userRegister = async (registerForm) => {
     try {
-      // 将captchaCode转换为captcha、captchaKey保持不变，与后端字段匹配
       const data = {
         username: registerForm.username,
         password: registerForm.password,

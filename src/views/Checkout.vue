@@ -28,18 +28,24 @@
           <div class="section address-section">
             <div class="section-header">
               <h3 class="section-title">收货地址</h3>
-              <el-button type="primary" link @click="showAddressDialog">{{ addressList.length ? '选择地址' : '添加地址' }}</el-button>
+              <el-button type="primary" link @click="showAddressDialog" :icon="ArrowRight">更多地址</el-button>
             </div>
             
-            <div v-if="selectedAddress" class="address-info">
-              <div class="address-content">
-                <p class="address-name">{{ selectedAddress.receiverName }} {{ selectedAddress.receiverPhone }}</p>
-                <p class="address-detail">{{ getFullAddress(selectedAddress) }}</p>
+            <div v-if="selectedAddress" class="selected-address-card" @click="showAddressDialog">
+              <div class="address-info">
+                <div class="address-header">
+                  <span class="address-name">{{ selectedAddress.receiverName }}</span>
+                  <span class="address-phone">{{ selectedAddress.receiverPhone }}</span>
+                  <el-tag v-if="selectedAddress.isDefault === 1" size="small" type="success">默认</el-tag>
+                </div>
+                <div class="address-detail">{{ getFullAddress(selectedAddress) }}</div>
               </div>
-              <el-icon class="address-arrow"><ArrowRight /></el-icon>
+              <el-icon class="address-select-icon"><ArrowRight /></el-icon>
             </div>
             
-            <el-empty v-else description="请添加收货地址" />
+            <el-empty v-else description="暂无收货地址">
+              <el-button type="primary" @click="showAddNewAddressDialog">添加新地址</el-button>
+            </el-empty>
           </div>
           
           <!-- 支付方式 -->
@@ -106,12 +112,12 @@
           @click="selectAddress(address)"
         >
           <div class="address-info">
-            <p class="address-name">
-              {{ address.receiverName }}
+            <div class="address-header">
+              <span class="address-name">{{ address.receiverName }}</span>
               <span class="address-phone">{{ address.receiverPhone }}</span>
-              <el-tag v-if="address.isDefault" size="small" type="success">默认</el-tag>
-            </p>
-            <p class="address-detail">{{ getFullAddress(address) }}</p>
+              <el-tag v-if="address.isDefault === 1" size="small" type="success">默认</el-tag>
+            </div>
+            <div class="address-detail">{{ getFullAddress(address) }}</div>
           </div>
           <div class="address-actions">
             <el-button type="primary" link @click.stop="editAddress(address)">编辑</el-button>
@@ -158,15 +164,27 @@
     </el-dialog>
     
     <!-- 支付确认对话框 -->
-    <el-dialog v-model="paymentDialogVisible" title="支付确认" width="400px" :close-on-click-modal="false" :close-on-press-escape="false">
+    <el-dialog v-model="paymentDialogVisible" title="支付确认" width="450px" :close-on-click-modal="false" :close-on-press-escape="false">
       <div class="payment-confirm">
-        <p class="payment-amount">支付金额: <span class="price">￥{{ totalAmount.toFixed(2) }}</span></p>
+        <div class="payment-amount">
+          <div>支付金额</div>
+          <div class="price">￥{{ totalAmount && !isNaN(totalAmount) ? totalAmount.toFixed(2) : '0.00' }}</div>
+        </div>
+        
+        <div class="payment-method-info">
+          支付方式: <el-tag size="small">{{ paymentMethodText }}</el-tag>
+        </div>
+        
         <div class="payment-qrcode">
           <img src="../assets/images/qr-code-placeholder.png" alt="支付二维码" />
-          <p>请使用{{ paymentMethodText }}扫码支付</p>
+          <div class="qrcode-tip">请使用{{ paymentMethodText }}扫描二维码完成支付</div>
         </div>
-        <div class="payment-status" :class="{'success': paymentStatus === 2, 'error': paymentStatus === 3}">
-          <el-tag v-if="paymentStatus > 0" :type="paymentStatus === 2 ? 'success' : paymentStatus === 3 ? 'danger' : 'info'">
+        
+        <div class="payment-status-wrapper">
+          <el-tag v-if="paymentStatus > 0" 
+                  :type="paymentStatus === 2 ? 'success' : paymentStatus === 3 ? 'danger' : 'info'"
+                  size="large"
+                  class="payment-status-tag">
             {{ paymentStatusText }}
           </el-tag>
         </div>
@@ -174,7 +192,9 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="cancelPayment" :disabled="paymentStatus === 1">取消支付</el-button>
-          <el-button type="primary" @click="confirmPayment" :loading="paymentStatus === 1" :disabled="paymentStatus === 2 || paymentStatus === 3">
+          <el-button type="primary" @click="confirmPayment" 
+                    :loading="paymentStatus === 1" 
+                    :disabled="paymentStatus === 2 || paymentStatus === 3">
             {{ paymentStatus === 0 ? '确认支付' : '查询支付状态' }}
           </el-button>
         </span>
@@ -388,12 +408,24 @@ const fetchAddressList = async () => {
     await addressStore.fetchAddressList()
     addressList.value = addressStore.addressList || []
     
+    // 处理后端返回的地址数据中的isDefault字段
+    addressList.value = addressList.value.map(address => {
+      // 如果isDefault是数字类型，保留原值
+      // 如果是布尔值，则转换为数字
+      if (typeof address.isDefault === 'boolean') {
+        return {
+          ...address,
+          isDefault: address.isDefault ? 1 : 0
+        }
+      }
+      return address
+    })
+    
     // 调试输出
-    console.log('地址Store数据:', addressStore.addressList)
-    console.log('本地地址列表:', addressList.value)
+    console.log('处理后的地址列表:', addressList.value)
     
     // 如果有默认地址，自动选择
-    const defaultAddress = addressList.value.find(addr => addr.isDefault)
+    const defaultAddress = addressList.value.find(addr => addr.isDefault === 1)
     if (defaultAddress) {
       selectedAddressId.value = defaultAddress.id
     } else if (addressList.value.length > 0) {
@@ -433,14 +465,30 @@ const showAddNewAddressDialog = () => {
 // 编辑地址
 const editAddress = (address) => {
   isEditingAddress.value = true
+  
+  console.log('编辑地址数据:', address)
+  
+  // 处理省市区信息
+  let region = []
+  if (address.province && address.city && address.district) {
+    region = [address.province, address.city, address.district]
+  } else if (address.region && Array.isArray(address.region)) {
+    region = address.region
+  } else if (address.regionStr) {
+    region = address.regionStr.split(' ')
+  }
+  
   addressForm.value = {
     id: address.id,
     receiverName: address.receiverName,
     receiverPhone: address.receiverPhone,
-    region: address.region || [],
-    addressDetail: address.addressDetail || '',
-    isDefault: address.isDefault || false
+    region: region,
+    addressDetail: address.detail || address.addressDetail || '',
+    isDefault: address.isDefault === 1
   }
+  
+  console.log('处理后的地址表单:', addressForm.value)
+  
   addressDialogVisible.value = false
   addressFormDialogVisible.value = true
 }
@@ -521,9 +569,18 @@ const saveAddress = async () => {
         // 将省市区数组转换为字符串
         const regionStr = addressForm.value.region.join(' ')
         
+        // 提取省市区信息
+        const [province = '', city = '', district = ''] = addressForm.value.region
+        
         const addressData = {
           ...addressForm.value,
           regionStr,
+          province,
+          city,
+          district,
+          detail: addressForm.value.addressDetail,
+          // 确保isDefault是数值类型
+          isDefault: addressForm.value.isDefault ? 1 : 0
         }
         
         console.log('保存地址数据:', addressData)
@@ -582,30 +639,57 @@ const getFullAddress = (address) => {
 
 // 提交订单
 const submitOrder = async () => {
-  if (!canSubmit.value) {
-    ElMessage.warning('请先选择收货地址')
+  // 检查用户是否已登录
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    router.push('/login?redirect=' + encodeURIComponent(router.currentRoute.value.fullPath))
     return
   }
   
+  // 检查是否选择了收货地址
+  if (!selectedAddress.value) {
+    ElMessage.warning('请选择收货地址')
+    return
+  }
+  
+  // 确认用户是否提交订单
   try {
-    // 确认提交
-    const result = await ElMessageBox.confirm(
-      `确认提交订单并支付 ￥${totalAmount.value.toFixed(2)} 吗？`,
-      '确认订单',
-      {
-        confirmButtonText: '确认支付',
-        cancelButtonText: '取消',
-        type: 'info'
-      }
-    )
+    await ElMessageBox.confirm('确认提交订单?', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
     
-    if (result) {
-      // 重置支付状态
-      paymentStatus.value = 0
-      currentOrderId.value = null
+    loading.value = true
+    try {
+      // 构建订单数据
+      const orderData = {
+        productId: productDetail.value.id,
+        addressId: selectedAddress.value.id,
+        message: message.value || '',
+        quantity: 1,  // 默认购买数量为1
+        price: productDetail.value.price  // 添加价格字段
+      }
       
-      // 显示支付对话框
-      paymentDialogVisible.value = true
+      // 创建订单
+      const orderResult = await orderStore.submitOrder(orderData)
+      
+      if (orderResult && orderResult.id) {
+        // 保存订单ID到本地变量
+        currentOrderId.value = orderResult.id
+        console.log('订单创建成功，ID:', currentOrderId.value)
+        
+        // 显示支付对话框
+        paymentDialogVisible.value = true
+      } else {
+        ElMessage.error('订单创建失败：返回的订单数据无效')
+        console.error('订单创建失败：无效的订单数据', orderResult)
+      }
+    } catch (error) {
+      console.error('提交订单失败:', error)
+      ElMessage.error('提交订单失败: ' + (error.message || '未知错误'))
+    } finally {
+      loading.value = false
     }
   } catch (error) {
     console.log('用户取消了订单提交')
@@ -628,8 +712,16 @@ const confirmPayment = async () => {
   }
   
   // 如果当前已有订单ID，说明是查询支付状态
-  if (currentOrderId.value) {
+  if (currentOrderId.value && paymentStatus.value === 1) {
     await checkPaymentStatus()
+    return
+  }
+  
+  // 检查订单ID是否存在
+  if (!currentOrderId.value) {
+    console.error('支付失败: 订单ID不存在')
+    ElMessage.error('订单ID不存在，请重新提交订单')
+    paymentDialogVisible.value = false
     return
   }
   
@@ -638,44 +730,34 @@ const confirmPayment = async () => {
   loading.value = true
   
   try {
-    // 构建订单数据
-    const orderData = {
-      productId: productDetail.value.id,
-      addressId: selectedAddress.value.id,
-      message: message.value || '',
-      quantity: 1  // 默认购买数量为1
+    // 确保totalAmount是有效数字
+    const amount = totalAmount.value && !isNaN(totalAmount.value) ? Number(totalAmount.value) : 0
+    
+    // 构建支付数据
+    const paymentData = {
+      amount: amount,
+      paymentMethod: paymentMethod.value,
+      message: message.value || ''
     }
     
-    // 提交订单
-    const orderResult = await orderStore.submitOrder(orderData)
+    console.log('支付订单ID:', currentOrderId.value, '类型:', typeof currentOrderId.value)
+    console.log('支付数据:', paymentData)
     
-    if (orderResult) {
-      // 保存当前订单ID
-      currentOrderId.value = orderResult.id
+    // 调用支付API
+    const paymentResult = await orderStore.submitPayment(currentOrderId.value, paymentData)
+    
+    if (paymentResult) {
+      paymentStatus.value = 2 // 支付成功
+      ElMessage.success('支付成功！')
       
-      // 构建支付数据
-      const paymentData = {
-        amount: totalAmount.value,
-        paymentMethod: paymentMethod.value,
-        message: message.value || ''
-      }
-      
-      // 调用支付API
-      const paymentResult = await orderStore.submitPayment(orderResult.id, paymentData)
-      
-      if (paymentResult) {
-        paymentStatus.value = 2 // 支付成功
-        ElMessage.success('支付成功！')
-        
-        // 3秒后自动跳转
-        setTimeout(() => {
-          paymentDialogVisible.value = false
-          router.push(`/user/order/${orderResult.id}`)
-        }, 3000)
-      } else {
-        paymentStatus.value = 3 // 支付失败
-        ElMessage.error('支付失败，请到订单中心重新支付')
-      }
+      // 3秒后自动跳转
+      setTimeout(() => {
+        paymentDialogVisible.value = false
+        router.push(`/user/order/${currentOrderId.value}`)
+      }, 3000)
+    } else {
+      paymentStatus.value = 3 // 支付失败
+      ElMessage.error('支付失败，请到订单中心重新支付')
     }
   } catch (error) {
     console.error('支付失败:', error)
@@ -871,35 +953,63 @@ onBeforeUnmount(() => {
 
 .address-item {
   padding: 15px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 15px;
   cursor: pointer;
+  transition: all 0.3s;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
 }
 
 .address-item:hover {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   border-color: #c0c4cc;
 }
 
 .address-item.active {
-  border-color: #409eff;
-  background-color: #ecf5ff;
+  border-color: var(--el-color-primary);
+  background-color: rgba(var(--el-color-primary-rgb), 0.05);
+}
+
+.address-info {
+  flex: 1;
+}
+
+.address-header {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.address-name {
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 8px;
 }
 
 .address-phone {
-  margin-left: 10px;
-  font-weight: normal;
+  color: #606266;
+  margin-right: 8px;
+}
+
+.address-detail {
+  color: #606266;
+  line-height: 1.5;
+  font-size: 14px;
 }
 
 .address-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .address-footer {
-  margin-top: 15px;
+  margin-top: 20px;
   text-align: center;
 }
 
@@ -990,5 +1100,76 @@ onBeforeUnmount(() => {
     margin-top: 10px;
     justify-content: flex-end;
   }
+}
+
+.selected-address-card {
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-address-card:hover {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.address-select-icon {
+  color: #c0c4cc;
+  font-size: 18px;
+}
+
+.payment-qrcode {
+  text-align: center;
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.payment-qrcode img {
+  width: 180px;
+  height: 180px;
+  margin-bottom: 10px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+}
+
+.payment-amount {
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.payment-amount .price {
+  color: #ff4d4f;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.payment-method-info {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.qrcode-tip {
+  margin-top: 10px;
+  color: #909399;
+  font-size: 14px;
+}
+
+.payment-status-wrapper {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.payment-status-tag {
+  font-size: 20px;
+  font-weight: bold;
 }
 </style> 

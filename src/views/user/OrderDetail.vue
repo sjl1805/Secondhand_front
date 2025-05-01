@@ -22,7 +22,7 @@
           <div class="order-actions">
             <!-- 买家操作 -->
             <el-button 
-              v-if="isBuyer && order.status === 1" 
+              v-if="showPayButton" 
               type="primary"
               @click="payOrder(order)"
             >
@@ -30,7 +30,7 @@
             </el-button>
             
             <el-button 
-              v-if="isBuyer && order.status === 3" 
+              v-if="showReceiveButton" 
               type="success"
               @click="confirmReceive(order.id)"
             >
@@ -38,7 +38,7 @@
             </el-button>
             
             <el-button 
-              v-if="isBuyer && order.status === 1" 
+              v-if="showCancelButton" 
               type="danger"
               @click="cancelOrder(order.id)"
             >
@@ -47,7 +47,7 @@
             
             <!-- 卖家操作 -->
             <el-button 
-              v-if="!isBuyer && order.status === 2" 
+              v-if="showShipButton" 
               type="primary"
               @click="shipOrder(order.id)"
             >
@@ -78,9 +78,17 @@
         <el-descriptions :column="2" border>
           <el-descriptions-item label="订单编号">{{ order.orderNo }}</el-descriptions-item>
           <el-descriptions-item label="下单时间">{{ formatDate(order.createTime) }}</el-descriptions-item>
-          <el-descriptions-item label="买家">{{ order.buyer?.username || '未知' }}</el-descriptions-item>
-          <el-descriptions-item label="卖家">{{ order.seller?.username || '未知' }}</el-descriptions-item>
-          <el-descriptions-item label="交易方式" :span="2">线下交易</el-descriptions-item>
+          <el-descriptions-item v-if="isSeller" label="买家">{{ order.buyer?.username || '未知' }}</el-descriptions-item>
+          <el-descriptions-item v-if="isBuyer" label="卖家">{{ order.seller?.username || '未知' }}</el-descriptions-item>
+          <el-descriptions-item v-if="order.status >= 2" label="支付方式">
+            {{ order.paymentMethod === 1 ? '支付宝' : 
+               order.paymentMethod === 2 ? '微信支付' : 
+               order.paymentMethod === 3 ? '银行卡' : '未知' }}
+          </el-descriptions-item>
+          <el-descriptions-item v-if="order.status >= 2" label="支付时间">
+            {{ order.paymentTime ? formatDate(order.paymentTime) : '未知' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="交易方式" :span="order.status >= 2 ? 1 : 2">线下交易</el-descriptions-item>
           <el-descriptions-item label="买家留言" :span="2">{{ order.message || '无留言' }}</el-descriptions-item>
         </el-descriptions>
       </el-card>
@@ -165,30 +173,30 @@
         </template>
         
         <div class="contact-info">
-          <div class="contact-item" v-if="isBuyer">
+          <div class="contact-item" v-if="isBuyer && order.seller">
             <h4>卖家联系方式</h4>
             <p>
               <el-tag size="small" type="info">联系人</el-tag>
               {{ order.seller?.username || '未知' }}
             </p>
-            <p v-if="order.seller?.phone">
+            <p v-if="canViewContactInfo && order.seller?.phone">
               <el-tag size="small" type="info">电话</el-tag>
               {{ order.seller.phone }}
             </p>
-            <p v-else class="no-contact">订单完成后可查看联系方式</p>
+            <p v-else class="no-contact">订单支付后可查看联系方式</p>
           </div>
           
-          <div class="contact-item" v-else>
+          <div class="contact-item" v-if="isSeller && order.buyer">
             <h4>买家联系方式</h4>
             <p>
               <el-tag size="small" type="info">联系人</el-tag>
               {{ order.buyer?.username || '未知' }}
             </p>
-            <p v-if="order.buyer?.phone">
+            <p v-if="canViewContactInfo && order.buyer?.phone">
               <el-tag size="small" type="info">电话</el-tag>
               {{ order.buyer.phone }}
             </p>
-            <p v-else class="no-contact">订单完成后可查看联系方式</p>
+            <p v-else class="no-contact">订单支付后可查看联系方式</p>
           </div>
         </div>
       </el-card>
@@ -203,7 +211,7 @@
     <!-- 支付确认对话框 -->
     <el-dialog v-model="paymentDialogVisible" title="支付确认" width="400px" :close-on-click-modal="false" :close-on-press-escape="false">
       <div v-if="order" class="payment-confirm">
-        <p class="payment-amount">支付订单: <span class="price">￥{{ order.totalAmount.toFixed(2) }}</span></p>
+        <p class="payment-amount">支付订单: <span class="price">￥{{ order.totalAmount && !isNaN(order.totalAmount) ? order.totalAmount.toFixed(2) : '0.00' }}</span></p>
         
         <!-- 支付方式选择 -->
         <div class="payment-methods">
@@ -263,7 +271,53 @@ const order = computed(() => orderStore.orderDetail)
 // 是否是买家
 const isBuyer = computed(() => {
   if (!order.value || !userStore.currentUser) return false
-  return order.value.buyerId === userStore.currentUser.id
+  return order.value.buyerId === userStore.userId
+})
+
+// 是否是卖家
+const isSeller = computed(() => {
+  if (!order.value || !userStore.currentUser) return false
+  return order.value.sellerId === userStore.userId
+})
+
+// 是否允许查看联系方式
+const canViewContactInfo = computed(() => {
+  if (!order.value) return false
+  
+  // 订单已完成或已取消，可以查看联系方式
+  if (order.value.status === 4) return true
+  
+  // 卖家在订单支付后可以查看买家联系方式
+  if (isSeller.value && order.value.status >= 2) return true
+  
+  // 买家在订单支付后可以查看卖家联系方式
+  if (isBuyer.value && order.value.status >= 2) return true
+  
+  return false
+})
+
+// 判断是否显示支付按钮
+const showPayButton = computed(() => {
+  if (!order.value) return false
+  return isBuyer.value && order.value.status === 1
+})
+
+// 判断是否显示确认收货按钮
+const showReceiveButton = computed(() => {
+  if (!order.value) return false
+  return isBuyer.value && order.value.status === 3
+})
+
+// 判断是否显示取消订单按钮
+const showCancelButton = computed(() => {
+  if (!order.value) return false
+  return isBuyer.value && order.value.status === 1
+})
+
+// 判断是否显示发货按钮
+const showShipButton = computed(() => {
+  if (!order.value) return false
+  return isSeller.value && order.value.status === 2
 })
 
 // 根据状态获取步骤条激活状态
@@ -533,12 +587,19 @@ const confirmPayment = async () => {
   loading.value = true
   
   try {
+    // 确保金额是有效数字
+    const amount = order.value.totalAmount && !isNaN(order.value.totalAmount) ? 
+      Number(order.value.totalAmount) : 0
+      
     // 构建支付数据
     const paymentData = {
-      amount: order.value.totalAmount,
+      amount: amount,
       paymentMethod: paymentMethod.value,
       message: order.value.message || ''
     }
+    
+    console.log('支付订单ID:', order.value.id, '类型:', typeof order.value.id)
+    console.log('支付数据:', paymentData)
     
     // 调用支付API
     const paymentResult = await orderStore.submitPayment(order.value.id, paymentData)

@@ -60,13 +60,46 @@ export const useOrderStore = defineStore('order', () => {
     loading.value = true
     try {
       const res = await createOrder(orderData)
+      console.log('订单API原始返回数据:', res)
+      
       if (res.code === 200) {
-        ElMessage.success('订单创建成功')
-        return res.data
+        // 检查返回的数据类型和内容
+        const orderInfo = res.data
+        console.log('订单API返回数据类型:', typeof orderInfo, '内容:', orderInfo)
+        
+        // 如果返回的是数字ID而不是对象
+        if (typeof orderInfo === 'number' || (typeof orderInfo === 'string' && !isNaN(Number(orderInfo)))) {
+          // 创建一个包含ID的对象返回
+          const orderId = Number(orderInfo)
+          console.log('订单创建成功，ID(数字):', orderId)
+          ElMessage.success('订单创建成功')
+          return { id: orderId }
+        }
+        // 如果返回的是对象，但不包含id字段
+        else if (typeof orderInfo === 'object' && orderInfo !== null) {
+          if (!orderInfo.id) {
+            console.error('订单创建API返回的对象数据缺少ID字段:', orderInfo)
+            ElMessage.error('订单创建失败: 返回数据格式错误')
+            return null
+          }
+          
+          console.log('订单创建成功，ID(对象):', orderInfo.id)
+          ElMessage.success('订单创建成功')
+          return orderInfo
+        } else {
+          console.error('订单创建API返回的数据格式无效:', orderInfo)
+          ElMessage.error('订单创建失败: 返回数据格式无效')
+          return null
+        }
+      } else {
+        console.error('订单创建API返回错误代码:', res.code, res.message)
+        ElMessage.error(res.message || '订单创建失败')
+        return null
       }
     } catch (error) {
       console.error('订单创建失败', error)
       ElMessage.error(error.message || '订单创建失败')
+      return null
     } finally {
       loading.value = false
     }
@@ -245,14 +278,29 @@ export const useOrderStore = defineStore('order', () => {
   
   // 支付订单
   const submitPayment = async (orderId, paymentData) => {
+    console.log('Store: submitPayment - orderId:', orderId, 'paymentData:', paymentData)
+    
+    // 强制转换订单ID为数字，并检查是否有效
+    const orderIdNum = Number(orderId)
+    if (!orderIdNum || isNaN(orderIdNum) || orderIdNum <= 0) {
+      console.error('支付订单失败: 订单ID无效', orderId)
+      ElMessage.error('支付订单失败: 订单ID无效')
+      return null
+    }
+    
+    // 确保amount为数字
+    if (paymentData && typeof paymentData.amount !== 'number') {
+      paymentData.amount = Number(paymentData.amount) || 0
+    }
+    
     loading.value = true
     try {
-      const res = await payOrder(orderId, paymentData)
+      const res = await payOrder(orderIdNum, paymentData)
       if (res.code === 200) {
         paymentResult.value = res.data
         
         // 更新订单详情
-        if (orderDetail.value && orderDetail.value.id === orderId) {
+        if (orderDetail.value && orderDetail.value.id === orderIdNum) {
           orderDetail.value.status = 2 // 待发货
           orderDetail.value.statusText = orderStatusMap[2]
           orderDetail.value.paymentMethod = paymentData.paymentMethod
@@ -262,7 +310,7 @@ export const useOrderStore = defineStore('order', () => {
         }
         
         // 更新订单列表
-        updateOrderListStatus(orderId, 2)
+        updateOrderListStatus(orderIdNum, 2)
         
         ElMessage.success('支付成功')
         return res.data

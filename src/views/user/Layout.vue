@@ -25,6 +25,10 @@
               <el-icon><UserFilled /></el-icon>
               <span>个人资料</span>
             </el-menu-item>
+            <el-menu-item index="/user/notifications">  
+              <el-icon><Bell /></el-icon>
+              <span>系统通知</span>
+            </el-menu-item>
             <el-menu-item index="/user/products">
               <el-icon><Goods /></el-icon>
               <span>我的商品</span>
