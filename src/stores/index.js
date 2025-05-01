@@ -1,6 +1,5 @@
 // 导出所有状态
 import { useUserStore } from './user'
-import { useCounterStore } from './counter'
 import { useAddressStore } from './address'
 import { useCategoryStore } from './category'
 import { useAdminOrderStore } from './adminOrder'
@@ -15,10 +14,10 @@ import { useOrderStore } from './order'
 import { useProductStore } from './product'
 import { useRecommendationStore } from './recommendation'
 import { useNotificationStore } from './notification'
+import { useFileStore } from './file'
 
 export {
   useUserStore,
-  useCounterStore,
   useAddressStore,
   useCategoryStore,
   useAdminOrderStore,
@@ -32,7 +31,8 @@ export {
   useOrderStore,
   useProductStore,
   useRecommendationStore,
-  useNotificationStore
+  useNotificationStore,
+  useFileStore
 }
 
 // 初始化函数，用于应用启动时预加载某些状态

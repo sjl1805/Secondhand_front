@@ -15,6 +15,7 @@ import * as adminProductApi from './adminProduct'
 import * as recommendationApi from './recommendation'
 import * as notificationApi from './notification'
 import * as adminNotificationApi from './adminNotification'
+import * as fileApi from './file'
 
 // 导出所有API
 
@@ -34,7 +35,8 @@ export {
   adminProductApi,
   recommendationApi,
   notificationApi,
-  adminNotificationApi
+  adminNotificationApi,
+  fileApi
 }
 
 // 按需添加其他模块的API
