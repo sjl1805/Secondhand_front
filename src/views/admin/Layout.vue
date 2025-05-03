@@ -103,11 +103,11 @@
           </el-breadcrumb-item>
         </el-breadcrumb>
         
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <div class="admin-content" ref="contentRef">
+          <keep-alive>
+            <router-view v-if="isAdmin && !isRouteChanging"></router-view>
+          </keep-alive>
+        </div>
       </el-main>
     </el-container>
   </div>
@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useFileStore } from '@/stores/file'
@@ -254,9 +254,23 @@ onMounted(() => {
   }
 })
 
+// 路由变化状态
+const isRouteChanging = ref(false)
+const contentRef = ref(null)
+
 // 监听路由变化
-watch(() => route.path, () => {
-  // 可以在这里添加路由变化时的处理逻辑
+watch(() => route.path, (newPath, oldPath) => {
+  // 处理路由变化时的过渡
+  if (newPath !== oldPath) {
+    isRouteChanging.value = true
+    
+    // 短暂延迟后重新显示视图
+    setTimeout(() => {
+      nextTick(() => {
+        isRouteChanging.value = false
+      })
+    }, 50)
+  }
 })
 </script>
 
@@ -375,6 +389,16 @@ watch(() => route.path, () => {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.admin-content {
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 60px);
+  position: relative;
+  overflow: auto;  /* 允许内容滚动 */
+  display: flex;
+  flex-direction: column;
 }
 
 .unauthorized {

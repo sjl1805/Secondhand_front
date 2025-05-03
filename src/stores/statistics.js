@@ -13,12 +13,16 @@ import {
   getActiveSellersStatistics,
   getActiveBuyersStatistics
 } from '@/api/statistics'
+import { useFileStore } from '@/stores/file'
 import { ElMessage } from 'element-plus'
 
 export const useStatisticsStore = defineStore('statistics', () => {
   // 状态
   const loading = ref(false)
   const isAdmin = ref(false)
+  
+  // 文件处理
+  const fileStore = useFileStore()
   
   // 基本统计数据
   const basicStats = reactive({
@@ -28,7 +32,8 @@ export const useStatisticsStore = defineStore('statistics', () => {
     totalTransaction: 0,
     todayNewUsers: 0,
     todayNewProducts: 0,
-    todayNewOrders: 0
+    todayNewOrders: 0,
+    todayTransaction: 0
   })
   
   // 时间单位选项
@@ -108,6 +113,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
         basicStats.todayNewUsers = res.data.todayNewUsers || 0
         basicStats.todayNewProducts = res.data.todayNewProducts || 0
         basicStats.todayNewOrders = res.data.todayNewOrders || 0
+        basicStats.todayTransaction = res.data.todayTransaction || 0
         return res.data
       }
     } catch (error) {
@@ -283,8 +289,16 @@ export const useStatisticsStore = defineStore('statistics', () => {
     try {
       const res = await getActiveSellersStatistics(params)
       if (res.code === 200) {
-        activeSellersStats.value = res.data || []
-        return res.data
+        // 处理头像URL
+        const data = res.data || []
+        data.forEach(seller => {
+          if (seller.avatar && !seller.avatar.startsWith('http')) {
+            seller.avatar = fileStore.getFullUrl(seller.avatar)
+          }
+        })
+        
+        activeSellersStats.value = data
+        return data
       }
     } catch (error) {
       console.error('获取活跃卖家统计数据失败', error)
@@ -305,8 +319,16 @@ export const useStatisticsStore = defineStore('statistics', () => {
     try {
       const res = await getActiveBuyersStatistics(params)
       if (res.code === 200) {
-        activeBuyersStats.value = res.data || []
-        return res.data
+        // 处理头像URL
+        const data = res.data || []
+        data.forEach(buyer => {
+          if (buyer.avatar && !buyer.avatar.startsWith('http')) {
+            buyer.avatar = fileStore.getFullUrl(buyer.avatar)
+          }
+        })
+        
+        activeBuyersStats.value = data
+        return data
       }
     } catch (error) {
       console.error('获取活跃买家统计数据失败', error)
@@ -327,8 +349,15 @@ export const useStatisticsStore = defineStore('statistics', () => {
   
   // 获取前30天的日期
   const getPast30Days = () => {
-    const endDate = new Date()
-    const startDate = new Date()
+    // 创建今天的日期对象
+    const today = new Date()
+    
+    // 创建结束日期为明天（今天+1天），确保包含今天的完整数据
+    const endDate = new Date(today)
+    endDate.setDate(endDate.getDate() + 1)
+    
+    // 创建开始日期为31天前（这样能包含30天的数据区间）
+    const startDate = new Date(today)
     startDate.setDate(startDate.getDate() - 30)
     
     const formatDate = (date) => {

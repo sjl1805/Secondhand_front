@@ -239,6 +239,16 @@ const router = createRouter({
   }
 })
 
+// 防止重复导航
+const originalPush = router.push
+router.push = function push(location) {
+  return originalPush.call(this, location).catch(err => {
+    if (err.name !== 'NavigationDuplicated') {
+      throw err
+    }
+  })
+}
+
 // 前置守卫
 router.beforeEach((to, from, next) => {
   // 设置页面标题
@@ -278,6 +288,17 @@ router.beforeEach((to, from, next) => {
   }
   
   next()
+})
+
+// 全局后置钩子，处理路由切换后的操作
+router.afterEach((to, from) => {
+  // 处理从admin路由切换出来的情况，确保DOM操作安全
+  if (from.path.startsWith('/admin') && !to.path.startsWith('/admin')) {
+    // 给DOM一点时间完成操作
+    setTimeout(() => {
+      // 可以添加一些清理逻辑，如清除定时器等
+    }, 100)
+  }
 })
 
 export default router

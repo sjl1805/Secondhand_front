@@ -53,6 +53,21 @@
               <span class="meta-value">{{ product.viewCount }}</span>
             </div>
             <div class="meta-item">
+              <span class="meta-label">商品评分：</span>
+              <span class="meta-value rating-with-stars">
+                {{ averageRating.toFixed(1) }}
+                <el-rate 
+                  v-model="averageRating" 
+                  disabled 
+                  :max="5"
+                  :colors="['#ffd21e', '#ffd21e', '#ffd21e']" 
+                  :show-text="false"
+                  :show-score="false"
+                  style="display: inline-flex; margin-left: 5px;"
+                />
+              </span>
+            </div>
+            <div class="meta-item">
               <span class="meta-label">发布时间：</span>
               <span class="meta-value">{{ formatDate(product.createTime) }}</span>
             </div>
@@ -103,36 +118,45 @@
             </div>
           </el-tab-pane>
           
-          <el-tab-pane label="评分与评价">
-            <div class="product-rating" v-loading="ratingLoading">
-              <h3>商品评分</h3>
-              <div v-if="ratingStats" class="rating-stats">
-                <div class="rating-overview">
-                  <div class="rating-average">
-                    <span class="average-num">{{ calculateAverageRating }}</span>
-                    <div class="average-stars">
-                      <el-rate
-                        v-model="calculateAverageRating"
-                        disabled
-                        show-score
-                        text-color="#ff9900"
-                      />
+          <el-tab-pane label="评价">
+            <!-- 评论列表 -->
+            <div class="product-comments" v-loading="commentLoading">
+              <h3>用户评价 ({{ commentPagination.total || 0 }})</h3>
+              
+              <div v-if="productComments && productComments.length > 0" class="comment-list">
+                <div v-for="comment in productComments" :key="comment.id" class="comment-item">
+                  <div class="comment-header">
+                    <div class="comment-user">
+                      <el-avatar :size="40" :src="comment.userAvatar || defaultAvatar"></el-avatar>
+                      <div class="comment-user-info">
+                        <div class="comment-username">{{ comment.nickname || '匿名用户' }}</div>
+                        <div class="comment-time">{{ formatDate(comment.createTime) }}</div>
+                      </div>
+                    </div>
+                    <div class="comment-rating">
+                      <el-rate v-model="comment.rating" disabled />
                     </div>
                   </div>
-                  <div class="rating-progress">
-                    <div v-for="n in 5" :key="n" class="rating-item">
-                      <span class="rating-label">{{ 6-n }}星</span>
-                      <el-progress 
-                        :percentage="calculateRatingPercentage(6-n)" 
-                        :stroke-width="12" 
-                        :color="getRatingColor(6-n)"
-                      />
-                      <span class="rating-count">{{ ratingStats[6-n] || 0 }}</span>
-                    </div>
+                  
+                  <div class="comment-content">
+                    {{ comment.content }}
                   </div>
                 </div>
+                
+                <!-- 分页 -->
+                <div class="pagination-container" v-if="commentPagination.total > commentPagination.size">
+                  <el-pagination
+                    background
+                    layout="prev, pager, next"
+                    :current-page="commentPagination.current"
+                    :page-size="commentPagination.size"
+                    :total="commentPagination.total"
+                    @current-change="handleCommentPageChange"
+                  />
+                </div>
               </div>
-              <el-empty v-else description="暂无评分数据" />
+              
+              <el-empty v-else description="暂无评价" />
             </div>
           </el-tab-pane>
           
@@ -163,8 +187,10 @@ import { useProductStore } from '@/stores/product'
 import { useFavoriteStore } from '@/stores/favorite'
 import { useUserStore } from '@/stores/user'
 import { useFileStore } from '@/stores/file'
+import { useCommentStore } from '@/stores/comment'
 import { getProductDetail } from '@/api/product'
 import { getSellerInfo } from '@/api/user'
+import { getProductRating } from '@/api/comment'
 import { 
   Picture, 
   Star, 
@@ -183,6 +209,7 @@ const productStore = useProductStore()
 const favoriteStore = useFavoriteStore()
 const userStore = useUserStore()
 const fileStore = useFileStore()
+const commentStore = useCommentStore()
 
 // 默认图片
 const defaultImage = 'http://localhost:8080/api/static/images/products/b2a22df3bee54c04bdba66a51059948a.jpg'
@@ -204,9 +231,19 @@ const sellerInfo = ref(null)
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const userId = computed(() => userStore.userId)
 
-// 评分统计
+// 评分相关
+const averageRating = ref(0)
 const ratingLoading = ref(false)
 const ratingStats = ref(null)
+
+// 评论相关
+const commentLoading = ref(false)
+const productComments = ref([])
+const commentPagination = ref({
+  current: 1,
+  size: 5,
+  total: 0
+})
 
 // 状态类型映射
 const statusTypeMap = {
@@ -240,6 +277,20 @@ const getStatusTagType = (status) => {
 // 获取商品成色文本
 const getConditionText = (productQuality) => {
   return productStore.productQualityMap[productQuality] || '未知'
+}
+
+// 获取商品平均评分
+const fetchAverageRating = async () => {
+  if (!productId.value) return
+  
+  try {
+    const res = await getProductRating(productId.value)
+    if (res.code === 200) {
+      averageRating.value = res.data || 0
+    }
+  } catch (error) {
+    console.error('获取商品平均评分失败:', error)
+  }
 }
 
 // 获取商品详情
@@ -276,6 +327,12 @@ const fetchProductDetail = async () => {
       
       // 获取商品评分统计
       fetchProductRating()
+      
+      // 获取商品平均评分
+      fetchAverageRating()
+      
+      // 获取商品评论列表
+      fetchProductComments()
     }
   } catch (error) {
     console.error('获取商品详情失败:', error)
@@ -480,24 +537,6 @@ const fetchProductRating = async () => {
   }
 }
 
-// 计算平均评分
-const calculateAverageRating = computed(() => {
-  if (!ratingStats.value) return 0
-  
-  const ratings = Object.entries(ratingStats.value)
-  if (ratings.length === 0) return 0
-  
-  let totalScore = 0
-  let totalCount = 0
-  
-  ratings.forEach(([rating, count]) => {
-    totalScore += Number(rating) * Number(count)
-    totalCount += Number(count)
-  })
-  
-  return totalCount > 0 ? Number((totalScore / totalCount).toFixed(1)) : 0
-})
-
 // 计算评分百分比
 const calculateRatingPercentage = (rating) => {
   if (!ratingStats.value) return 0
@@ -519,6 +558,47 @@ const getRatingColor = (rating) => {
     1: '#f56c6c'
   }
   return colors[rating] || '#909399'
+}
+
+// 获取商品评论
+const fetchProductComments = async () => {
+  if (!productId.value) return
+  
+  commentLoading.value = true
+  try {
+    const params = {
+      page: commentPagination.value.current,
+      size: commentPagination.value.size
+    }
+    
+    const result = await commentStore.fetchProductComments(productId.value, params)
+    if (result) {
+      // 处理评论数据，确保头像URL正确
+      productComments.value = result.records.map(comment => {
+        // 处理用户头像路径
+        if (comment.avatar && !comment.userAvatar) {
+          comment.userAvatar = fileStore.getFullUrl(comment.avatar)
+        }
+        return comment
+      })
+      
+      commentPagination.value = {
+        current: result.current,
+        size: result.size,
+        total: result.total
+      }
+    }
+  } catch (error) {
+    console.error('获取商品评论失败:', error)
+  } finally {
+    commentLoading.value = false
+  }
+}
+
+// 切换评论分页
+const handleCommentPageChange = (page) => {
+  commentPagination.value.current = page
+  fetchProductComments()
 }
 
 // 监听路由变化
@@ -687,32 +767,47 @@ onMounted(() => {
   padding: 20px 0;
 }
 
-.rating-stats {
-  margin-top: 20px;
-}
-
-.rating-overview {
-  display: flex;
-  gap: 40px;
-  align-items: center;
-}
-
-.rating-average {
+.average-rating {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 150px;
+  margin-bottom: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
 
-.average-num {
+.rating-number {
   font-size: 48px;
   font-weight: bold;
   color: #ff9900;
   line-height: 1;
 }
 
-.average-stars {
+.rating-stars {
   margin-top: 10px;
+}
+
+.rating-label {
+  font-size: 14px;
+  color: #606266;
+  margin-top: 5px;
+}
+
+.rating-stats {
+  margin-top: 20px;
+}
+
+.rating-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.rating-overview {
+  display: flex;
+  gap: 40px;
+  align-items: center;
 }
 
 .rating-progress {
@@ -723,13 +818,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
-}
-
-.rating-label {
-  width: 40px;
-  text-align: right;
-  margin-right: 10px;
-  color: #606266;
 }
 
 .rating-count {
@@ -747,6 +835,65 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
+  margin-top: 20px;
+}
+
+/* 评论样式 */
+.product-comments {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #ebeef5;
+}
+
+.comment-list {
+  margin-top: 20px;
+}
+
+.comment-item {
+  padding: 20px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.comment-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comment-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.comment-username {
+  font-weight: bold;
+  color: #303133;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
+}
+
+.comment-content {
+  color: #606266;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
   margin-top: 20px;
 }
 
@@ -774,6 +921,11 @@ onMounted(() => {
   .rating-average {
     min-width: auto;
   }
+  
+  .comment-header {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -788,5 +940,10 @@ onMounted(() => {
   .product-price {
     font-size: 24px;
   }
+}
+
+.rating-with-stars {
+  display: flex;
+  align-items: center;
 }
 </style>
