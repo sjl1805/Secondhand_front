@@ -5,8 +5,8 @@
     <!-- 角色切换 -->
     <div class="role-selector">
       <el-radio-group v-model="activeRole" @change="handleRoleChange">
-        <el-radio-button label="buyer">我购买的</el-radio-button>
-        <el-radio-button label="seller">我出售的</el-radio-button>
+        <el-radio-button :value="'buyer'">我购买的</el-radio-button>
+        <el-radio-button :value="'seller'">我出售的</el-radio-button>
       </el-radio-group>
     </div>
     
@@ -92,7 +92,7 @@
           <div class="order-content" @click="viewOrderDetail(order.id)">
             <div class="product-info">
               <el-image 
-                :src="order.product && order.product.coverImage ? order.product.coverImage : (order.product && order.product.imageUrl ? order.product.imageUrl : getProductImage(order.product))" 
+                :src="getProductImageUrl(order)"
                 class="product-image"
                 fit="cover"
                 lazy
@@ -112,7 +112,7 @@
             <div class="order-summary">
               <div class="order-amount">
                 <p class="total-label">实付款</p>
-                <p class="total-price">¥{{ order.totalAmount ? order.totalAmount.toFixed(2) : '0.00' }}</p>
+                <p class="total-price">¥{{ order.product && order.product.price ? order.product.price.toFixed(2) : '0.00' }}</p>
               </div>
             </div>
           </div>
@@ -156,6 +156,16 @@
                 @click="buyAgain(order)"
               >
                 再次购买
+              </el-button>
+              
+              <el-button 
+                v-if="order.status === 4 && !order.commented && order.isCommented !== 1" 
+                type="success" 
+                plain
+                size="small"
+                @click="openCommentDialog(order)"
+              >
+                评价
               </el-button>
             </template>
             
@@ -207,9 +217,9 @@
         <div class="payment-methods">
           <h4>选择支付方式</h4>
           <el-radio-group v-model="paymentMethod" :disabled="paymentStatus > 0">
-            <el-radio :label="1">支付宝</el-radio>
-            <el-radio :label="2">微信支付</el-radio>
-            <el-radio :label="3">银行卡</el-radio>
+            <el-radio :value="1">支付宝</el-radio>
+            <el-radio :value="2">微信支付</el-radio>
+            <el-radio :value="3">银行卡</el-radio>
           </el-radio-group>
         </div>
         
@@ -234,34 +244,73 @@
         </span>
       </template>
     </el-dialog>
+    
+    <!-- 评价对话框 -->
+    <el-dialog v-model="commentDialogVisible" title="评价商品" width="500px" :close-on-click-modal="true">
+      <comment-form
+        :order-id="currentOrder?.id"
+        :product-id="currentOrder?.productId"
+        :product="currentOrder?.product"
+        v-model:rating="commentForm.rating"
+        v-model:content="commentForm.content"
+        @update:images="commentForm.images = $event"
+        ref="commentFormRef"
+      />
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelComment">取消</el-button>
+          <el-button type="primary" @click="submitComment" :loading="commentSubmitting">提交评价</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template> 
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useOrderStore } from '@/stores/order'
 import { formatDateTime } from '@/utils/format'
 import { useProductStore } from '@/stores/product'
 import { useFileStore } from '@/stores/file'
-import { Picture } from '@element-plus/icons-vue'
+import { useCommentStore } from '@/stores/comment'
+import { Picture, Plus } from '@element-plus/icons-vue'
+import CommentForm from '@/components/CommentForm.vue'
+
+// 默认图片路径
+const DEFAULT_PRODUCT_IMAGE = '/images/default-product.png'
 
 const router = useRouter()
 const orderStore = useOrderStore()
 const productStore = useProductStore()
 const fileStore = useFileStore()
+const commentStore = useCommentStore()
 
 // 角色：买家/卖家
 const activeRole = ref('buyer')
 // 订单状态筛选
 const activeStatus = ref('0')
+// 加载状态
+const loading = ref(false)
 
 // 添加支付相关状态
 const paymentDialogVisible = ref(false)
 const paymentMethod = ref(1)
 const paymentStatus = ref(0) // 0-未支付 1-支付中 2-支付成功 3-支付失败
 const currentOrder = ref(null)
+
+// 评价相关状态
+const commentDialogVisible = ref(false)
+const commentSubmitting = ref(false)
+const commentForm = reactive({
+  orderId: null,
+  productId: null,
+  rating: 5,
+  content: '',
+  images: []
+})
 
 // 支付方式文本
 const paymentMethodText = computed(() => {
@@ -284,21 +333,32 @@ const paymentStatusText = computed(() => {
   return map[paymentStatus.value] || '未支付'
 })
 
+// 评价表单引用
+const commentFormRef = ref(null)
+
 // 初始化页面
 const initPage = async () => {
-  // 根据角色获取订单列表
-  if (activeRole.value === 'buyer') {
-    await orderStore.fetchBuyerOrders({
-      status: activeStatus.value !== '0' ? Number(activeStatus.value) : null
-    })
-  } else {
-    await orderStore.fetchSellerOrders({
-      status: activeStatus.value !== '0' ? Number(activeStatus.value) : null
-    })
+  loading.value = true
+  try {
+    // 根据角色获取订单列表
+    if (activeRole.value === 'buyer') {
+      await orderStore.fetchBuyerOrders({
+        status: activeStatus.value !== '0' ? Number(activeStatus.value) : null
+      })
+    } else {
+      await orderStore.fetchSellerOrders({
+        status: activeStatus.value !== '0' ? Number(activeStatus.value) : null
+      })
+    }
+    
+    // 处理订单中的商品数据
+    await processOrderProductData()
+  } catch (error) {
+    console.error('获取订单数据失败:', error)
+    ElMessage.error('获取订单数据失败')
+  } finally {
+    loading.value = false
   }
-  
-  // 处理订单中的商品数据
-  await processOrderProductData()
 }
 
 // 处理订单中的商品数据
@@ -307,8 +367,17 @@ const processOrderProductData = async () => {
   
   if (orders && orders.length > 0) {
     for (const order of orders) {
+      // 为每个订单添加product对象（如果不存在）
+      if (!order.product) {
+        order.product = {
+          title: order.productTitle || '商品信息不可用',
+          price: order.price || 0,
+          imageUrl: null
+        }
+      }
+      
       // 如果有productId但没有完整的product数据，尝试从product store获取
-      if (order.productId && (!order.product || !order.product.id)) {
+      if (order.productId && (!order.product.id)) {
         try {
           const productData = await productStore.fetchProductDetail(order.productId)
           if (productData) {
@@ -320,53 +389,66 @@ const processOrderProductData = async () => {
         }
       }
       
-      // 确保商品数据存在
-      if (!order.product) {
-        order.product = {
-          title: order.productTitle || '商品信息不可用',
-          price: order.price || 0,
-          imageUrl: order.productImage ? fileStore.getFullUrl(order.productImage) : '/images/default-product.png'
-        }
-      } 
-      
       // 处理商品图片
-      if (order.product) {
-        // 1. 设置默认图片属性
-        if (!order.product.imageUrl && order.productImage) {
-          order.product.imageUrl = fileStore.getFullUrl(order.productImage)
-        } else if (!order.product.imageUrl) {
-          order.product.imageUrl = '/images/default-product.png'
-        }
-        
-        // 2. 处理图片URL数组
-        if (order.product.imageUrls && Array.isArray(order.product.imageUrls) && !order.product.images) {
-          order.product.images = order.product.imageUrls.map(url => fileStore.getFullUrl(url))
+      // 1. 设置默认图片属性
+      if (!order.product.imageUrl && order.productImage) {
+        order.product.imageUrl = fileStore.getFullUrl(order.productImage)
+      }
+      
+      // 2. 处理图片URL数组
+      if (order.product.imageUrls && Array.isArray(order.product.imageUrls) && !order.product.images) {
+        order.product.images = order.product.imageUrls.map(url => fileStore.getFullUrl(url))
+        order.product.coverImage = order.product.images[0] || null
+      }
+      
+      // 3. 确保 JSON 字符串形式的 images 被解析
+      if (order.product.images && typeof order.product.images === 'string') {
+        try {
+          order.product.images = JSON.parse(order.product.images)
           order.product.coverImage = order.product.images[0] || null
+        } catch (e) {
+          console.error('解析商品图片JSON失败:', e, order.product.images)
+          order.product.images = []
         }
-        
-        // 3. 确保 JSON 字符串形式的 images 被解析
-        if (order.product.images && typeof order.product.images === 'string') {
+      }
+      
+      // 4. 如果只有imageUrl但没有coverImage和images
+      if (order.product.imageUrl && !order.product.coverImage && (!order.product.images || order.product.images.length === 0)) {
+        order.product.coverImage = order.product.imageUrl
+        order.product.images = [order.product.imageUrl]
+      }
+      
+      // 5. 如果是订单商品图片直接赋值
+      if (!order.product.coverImage && !order.product.imageUrl && order.productImage) {
+        const imageUrl = fileStore.getFullUrl(order.productImage)
+        order.product.imageUrl = imageUrl
+        order.product.coverImage = imageUrl
+        order.product.images = [imageUrl]
+      }
+      
+      // 设置其它默认值
+      if (!order.product.title) {
+        order.product.title = order.productTitle || '商品信息不完整'
+      }
+      
+      if (!order.product.price && order.price) {
+        order.product.price = order.price
+      }
+      
+      // 检查已完成的订单是否已评价
+      if (order.status === 4) {
+        // 优先使用order对象中的isCommented字段
+        if (order.isCommented === 1) {
+          order.commented = true
+        } else {
+          // 如果isCommented字段为0或null，再调用API查询
           try {
-            order.product.images = JSON.parse(order.product.images)
-            order.product.coverImage = order.product.images[0] || null
-          } catch (e) {
-            order.product.images = []
+            const isCommented = await commentStore.checkOrderCommented(order.id)
+            order.commented = isCommented
+          } catch (error) {
+            console.error('检查订单评价状态失败:', error)
+            order.commented = false
           }
-        }
-        
-        // 4. 如果只有imageUrl但没有coverImage和images
-        if (order.product.imageUrl && !order.product.coverImage && (!order.product.images || order.product.images.length === 0)) {
-          order.product.coverImage = order.product.imageUrl
-          order.product.images = [order.product.imageUrl]
-        }
-        
-        // 设置其它默认值
-        if (!order.product.title) {
-          order.product.title = order.productTitle || '商品信息不完整'
-        }
-        
-        if (!order.product.price) {
-          order.product.price = order.price || 0
         }
       }
     }
@@ -450,9 +532,51 @@ const getStatusType = (status) => {
 // 获取商品图片
 const getProductImage = (product) => {
   if (!product || !product.imageUrl) {
-    return '/images/default-product.png'
+    return DEFAULT_PRODUCT_IMAGE
   }
   return product.imageUrl
+}
+
+// 获取商品图片URL，优先级：产品封面 > 产品图片 > 订单商品图片 > 默认图片
+const getProductImageUrl = (order) => {
+  if (!order) return DEFAULT_PRODUCT_IMAGE
+  
+  // 检查产品对象
+  if (order.product) {
+    // 1. 检查封面图片
+    if (order.product.coverImage) {
+      return order.product.coverImage
+    }
+    
+    // 2. 检查产品图片
+    if (order.product.imageUrl) {
+      return order.product.imageUrl
+    }
+    
+    // 3. 检查图片数组的第一张
+    if (order.product.images && order.product.images.length > 0) {
+      if (typeof order.product.images === 'string') {
+        try {
+          const images = JSON.parse(order.product.images)
+          if (images && images.length > 0) {
+            return images[0]
+          }
+        } catch (e) {
+          console.error('解析产品图片字符串失败:', e)
+        }
+      } else if (Array.isArray(order.product.images) && order.product.images.length > 0) {
+        return order.product.images[0]
+      }
+    }
+  }
+  
+  // 4. 检查订单中的商品图片
+  if (order.productImage) {
+    return fileStore.getFullUrl(order.productImage)
+  }
+  
+  // 5. 返回默认图片
+  return DEFAULT_PRODUCT_IMAGE
 }
 
 // 查看订单详情
@@ -679,6 +803,79 @@ watch(
 onMounted(() => {
   initPage()
 })
+
+// 打开评价对话框
+const openCommentDialog = (order) => {
+  currentOrder.value = order
+  
+  // 重置评价表单
+  commentForm.orderId = order.id
+  commentForm.productId = order.productId
+  commentForm.rating = 5
+  commentForm.content = ''
+  commentForm.images = []
+  
+  commentDialogVisible.value = true
+  
+  // 在下一个tick中重置表单
+  nextTick(() => {
+    if (commentFormRef.value) {
+      commentFormRef.value.reset()
+    }
+  })
+}
+
+// 取消评价
+const cancelComment = () => {
+  commentDialogVisible.value = false
+  currentOrder.value = null
+}
+
+// 提交评价
+const submitComment = async () => {
+  if (!commentForm.content || commentForm.content.trim() === '') {
+    ElMessage.warning('请输入评价内容')
+    return
+  }
+  
+  commentSubmitting.value = true
+  
+  try {
+    // 构建评价数据
+    const commentData = {
+      orderId: commentForm.orderId,
+      productId: commentForm.productId,
+      rating: commentForm.rating,
+      content: commentForm.content,
+      images: commentForm.images
+    }
+    
+    // 调用评价API
+    const result = await commentStore.submitComment(commentData)
+    
+    if (result) {
+      ElMessage.success('评价提交成功')
+      
+      // 更新订单评价状态
+      if (currentOrder.value) {
+        currentOrder.value.commented = true
+        currentOrder.value.isCommented = 1
+      }
+      
+      // 刷新订单列表
+      commentDialogVisible.value = false
+      currentOrder.value = null
+      
+      // 重新加载订单
+      initPage()
+    }
+  } catch (error) {
+    console.error('评价提交失败:', error)
+    ElMessage.error('评价提交失败，请重试')
+  } finally {
+    commentSubmitting.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -879,4 +1076,6 @@ onMounted(() => {
   color: #f56c6c;
   font-weight: bold;
 }
+
+/* 评价表单样式已移至CommentForm组件中 */
 </style> 

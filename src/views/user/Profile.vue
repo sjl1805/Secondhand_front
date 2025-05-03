@@ -58,6 +58,7 @@
         <el-form-item>
           <el-button type="primary" @click="saveProfile" :loading="loading">保存修改</el-button>
           <el-button @click="resetForm">重置</el-button>
+          <el-button @click="goToPassword" type="warning">修改密码</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -69,9 +70,11 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { useFileStore } from '@/stores/file'
+import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
 const fileStore = useFileStore()
+const router = useRouter()
 
 // 用户信息
 const username = computed(() => userStore.username)
@@ -179,6 +182,11 @@ const resetForm = () => {
   if (profileFormRef.value) {
     profileFormRef.value.resetFields()
   }
+}
+
+// 跳转到修改密码页面
+const goToPassword = () => {
+  router.push('/user/password')
 }
 
 // 组件挂载时加载用户信息

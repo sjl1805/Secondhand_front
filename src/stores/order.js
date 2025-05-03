@@ -111,8 +111,35 @@ export const useOrderStore = defineStore('order', () => {
     try {
       const res = await getOrderDetail(orderId)
       if (res.code === 200) {
-        orderDetail.value = res.data
-        return res.data
+        const order = res.data
+        
+        // 设置订单状态文本
+        if (order && order.status) {
+          order.statusText = orderStatusMap[order.status] || '未知状态'
+        }
+        
+        // 设置支付方式文本
+        if (order && order.paymentMethod) {
+          order.paymentMethodText = paymentMethodMap[order.paymentMethod] || '未知方式'
+        }
+        
+        // 设置支付状态文本
+        if (order && order.paymentStatus) {
+          order.paymentStatusText = paymentStatusMap[order.paymentStatus] || '未知状态'
+        }
+        
+        // 计算订单总金额（如果没有totalAmount字段）
+        if (order && !order.totalAmount && order.price) {
+          order.totalAmount = order.price
+        }
+        
+        // 确保isCommented字段处理正确
+        if (order && order.isCommented === null) {
+          order.isCommented = 0
+        }
+        
+        orderDetail.value = order
+        return order
       }
     } catch (error) {
       console.error('获取订单详情失败', error)
@@ -307,6 +334,8 @@ export const useOrderStore = defineStore('order', () => {
           orderDetail.value.paymentMethodText = paymentMethodMap[paymentData.paymentMethod]
           orderDetail.value.paymentStatus = 2 // 支付成功
           orderDetail.value.paymentStatusText = paymentStatusMap[2]
+          orderDetail.value.paymentTime = new Date()
+          orderDetail.value.transactionNo = res.data.transactionNo || `TX${Date.now()}`
         }
         
         // 更新订单列表

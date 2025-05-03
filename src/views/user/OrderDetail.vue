@@ -45,6 +45,15 @@
               取消订单
             </el-button>
             
+            <!-- 评价按钮 -->
+            <el-button 
+              v-if="showCommentButton" 
+              type="success"
+              @click="openCommentDialog(order)"
+            >
+              评价商品
+            </el-button>
+            
             <!-- 卖家操作 -->
             <el-button 
               v-if="showShipButton" 
@@ -88,6 +97,16 @@
           <el-descriptions-item v-if="order.status >= 2" label="支付时间">
             {{ order.paymentTime ? formatDate(order.paymentTime) : '未知' }}
           </el-descriptions-item>
+          <el-descriptions-item v-if="order.status >= 2" label="支付交易号">
+            {{ order.transactionNo || '未知' }}
+          </el-descriptions-item>
+          <el-descriptions-item v-if="order.status >= 2" label="支付状态">
+            <el-tag :type="order.paymentStatus === 2 ? 'success' : (order.paymentStatus === 3 ? 'danger' : 'info')">
+              {{ order.paymentStatus === 1 ? '待支付' : 
+                 order.paymentStatus === 2 ? '支付成功' : 
+                 order.paymentStatus === 3 ? '支付失败' : '未知' }}
+            </el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="交易方式" :span="order.status >= 2 ? 1 : 2">线下交易</el-descriptions-item>
           <el-descriptions-item label="买家留言" :span="2">{{ order.message || '无留言' }}</el-descriptions-item>
         </el-descriptions>
@@ -120,7 +139,7 @@
             <div class="product-details" @click="viewProduct(order.product && order.product.id)">
               <h3 class="product-title">{{ order.product && order.product.title }}</h3>
               <p class="product-condition">
-                成色：{{ getConditionText(order.product && order.product.condition) }}
+                成色：{{ getConditionText(order.product && order.product.conditions) }}
               </p>
               <p class="product-desc">{{ truncateDesc(order.product && order.product.description) }}</p>
             </div>
@@ -244,19 +263,41 @@
         </span>
       </template>
     </el-dialog>
+    
+    <!-- 评价对话框 -->
+    <el-dialog v-model="commentDialogVisible" title="评价商品" width="500px" :close-on-click-modal="true">
+      <comment-form
+        :order-id="order?.id"
+        :product-id="order?.productId"
+        :product="order?.product"
+        v-model:rating="commentForm.rating"
+        v-model:content="commentForm.content"
+        @update:images="commentForm.images = $event"
+        ref="commentFormRef"
+      />
+      
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="cancelComment">取消</el-button>
+          <el-button type="primary" @click="submitComment" :loading="commentSubmitting">提交评价</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useOrderStore } from '@/stores/order'
 import { useUserStore } from '@/stores/user'
 import { useProductStore } from '@/stores/product'
 import { useFileStore } from '@/stores/file'
+import { useCommentStore } from '@/stores/comment'
 import { formatDateTime } from '@/utils/format'
-import { Picture } from '@element-plus/icons-vue'
+import { Picture, Plus } from '@element-plus/icons-vue'
+import CommentForm from '@/components/CommentForm.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -264,6 +305,7 @@ const orderStore = useOrderStore()
 const userStore = useUserStore()
 const productStore = useProductStore()
 const fileStore = useFileStore()
+const commentStore = useCommentStore()
 
 const loading = ref(true)
 const order = computed(() => orderStore.orderDetail)
@@ -320,6 +362,14 @@ const showShipButton = computed(() => {
   return isSeller.value && order.value.status === 2
 })
 
+// 判断是否显示评价按钮
+const showCommentButton = computed(() => {
+  if (!order.value) return false
+  // 使用is_commented字段判断是否已评价（优先）
+  if (order.value.isCommented === 1) return false
+  return isBuyer.value && order.value.status === 4 && !orderCommented.value
+})
+
 // 根据状态获取步骤条激活状态
 const getStatusStep = (status) => {
   const statusStepMap = {
@@ -336,10 +386,9 @@ const getStatusStep = (status) => {
 const getStatusTime = (status) => {
   if (!order.value) return ''
   
-  // 这里假设存在statusLogs字段记录了状态变更历史
-  // 实际项目中可能需要从后端获取状态变更日志
-  if (status === 2 && order.value.payTime) {
-    return formatDate(order.value.payTime)
+  // 这里根据不同状态返回对应的时间
+  if (status === 2 && order.value.paymentTime) {
+    return formatDate(order.value.paymentTime)
   } else if (status === 3 && order.value.shipTime) {
     return formatDate(order.value.shipTime)
   } else if (status === 4 && order.value.completeTime) {
@@ -348,7 +397,13 @@ const getStatusTime = (status) => {
   
   // 根据当前订单状态推断
   if (order.value.status >= status) {
-    if (status === 2) return formatDate(order.value.updateTime)
+    if (status === 2) {
+      // 优先使用paymentTime
+      if (order.value.paymentTime) {
+        return formatDate(order.value.paymentTime)
+      }
+      return formatDate(order.value.updateTime)
+    }
     if (status === 3 && order.value.status >= 3) return formatDate(order.value.updateTime)
     if (status === 4 && order.value.status === 4) return formatDate(order.value.updateTime)
   }
@@ -387,7 +442,7 @@ const getProductImage = (product) => {
 }
 
 // 获取商品成色文本
-const getConditionText = (condition) => {
+const getConditionText = (conditions) => {
   const conditionMap = {
     1: '全新',
     2: '几乎全新',
@@ -395,7 +450,7 @@ const getConditionText = (condition) => {
     4: '正常使用痕迹',
     5: '明显使用痕迹'
   }
-  return conditionMap[condition] || '未知'
+  return conditionMap[conditions] || '未知'
 }
 
 // 截断描述文本
@@ -426,6 +481,17 @@ const loadOrderDetail = async () => {
     } else {
       // 处理商品数据
       await processOrderProductData()
+      
+      // 检查订单是否已评价
+      if (orderStore.orderDetail.status === 4) {
+        // 优先使用order对象中的isCommented字段
+        if (orderStore.orderDetail.isCommented === 1) {
+          orderCommented.value = true
+        } else {
+          // 如果isCommented字段为0或null，再调用API查询
+          orderCommented.value = await commentStore.checkOrderCommented(orderId)
+        }
+      }
     }
   } catch (error) {
     console.error('获取订单详情失败:', error)
@@ -608,6 +674,14 @@ const confirmPayment = async () => {
       paymentStatus.value = 2 // 支付成功
       ElMessage.success('支付成功！')
       
+      // 设置订单对象的支付相关字段
+      if (order.value) {
+        order.value.paymentMethod = paymentMethod.value
+        order.value.paymentStatus = 2 // 支付成功
+        order.value.paymentTime = new Date()
+        order.value.transactionNo = paymentResult.transactionNo || `TX${Date.now()}`
+      }
+      
       // 3秒后自动关闭对话框并刷新
       setTimeout(() => {
         paymentDialogVisible.value = false
@@ -717,6 +791,91 @@ const shipOrder = (orderId) => {
     .catch(() => {
       ElMessage.info('已取消操作')
     })
+}
+
+// 评价相关状态
+const commentDialogVisible = ref(false)
+const commentSubmitting = ref(false)
+const commentForm = reactive({
+  orderId: null,
+  productId: null,
+  rating: 5,
+  content: '',
+  images: []
+})
+
+// 是否已经评价
+const orderCommented = ref(false)
+
+// 评价表单引用
+const commentFormRef = ref(null)
+
+// 打开评价对话框
+const openCommentDialog = (order) => {
+  if (!order) return
+  
+  // 重置评价表单
+  commentForm.orderId = order.id
+  commentForm.productId = order.productId
+  commentForm.rating = 5
+  commentForm.content = ''
+  commentForm.images = []
+  
+  commentDialogVisible.value = true
+  
+  // 在下一个tick中重置表单
+  nextTick(() => {
+    if (commentFormRef.value) {
+      commentFormRef.value.reset()
+    }
+  })
+}
+
+// 取消评价
+const cancelComment = () => {
+  commentDialogVisible.value = false
+}
+
+// 提交评价
+const submitComment = async () => {
+  if (!commentForm.content || commentForm.content.trim() === '') {
+    ElMessage.warning('请输入评价内容')
+    return
+  }
+  
+  commentSubmitting.value = true
+  
+  try {
+    // 构建评价数据
+    const commentData = {
+      orderId: commentForm.orderId,
+      productId: commentForm.productId,
+      rating: commentForm.rating,
+      content: commentForm.content,
+      images: commentForm.images
+    }
+    
+    // 调用评价API
+    const result = await commentStore.submitComment(commentData)
+    
+    if (result) {
+      ElMessage.success('评价提交成功')
+      // 更新订单评价状态
+      orderCommented.value = true
+      if (order.value) {
+        order.value.isCommented = 1
+      }
+      commentDialogVisible.value = false
+      
+      // 重新加载订单详情
+      loadOrderDetail()
+    }
+  } catch (error) {
+    console.error('评价提交失败:', error)
+    ElMessage.error('评价提交失败，请重试')
+  } finally {
+    commentSubmitting.value = false
+  }
 }
 
 // 监听路由参数变化
@@ -997,4 +1156,6 @@ onMounted(() => {
   color: #f56c6c;
   font-weight: bold;
 }
+
+/* 评价表单样式不再需要，已移到CommentForm组件中 */
 </style> 
