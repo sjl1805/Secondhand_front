@@ -68,13 +68,7 @@
       
       <!-- 输入区域 -->
       <div class="input-area">
-        <div class="message-toolbar">
-          <el-button-group>
-            <el-button type="default" :icon="Picture" @click="openUploadImage">图片</el-button>
-            <el-button type="default" :icon="ShoppingCart" @click="openProductSelector">商品</el-button>
-            <el-button type="default" :icon="Document" @click="openOrderSelector">订单</el-button>
-          </el-button-group>
-        </div>
+
         
         <div class="message-editor">
           <el-input

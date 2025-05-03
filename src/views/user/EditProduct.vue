@@ -45,8 +45,8 @@
           <span class="input-tip">元</span>
         </el-form-item>
         
-        <el-form-item label="商品成色" prop="condition">
-          <el-select v-model="formData.condition" placeholder="请选择商品成色">
+        <el-form-item label="商品成色" prop="conditions">
+          <el-select v-model="formData.conditions" placeholder="请选择商品成色">
             <el-option 
               v-for="(value, key) in productStore.conditionMap" 
               :key="key" 
@@ -86,15 +86,11 @@
           <el-input 
             v-model="formData.description" 
             type="textarea" 
-            rows="6" 
+            :rows="6" 
             placeholder="请详细描述商品的使用情况、新旧程度、有无损坏等信息"
             maxlength="1000"
             show-word-limit
           />
-        </el-form-item>
-        
-        <el-form-item label="交易地点" prop="location">
-          <el-input v-model="formData.location" placeholder="请输入交易地点，例如：北京市海淀区" />
         </el-form-item>
         
         <el-form-item>
@@ -114,6 +110,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { useProductStore } from '@/stores/product'
 import { useCategoryStore } from '@/stores/category'
 import { useFileStore } from '@/stores/file'
+import { updateProduct } from '@/api/product'
 
 const router = useRouter()
 const route = useRoute()
@@ -135,7 +132,7 @@ const formData = reactive({
   description: '',
   price: 0,
   categoryId: null,
-  condition: 1,
+  conditions: 1,
   location: '',
   imageUrls: []
 })
@@ -153,7 +150,7 @@ const rules = {
   categoryId: [
     { required: true, message: '请选择商品分类', trigger: 'change' }
   ],
-  condition: [
+  conditions: [
     { required: true, message: '请选择商品成色', trigger: 'change' }
   ],
   description: [
@@ -161,7 +158,16 @@ const rules = {
     { min: 10, max: 1000, message: '描述长度应在10-1000个字符之间', trigger: 'blur' }
   ],
   imageUrls: [
-    { required: true, message: '请上传至少一张商品图片', trigger: 'change' }
+    { 
+      validator: (rule, value, callback) => {
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          callback(new Error('请上传至少一张商品图片'));
+        } else {
+          callback();
+        }
+      }, 
+      trigger: 'change' 
+    }
   ]
 }
 
@@ -169,6 +175,30 @@ const rules = {
 const categoryOptions = computed(() => {
   return categoryStore.categoryTree || []
 })
+
+// 处理图片URL路径，确保格式正确
+const formatImageUrl = (url) => {
+  // 如果url为空，返回空字符串
+  if (!url) return '';
+  
+  // 如果已经是完整格式的路径（包含http），直接返回
+  if (url.startsWith('http')) return url;
+  
+  // 如果是相对路径，确保格式正确
+  if (!url.startsWith('/images/')) {
+    // 添加前导斜杠
+    if (!url.startsWith('/')) {
+      url = '/' + url;
+    }
+    
+    // 如果不包含images/，添加images/前缀
+    if (!url.includes('/images/')) {
+      url = '/images' + url;
+    }
+  }
+  
+  return url;
+}
 
 // 加载商品数据
 const loadProductData = async () => {
@@ -191,23 +221,40 @@ const loadProductData = async () => {
       return
     }
     
+    console.log('获取到商品详情:', product)
+    
     // 填充表单数据
     formData.title = product.title
     formData.description = product.description
     formData.price = product.price
     formData.categoryId = product.categoryId
-    formData.condition = product.condition
+    formData.conditions = product.conditions
     formData.location = product.location || ''
-    formData.imageUrls = product.imageUrls || []
+    
+    // 处理图片URL，确保格式正确
+    if (product.imageUrls && Array.isArray(product.imageUrls)) {
+      formData.imageUrls = product.imageUrls.map(url => formatImageUrl(url));
+    } else {
+      formData.imageUrls = [];
+    }
+    
+    console.log('商品图片URL:', JSON.stringify(formData.imageUrls))
     
     // 初始化文件列表
-    if (product.imageUrls && product.imageUrls.length > 0) {
-      fileList.value = product.imageUrls.map((url, index) => ({
-        name: `商品图片${index + 1}`,
-        url: fileStore.getFullUrl(url),
-        uid: Date.now() + index,
-        status: 'success'
-      }))
+    if (formData.imageUrls.length > 0) {
+      fileList.value = formData.imageUrls.map((url, index) => {
+        // 确保URL是正确的格式
+        const fullUrl = url.startsWith('http') ? url : fileStore.getFullUrl(url)
+        return {
+          name: `商品图片${index + 1}`,
+          url: fullUrl,
+          uid: Date.now() + index,
+          status: 'success',
+          response: { data: { path: url } } // 保存原始路径
+        }
+      })
+      
+      console.log('初始化文件列表:', fileList.value.length)
     }
   } catch (error) {
     console.error('加载商品数据失败:', error)
@@ -245,31 +292,75 @@ const handleImageChange = async (uploadFile) => {
     const result = await fileStore.uploadProductImage(uploadFile.raw)
     
     // 保存图片路径
-    if (!formData.imageUrls.includes(result.path)) {
-      formData.imageUrls.push(result.path)
-    }
-    
-    // 更新上传列表 - 替换URL
-    const index = fileList.value.findIndex(item => item.uid === uploadFile.uid)
-    if (index !== -1) {
-      fileList.value[index].url = result.url
-      fileList.value[index].status = 'success'
+    if (result && result.path) {
+      if (!formData.imageUrls.includes(result.path)) {
+        formData.imageUrls.push(result.path)
+        console.log('添加图片路径到imageUrls:', result.path)
+        console.log('当前imageUrls:', formData.imageUrls)
+      }
+      
+      // 更新上传列表 - 替换URL
+      const index = fileList.value.findIndex(item => item.uid === uploadFile.uid)
+      if (index !== -1) {
+        fileList.value[index].url = result.url
+        fileList.value[index].status = 'success'
+        fileList.value[index].response = { data: { path: result.path } } // 保存路径信息到response中
+      }
+    } else {
+      throw new Error('上传结果中缺少路径信息')
     }
   } catch (error) {
     console.error('图片上传失败:', error)
     ElMessage.error('图片上传失败，请重试')
+    
+    // 从文件列表中移除上传失败的文件
+    fileList.value = fileList.value.filter(file => file.uid !== uploadFile.uid)
   }
 }
 
 // 处理图片删除
 const handleImageRemove = (uploadFile) => {
-  // 从文件列表中删除
-  fileList.value = fileList.value.filter(file => file.uid !== uploadFile.uid)
-  
-  // 如果已上传到服务器，则从imageUrls中也移除
-  if (uploadFile.url) {
-    const path = fileStore.getPathFromUrl(uploadFile.url)
-    formData.imageUrls = formData.imageUrls.filter(url => url !== path)
+  try {
+    // 从文件列表中删除
+    fileList.value = fileList.value.filter(file => file.uid !== uploadFile.uid)
+    
+    let pathToRemove = null;
+    // 如果已上传到服务器，则从imageUrls中也移除
+    if (uploadFile.url) {
+      pathToRemove = fileStore.getPathFromUrl(uploadFile.url)
+      console.log('从URL提取路径:', pathToRemove)
+    } else if (uploadFile.response && uploadFile.response.data && uploadFile.response.data.path) {
+      // 处理刚上传完成的文件，直接使用response中的数据
+      pathToRemove = uploadFile.response.data.path
+      console.log('从response中提取路径:', pathToRemove)
+    }
+    
+    if (pathToRemove) {
+      // 创建新数组来保存过滤后的结果
+      const filteredUrls = [];
+      
+      // 手动遍历并过滤
+      for (let i = 0; i < formData.imageUrls.length; i++) {
+        if (formData.imageUrls[i] !== pathToRemove) {
+          filteredUrls.push(formData.imageUrls[i]);
+        }
+      }
+      
+      // 赋值给formData.imageUrls
+      formData.imageUrls = filteredUrls;
+      
+      console.log('从imageUrls中移除路径:', pathToRemove)
+      console.log('更新后的imageUrls:', JSON.stringify(formData.imageUrls))
+      console.log('更新后的imageUrls长度:', formData.imageUrls.length)
+    }
+    
+    // 如果删除后没有图片了，手动触发验证并显示警告
+    if (formData.imageUrls.length === 0) {
+      ElMessage.warning('请至少上传一张商品图片')
+    }
+  } catch (error) {
+    console.error('删除图片时出错:', error)
+    ElMessage.error('删除图片时出错，请重试')
   }
 }
 
@@ -288,60 +379,76 @@ const handleExceed = () => {
 const submitForm = async () => {
   if (!formRef.value) return
   
-  await formRef.value.validate(async (valid, fields) => {
-    if (valid) {
-      try {
-        submitting.value = true
-        
-        // 确保至少上传了一张图片
-        if (formData.imageUrls.length === 0) {
-          ElMessage.error('请上传至少一张商品图片')
-          return
-        }
-        
-        // 导入更新商品的API
-        const { updateProduct } = await import('@/api/product')
-        
-        // 提交商品数据
-        const res = await updateProduct(productId.value, {
-          title: formData.title,
-          description: formData.description,
-          price: formData.price,
-          categoryId: formData.categoryId,
-          condition: formData.condition,
-          location: formData.location,
-          imageUrls: formData.imageUrls
-        })
-        
-        if (res.code === 200) {
-          ElMessage.success('商品更新成功')
-          
-          // 确认是查看商品还是返回列表
-          ElMessageBox.confirm(
-            '商品更新成功，是否查看商品详情？',
-            '提示',
-            {
-              confirmButtonText: '查看商品',
-              cancelButtonText: '返回列表',
-              type: 'success',
-            }
-          ).then(() => {
-            router.push(`/product/${productId.value}`)
-          }).catch(() => {
-            router.push('/user/products')
-          })
-        }
-      } catch (error) {
-        console.error('更新商品失败:', error)
-        ElMessage.error(error.message || '更新商品失败，请重试')
-      } finally {
-        submitting.value = false
-      }
-    } else {
-      console.log('表单验证失败:', fields)
+  console.log('提交前检查imageUrls:', JSON.stringify(formData.imageUrls))
+  
+  // 确保至少上传了一张图片
+  if (!formData.imageUrls || !Array.isArray(formData.imageUrls) || formData.imageUrls.length === 0) {
+    ElMessage.error('请上传至少一张商品图片')
+    return
+  }
+  
+  try {
+    // 手动验证表单
+    const valid = await formRef.value.validate().catch(errors => {
+      console.log('表单验证失败:', errors)
+      return false
+    })
+    
+    if (!valid) {
       ElMessage.error('请完善表单信息')
+      return
     }
-  })
+    
+    // 表单验证通过，开始提交
+    submitting.value = true
+    
+    // 准备提交数据，确保imageUrls是一个新的数组
+    const submitData = {
+      title: formData.title,
+      description: formData.description,
+      price: formData.price,
+      categoryId: formData.categoryId,
+      conditions: formData.conditions,
+      location: formData.location,
+      imageUrls: [...formData.imageUrls] // 创建新数组
+    }
+    
+    // 打印要提交的数据，用于调试
+    console.log('提交的商品数据:', {
+      id: productId.value,
+      ...submitData,
+      imageUrls: JSON.stringify(submitData.imageUrls)
+    })
+    
+    // 提交商品数据
+    const res = await updateProduct(productId.value, submitData)
+    
+    if (res.code === 200) {
+      ElMessage.success('商品更新成功')
+      
+      // 确认是查看商品还是返回列表
+      ElMessageBox.confirm(
+        '商品更新成功，是否查看商品详情？',
+        '提示',
+        {
+          confirmButtonText: '查看商品',
+          cancelButtonText: '返回列表',
+          type: 'success',
+        }
+      ).then(() => {
+        router.push(`/product/${productId.value}`)
+      }).catch(() => {
+        router.push('/user/products')
+      })
+    } else {
+      throw new Error(res.message || '更新失败')
+    }
+  } catch (error) {
+    console.error('更新商品失败:', error)
+    ElMessage.error(error.message || '更新商品失败，请重试')
+  } finally {
+    submitting.value = false
+  }
 }
 
 // 返回上一页
@@ -351,8 +458,13 @@ const goBack = () => {
 
 // 监听formData.imageUrls变化
 watch(() => formData.imageUrls, (newValue) => {
-  formRef.value?.validateField('imageUrls')
-}, { deep: true })
+  console.log('imageUrls变化:', newValue)
+  if (formRef.value) {
+    formRef.value.validateField('imageUrls')
+      .then(() => console.log('imageUrls验证通过'))
+      .catch(err => console.log('imageUrls验证失败:', err))
+  }
+}, { deep: true, immediate: false })
 
 // 组件挂载时加载分类数据和商品数据
 onMounted(async () => {

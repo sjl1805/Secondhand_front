@@ -82,6 +82,12 @@ const userRoutes = [
         meta: { title: '个人资料' }
       },
       {
+        path: 'password',
+        name: 'UserPassword',
+        component: () => import('@/views/user/PasswordUpdate.vue'),
+        meta: { title: '修改密码' }
+      },
+      {
         path: 'favorites',
         name: 'UserFavorites',
         component: () => import('@/views/user/Favorites.vue'),

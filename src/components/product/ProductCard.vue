@@ -2,10 +2,9 @@
   <div class="product-card" @click="navigateToDetail">
     <div class="product-image">
       <el-image 
-        :src="product.coverImage || defaultImage" 
+        :src="localProduct.coverImage || defaultImage" 
         fit="cover"
-        lazy
-        :preview-src-list="product.images || []"
+        :preview-src-list="localProduct.images || []"
         :initial-index="0"
       >
         <template #error>
@@ -15,28 +14,28 @@
           </div>
         </template>
       </el-image>
-      <div class="product-price">￥{{ formatPrice(product.price) }}</div>
-      <div v-if="product.originalPrice" class="original-price">￥{{ formatPrice(product.originalPrice) }}</div>
+      <div class="product-price">￥{{ formatPrice(localProduct.price) }}</div>
+      <div v-if="localProduct.originalPrice" class="original-price">￥{{ formatPrice(localProduct.originalPrice) }}</div>
     </div>
     <div class="product-info">
-      <h3 class="product-title">{{ product.title }}</h3>
+      <h3 class="product-title">{{ localProduct.title }}</h3>
       <div class="product-meta">
-        <span class="product-condition">{{ getConditionText(product.condition) }}</span>
+        <span class="product-condition">{{ getConditionText(localProduct.conditions) }}</span>
         <span class="product-views">
-          <el-icon><View /></el-icon> {{ formatNumber(product.viewCount || 0) }}
+          <el-icon><View /></el-icon> {{ formatNumber(localProduct.viewCount) }}
         </span>
       </div>
       <div class="seller-info">
-        <el-avatar :size="20" :src="product.sellerAvatar || defaultAvatar"></el-avatar>
-        <span class="seller-name">{{ product.sellerName || product.nickname }}</span>
-        <span class="publish-time">{{ formatTime(product.createTime) }}</span>
+        <el-avatar :size="20" :src="localProduct.sellerAvatar || defaultAvatar"></el-avatar>
+        <span class="seller-name">{{ localProduct.sellerName || localProduct.nickname }}</span>
+        <span class="publish-time">{{ formatTime(localProduct.createTime) }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductStore } from '@/stores/product'
 import { useFileStore } from '@/stores/file'
@@ -65,47 +64,64 @@ const props = defineProps({
 })
 
 // 默认图片
-const defaultImage = 'https://cube.elemecdn.com/e/fd/0fc7d20532fdaf769a25683617711png.png'
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+const defaultImage = 'http://localhost:8080/api/static/images/products/b2a22df3bee54c04bdba66a51059948a.jpg'
+const defaultAvatar = 'http://localhost:8080/api/static/images/products/b2a22df3bee54c04bdba66a51059948a.jpg'
+
+
+// 创建本地响应式商品数据副本（确保初始化处理）
+const localProduct = reactive(productStore.processProductData({ ...props.product }))
 
 // 确保商品数据已处理
 const ensureProductProcessed = () => {
   try {
-    if (!props.product) return
+    if (!localProduct) return
     
     // 检查图片数据是否已处理
-    if (!props.product.coverImage && props.product.imageUrls) {
-      productStore.processProductData(props.product)
-    }
-    
-    // 检查直接的 JSON 情况，images 属性已存在但可能格式不正确
-    if (props.product.images && typeof props.product.images === 'string') {
-      try {
-        props.product.images = JSON.parse(props.product.images)
-      } catch (e) {
-        // 如果不能解析为数组，则设置为空数组
-        props.product.images = []
+    if (!localProduct.coverImage && localProduct.imageUrls) {
+      if (Array.isArray(localProduct.imageUrls)) {
+        localProduct.images = localProduct.imageUrls.map(url => fileStore.getFullUrl(url))
+        localProduct.coverImage = localProduct.images[0] || defaultImage
+      } else {
+        productStore.processProductData(localProduct)
       }
     }
     
-    // 确保 viewCount 有效
-    if (props.product.viewCount === undefined || props.product.viewCount === null) {
-      props.product.viewCount = 0
+    // 处理images字段格式
+    if (localProduct.images && typeof localProduct.images === 'string') {
+      try {
+        localProduct.images = JSON.parse(localProduct.images)
+      } catch (e) {
+        localProduct.images = []
+      }
     }
     
-    // 确保 condition 有效
-    if (props.product.condition === undefined || props.product.condition === null) {
-      props.product.condition = 1 // 默认为全新
+    // 确保封面图片存在
+    if (!localProduct.coverImage && localProduct.images && localProduct.images.length > 0) {
+      localProduct.coverImage = localProduct.images[0]
+    } else if (!localProduct.coverImage) {
+      localProduct.coverImage = defaultImage
     }
+    
+    // 确保卖家头像存在
+    if (localProduct.avatar && !localProduct.sellerAvatar) {
+      localProduct.sellerAvatar = fileStore.getFullUrl(localProduct.avatar)
+    }
+    
+    // 设置默认值
+    localProduct.viewCount = localProduct.viewCount ?? 0
+    localProduct.conditions = localProduct.conditions ?? 1
+    
+    console.log('处理后的商品数据:', localProduct)
   } catch (error) {
     console.error('处理商品数据时出错:', error)
   }
 }
 
 // 监视商品数据变化
-watch(() => props.product, () => {
+watch(() => props.product, (newProduct) => {
+  Object.assign(localProduct, newProduct)
   ensureProductProcessed()
-}, { immediate: true, deep: true })
+}, { immediate: true })
 
 // 在组件挂载后处理当前商品数据
 onMounted(() => {
@@ -128,8 +144,8 @@ const formatNumber = (num) => {
 }
 
 // 获取商品成色文本
-const getConditionText = (condition) => {
-  return productStore.conditionMap[condition] || '未知'
+const getConditionText = (conditions) => {
+  return productStore.conditionMap[conditions] || '未知'
 }
 
 // 格式化时间为相对时间
@@ -140,7 +156,7 @@ const formatTime = (time) => {
 
 // 导航到商品详情页
 const navigateToDetail = () => {
-  router.push(`/product/${props.product.id}`)
+  router.push(`/product/${localProduct.id}`)
 }
 </script>
 
@@ -280,4 +296,4 @@ const navigateToDetail = () => {
 .publish-time {
   margin-left: auto;
 }
-</style> 
+</style>

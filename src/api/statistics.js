@@ -163,4 +163,17 @@ export function getActiveBuyersStatistics(params) {
     method: 'get',
     params
   })
+}
+
+/**
+ * 获取商品评分统计数据
+ * @param {number} productId - 商品ID
+ * @returns {Promise}
+ */
+export function getProductRatingStatistics(productId) {
+  return request({
+    url: `/admin/statistics/product/rating`,
+    method: 'get',
+    params: { productId }
+  })
 } 

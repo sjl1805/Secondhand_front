@@ -41,8 +41,8 @@
           <span class="input-tip">元</span>
         </el-form-item>
         
-        <el-form-item label="商品成色" prop="condition">
-          <el-select v-model="formData.condition" placeholder="请选择商品成色">
+        <el-form-item label="商品成色" prop="conditions">
+          <el-select v-model="formData.conditions" placeholder="请选择商品成色">
             <el-option 
               v-for="(value, key) in productStore.conditionMap" 
               :key="key" 
@@ -89,9 +89,6 @@
           />
         </el-form-item>
         
-        <el-form-item label="交易地点" prop="location">
-          <el-input v-model="formData.location" placeholder="请输入交易地点，例如：北京市海淀区" />
-        </el-form-item>
         
         <el-form-item>
           <el-button type="primary" @click="submitForm" :loading="submitting">发布商品</el-button>
@@ -128,7 +125,7 @@ const formData = reactive({
   description: '',
   price: 0,
   categoryId: null,
-  condition: 1,
+  conditions: 1,
   location: '',
   imageUrls: []
 })
@@ -146,7 +143,7 @@ const rules = {
   categoryId: [
     { required: true, message: '请选择商品分类', trigger: 'change' }
   ],
-  condition: [
+  conditions: [
     { required: true, message: '请选择商品成色', trigger: 'change' }
   ],
   description: [
@@ -233,52 +230,44 @@ const handleExceed = () => {
 const submitForm = async () => {
   if (!formRef.value) return
   
-  await formRef.value.validate(async (valid, fields) => {
+  await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
         submitting.value = true
         
-        // 确保至少上传了一张图片
         if (formData.imageUrls.length === 0) {
           ElMessage.error('请上传至少一张商品图片')
+          submitting.value = false
           return
         }
         
-        // 提交商品数据
-        const productId = await productStore.submitProduct({
+        // 上传商品数据
+        const productData = {
           title: formData.title,
           description: formData.description,
           price: formData.price,
           categoryId: formData.categoryId,
-          condition: formData.condition,
+          conditions: formData.conditions,
           location: formData.location,
           imageUrls: formData.imageUrls
-        })
+        }
         
+        // 发布商品
+        const productId = await productStore.submitProduct(productData)
         if (productId) {
-          ElMessageBox.confirm(
-            '商品发布成功，是否继续发布新商品？',
-            '提示',
-            {
-              confirmButtonText: '继续发布',
-              cancelButtonText: '查看我的商品',
-              type: 'success',
+          ElMessageBox.alert('商品发布成功！', '提示', {
+            confirmButtonText: '确定',
+            callback: () => {
+              router.push(`/product/${productId}`)
             }
-          ).then(() => {
-            resetForm()
-          }).catch(() => {
-            router.push('/user/products')
           })
         }
       } catch (error) {
-        console.error('发布商品失败:', error)
-        ElMessage.error(error.message || '发布商品失败，请重试')
+        console.error('商品发布失败:', error)
+        ElMessage.error('商品发布失败，请重试')
       } finally {
         submitting.value = false
       }
-    } else {
-      console.log('表单验证失败:', fields)
-      ElMessage.error('请完善表单信息')
     }
   })
 }

@@ -12,6 +12,11 @@
       <h1 class="page-title">{{ categoryName || (categoryId ? '分类商品' : '全部商品') }}</h1>
       
       <div class="filter-toolbar">
+        <el-select v-model="selectedCategory" placeholder="选择分类" clearable @change="handleCategoryChange">
+          <el-option label="全部分类" value="" />
+          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+        </el-select>
+      
         <el-select v-model="sortOrder" placeholder="排序方式" @change="handleSortChange">
           <el-option label="最新发布" value="createTime,desc" />
           <el-option label="价格从低到高" value="price,asc" />
@@ -32,6 +37,11 @@
 
     <!-- 搜索结果页面时也显示筛选工具 -->
     <div class="filter-toolbar-search" v-if="isSearchResult">
+      <el-select v-model="selectedCategory" placeholder="选择分类" clearable @change="handleCategoryChange">
+        <el-option label="全部分类" value="" />
+        <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+      </el-select>
+    
       <el-select v-model="sortOrder" placeholder="排序方式" @change="handleSortChange">
         <el-option label="最新发布" value="createTime,desc" />
         <el-option label="价格从低到高" value="price,asc" />
@@ -133,6 +143,12 @@ const total = ref(0)
 // 商品列表
 const products = ref([])
 const loading = ref(false)
+
+// 选中的分类
+const selectedCategory = ref('')
+
+// 分类列表
+const categories = ref([])
 
 // 获取分类名称
 const fetchCategoryName = async () => {
@@ -300,6 +316,49 @@ const restoreFiltersFromUrl = () => {
     minPrice.value = min ? Number(min) : null
     maxPrice.value = max ? Number(max) : null
   }
+  
+  // 恢复分类ID
+  if (route.query.categoryId) {
+    selectedCategory.value = Number(route.query.categoryId)
+  }
+}
+
+// 获取所有分类
+const fetchCategories = async () => {
+  try {
+    await categoryStore.fetchAllCategories()
+    categories.value = categoryStore.categories
+    
+    // 如果当前有分类ID，则设置选中状态
+    if (categoryId.value) {
+      selectedCategory.value = categoryId.value
+    }
+  } catch (error) {
+    console.error('获取分类列表失败:', error)
+  }
+}
+
+// 处理分类变化
+const handleCategoryChange = () => {
+  currentPage.value = 1 // 重置到第一页
+  
+  // 更新URL中的分类参数
+  if (selectedCategory.value) {
+    router.push({
+      query: {
+        ...route.query,
+        categoryId: selectedCategory.value
+      }
+    })
+  } else {
+    // 如果选择了"全部分类"，则移除分类参数
+    const query = { ...route.query }
+    delete query.categoryId
+    router.push({ query })
+  }
+  
+  // 获取商品数据
+  fetchProducts()
 }
 
 // 监听路由变化
@@ -308,6 +367,16 @@ watch(
   () => {
     // 重置页码
     currentPage.value = 1
+    
+    // 从URL同步分类ID
+    if (route.query.categoryId) {
+      selectedCategory.value = Number(route.query.categoryId)
+    } else if (route.name === 'CategoryProducts' && route.params.id) {
+      selectedCategory.value = Number(route.params.id)
+    } else {
+      selectedCategory.value = ''
+    }
+    
     // 获取分类名称
     fetchCategoryName()
     // 获取商品
@@ -318,6 +387,9 @@ watch(
 
 // 页面加载时
 onMounted(() => {
+  // 获取所有分类
+  fetchCategories()
+  
   // 从URL恢复筛选条件
   restoreFiltersFromUrl()
   // 获取分类名称

@@ -140,6 +140,21 @@
             </el-table-column>
             <el-table-column prop="viewCount" label="浏览量" width="90" />
             <el-table-column prop="saleCount" label="销量" width="80" />
+            <el-table-column label="评分" width="120">
+              <template #default="scope">
+                <div v-if="scope.row.rating" class="product-rating-cell">
+                  <el-rate
+                    v-model="scope.row.rating"
+                    disabled
+                    text-color="#ff9900"
+                    :show-score="false"
+                    :max="5"
+                  />
+                  <span>{{ scope.row.rating.toFixed(1) }}</span>
+                </div>
+                <span v-else>暂无评分</span>
+              </template>
+            </el-table-column>
           </el-table>
         </el-card>
       </el-col>
@@ -159,6 +174,33 @@
             <el-table-column prop="productCount" label="发布商品数" width="100" />
             <el-table-column prop="saleCount" label="售出数量" width="100" />
           </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
+    
+    <!-- 商品评分分析卡片 -->
+    <el-row :gutter="20" class="chart-row">
+      <el-col :span="24">
+        <el-card shadow="hover" class="chart-card">
+          <template #header>
+            <div class="chart-header">
+              <span>商品评分分布</span>
+              <el-select v-model="selectedProduct" placeholder="选择商品" size="small" filterable @change="fetchProductRating">
+                <el-option
+                  v-for="item in statisticsStore.hotProductsStats"
+                  :key="item.id"
+                  :label="item.title"
+                  :value="item.id"
+                />
+              </el-select>
+            </div>
+          </template>
+          <div v-if="selectedProduct">
+            <div class="chart-container" ref="ratingChartRef"></div>
+          </div>
+          <div v-else class="empty-chart-placeholder">
+            <el-empty description="请选择商品查看评分分布" />
+          </div>
         </el-card>
       </el-col>
     </el-row>
@@ -185,13 +227,19 @@ const trendChartRef = ref(null)
 const categoryChartRef = ref(null)
 const productStatusChartRef = ref(null)
 const orderStatusChartRef = ref(null)
+const ratingChartRef = ref(null)
 const trendChart = ref(null)
 const categoryChart = ref(null)
 const productStatusChart = ref(null)
 const orderStatusChart = ref(null)
+const ratingChart = ref(null)
 
 // 当前选择的图表类型
 const chartType = ref('user')
+
+// 选择的商品
+const selectedProduct = ref(null)
+const productRatingStats = ref(null)
 
 // 格式化价格
 const formatPrice = (price) => {
@@ -511,11 +559,11 @@ const updateOrderStatusChart = () => {
   const stats = statisticsStore.orderStatusStats || {}
   
   const data = [
-    { name: '待付款', value: stats.waitPay || 0 },
-    { name: '待发货', value: stats.waitDeliver || 0 },
-    { name: '待收货', value: stats.waitReceive || 0 },
+    { name: '待付款', value: stats.pendingPayment || 0 },
+    { name: '待发货', value: stats.pendingShipment || 0 },
+    { name: '待收货', value: stats.pendingReceipt || 0 },
     { name: '已完成', value: stats.completed || 0 },
-    { name: '已取消', value: stats.canceled || 0 }
+    { name: '已取消', value: stats.cancelled || 0 }
   ]
   
   // 检查是否所有数据都为0，如果是则不显示图表
@@ -583,6 +631,101 @@ const fetchActiveSellers = async () => {
   }
 }
 
+// 获取商品评分统计
+const fetchProductRating = async () => {
+  if (!selectedProduct.value) return
+  
+  try {
+    const data = await statisticsStore.fetchProductRatingStatistics(selectedProduct.value)
+    if (data) {
+      productRatingStats.value = data
+      nextTick(() => {
+        initRatingChart()
+      })
+    }
+  } catch (error) {
+    console.error('获取商品评分统计失败', error)
+    ElMessage.error('获取商品评分统计失败')
+  }
+}
+
+// 初始化评分分布图表
+const initRatingChart = () => {
+  if (!ratingChartRef.value || !productRatingStats.value) return
+  
+  // 初始化图表
+  if (!ratingChart.value) {
+    ratingChart.value = echarts.init(ratingChartRef.value)
+  }
+  
+  // 准备数据
+  const data = []
+  for (let i = 5; i >= 1; i--) {
+    data.push({
+      value: productRatingStats.value[i] || 0,
+      name: `${i}星`
+    })
+  }
+  
+  // 计算评价总数
+  const totalCount = data.reduce((sum, item) => sum + item.value, 0)
+  
+  // 如果没有数据显示提示
+  if (totalCount === 0) {
+    ratingChart.value.showLoading({
+      text: '暂无评分数据',
+      maskColor: 'rgba(255, 255, 255, 0.8)',
+      zlevel: 1
+    })
+    return
+  } else {
+    ratingChart.value.hideLoading()
+  }
+  
+  // 设置颜色
+  const colors = ['#ff9900', '#67c23a', '#409eff', '#e6a23c', '#f56c6c']
+  
+  // 配置图表
+  const option = {
+    title: {
+      text: '商品评分分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      data: data.map(item => item.name)
+    },
+    series: [
+      {
+        name: '评分分布',
+        type: 'pie',
+        radius: ['30%', '60%'],
+        center: ['50%', '50%'],
+        data: data,
+        color: colors,
+        label: {
+          formatter: '{b}: {c} ({d}%)'
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }
+    ]
+  }
+  
+  ratingChart.value.setOption(option)
+}
+
 // 监听图表类型变化
 watch(chartType, () => {
   nextTick(() => {
@@ -596,6 +739,7 @@ const resizeCharts = () => {
   categoryChart.value && categoryChart.value.resize()
   productStatusChart.value && productStatusChart.value.resize()
   orderStatusChart.value && orderStatusChart.value.resize()
+  ratingChart.value && ratingChart.value.resize()
 }
 
 // 组件挂载后初始化
@@ -635,6 +779,7 @@ onUnmounted(() => {
   categoryChart.value && categoryChart.value.dispose()
   productStatusChart.value && productStatusChart.value.dispose()
   orderStatusChart.value && orderStatusChart.value.dispose()
+  ratingChart.value && ratingChart.value.dispose()
 })
 </script>
 
@@ -705,5 +850,18 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.product-rating-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.empty-chart-placeholder {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style> 

@@ -88,12 +88,12 @@ export function batchDeleteAdminProduct(productIds) {
 /**
  * 发布商品
  * @param {Object} data - 商品数据
- * @param {string} data.name - 商品名称
+ * @param {string} data.title - 商品标题
  * @param {string} data.description - 商品描述
  * @param {number} data.price - 商品价格（元）
  * @param {number} data.categoryId - 分类ID
- * @param {Array} data.images - 商品图片列表
- * @param {number} data.condition - 商品成色：1-全新 2-几乎全新 3-轻微使用痕迹 4-正常使用痕迹 5-明显使用痕迹
+ * @param {Array} data.imageUrls - 商品图片列表
+ * @param {number} data.conditions - 商品成色：1-全新 2-几乎全新 3-轻微使用痕迹 4-正常使用痕迹 5-明显使用痕迹
  * @param {string} [data.location] - 地理位置
  * @returns {Promise}
  */
@@ -110,8 +110,12 @@ export function publishProduct(data) {
  * @param {Object} params - 查询参数
  * @param {number} params.page - 页码
  * @param {number} params.size - 每页数量
- * @param {number} params.categoryId - 分类ID
- * @param {string} params.keyword - 搜索关键词
+ * @param {number} [params.categoryId] - 分类ID
+ * @param {string} [params.keyword] - 搜索关键词
+ * @param {string} [params.sortField] - 排序字段
+ * @param {string} [params.sortOrder] - 排序方式
+ * @param {number} [params.minPrice] - 最低价格
+ * @param {number} [params.maxPrice] - 最高价格
  * @returns {Promise}
  */
 export function getProductList(params) {
@@ -119,6 +123,28 @@ export function getProductList(params) {
     url: '/product/list',
     method: 'get',
     params
+  })
+}
+
+/**
+ * 按分类获取商品列表
+ * @param {number} categoryId - 分类ID
+ * @param {Object} params - 查询参数
+ * @param {number} params.page - 页码
+ * @param {number} params.size - 每页数量
+ * @param {string} [params.keyword] - 搜索关键词
+ * @param {string} [params.sortField] - 排序字段
+ * @param {string} [params.sortOrder] - 排序方式
+ * @returns {Promise}
+ */
+export function getProductsByCategory(categoryId, params) {
+  return request({
+    url: '/product/list',
+    method: 'get',
+    params: {
+      ...params,
+      categoryId
+    }
   })
 }
 
@@ -205,8 +231,9 @@ export function deleteProduct(productId) {
  * @param {number} [params.categoryId] - 分类ID
  * @param {number} [params.minPrice] - 最低价格
  * @param {number} [params.maxPrice] - 最高价格
- * @param {string} [params.sortField] - 排序字段
- * @param {string} [params.sortOrder] - 排序方式
+ * @param {string} [params.sortField] - 排序字段：price/createTime/viewCount
+ * @param {string} [params.sortOrder] - 排序方式：asc/desc
+ * @param {number} [params.status] - 商品状态：1-在售 2-已售 3-下架
  * @returns {Promise}
  */
 export function advancedSearchProducts(params) {
@@ -226,5 +253,38 @@ export function incrementViewCount(productId) {
   return request({
     url: `/product/${productId}/view`,
     method: 'put'
+  })
+}
+
+/**
+ * 更新商品信息
+ * @param {number} productId - 商品ID
+ * @param {Object} data - 商品数据
+ * @param {string} data.title - 商品标题
+ * @param {string} data.description - 商品描述
+ * @param {number} data.price - 商品价格（元）
+ * @param {number} data.categoryId - 分类ID
+ * @param {Array} data.imageUrls - 商品图片路径列表
+ * @param {number} data.conditions - 商品成色：1-全新 2-几乎全新 3-轻微使用痕迹 4-正常使用痕迹 5-明显使用痕迹
+ * @param {string} [data.location] - 地理位置
+ * @returns {Promise}
+ */
+export function updateProduct(productId, data) {
+  return request({
+    url: `/product/${productId}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 获取商品评分统计
+ * @param {number} productId - 商品ID
+ * @returns {Promise}
+ */
+export function getProductRatingStatistics(productId) {
+  return request({
+    url: `/product/${productId}/rating`,
+    method: 'get'
   })
 }

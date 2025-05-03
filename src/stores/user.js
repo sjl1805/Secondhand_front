@@ -1,10 +1,11 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { login, register } from '@/api/auth'
-import { getUserInfo, updateUserInfo } from '@/api/user'
+import { getUserInfo, updateUserInfo, updatePassword } from '@/api/user'
 import Cookies from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'
 import router from '@/router'
+import { ElMessage } from 'element-plus'
 
 export const useUserStore = defineStore('user', () => {
   // 状态
@@ -136,6 +137,26 @@ export const useUserStore = defineStore('user', () => {
     }
   }
   
+  // 修改密码
+  const changePassword = async (data) => {
+    try {
+      const res = await updatePassword(data)
+      if (res.code === 200) {
+        ElMessage.success('密码修改成功，请重新登录')
+        
+        // 修改密码成功后需要重新登录
+        setTimeout(() => {
+          logout()
+        }, 1500)
+        
+        return res
+      }
+    } catch (error) {
+      console.error('修改密码失败', error)
+      throw error
+    }
+  }
+  
   // 更新localStorage中的用户信息
   const updateLocalStorage = () => {
     localStorage.setItem('userInfo', JSON.stringify({
@@ -201,6 +222,7 @@ export const useUserStore = defineStore('user', () => {
     userRegister,
     fetchUserInfo,
     updateProfile,
+    changePassword,
     logout,
     setUserInfo
   }

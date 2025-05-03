@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { 
   getBasicStatistics,
@@ -12,7 +12,8 @@ import {
   getPlatformIncome,
   getHotProductsStatistics,
   getActiveSellersStatistics,
-  getActiveBuyersStatistics
+  getActiveBuyersStatistics,
+  getProductRatingStatistics
 } from '@/api/statistics'
 import { ElMessage } from 'element-plus'
 
@@ -343,6 +344,24 @@ export const useStatisticsStore = defineStore('statistics', () => {
     }
   }
   
+  // 获取商品评分统计
+  const fetchProductRatingStatistics = async (productId) => {
+    loading.value = true
+    try {
+      const res = await getProductRatingStatistics(productId)
+      if (res.code === 200) {
+        return res.data
+      }
+      return null
+    } catch (error) {
+      console.error('获取商品评分统计失败', error)
+      ElMessage.error('获取商品评分统计失败')
+      return null
+    } finally {
+      loading.value = false
+    }
+  }
+  
   // 获取当前日期
   const getCurrentDate = () => {
     const date = new Date()
@@ -482,6 +501,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
     fetchHotProductsStatistics,
     fetchActiveSellersStatistics,
     fetchActiveBuyersStatistics,
+    fetchProductRatingStatistics,
     getCurrentDate,
     getPast30Days,
     initDashboardData

@@ -45,6 +45,10 @@
               </el-tag>
             </div>
             <div class="meta-item">
+              <span class="meta-label">商品成色：</span>
+              <el-tag size="small" type="success">{{ getConditionText(product.conditions) }}</el-tag>
+            </div>
+            <div class="meta-item">
               <span class="meta-label">浏览次数：</span>
               <span class="meta-value">{{ product.viewCount }}</span>
             </div>
@@ -55,12 +59,12 @@
           </div>
           
           <!-- 卖家信息 -->
-          <div class="seller-info">
+          <div class="seller-info" v-loading="sellerLoading">
             <div class="seller-profile" @click="goToSellerPage(product.userId)">
               <el-avatar :size="40" :src="product.sellerAvatar || defaultAvatar"></el-avatar>
               <div class="seller-detail">
                 <span class="seller-name">{{ product.sellerName || product.nickname }}</span>
-                <span class="seller-date">注册于 {{ formatDate(product.sellerRegisterTime, 'YYYY-MM-DD') }}</span>
+                <span class="seller-date">注册于 {{ sellerInfo?.createTime ? formatDate(sellerInfo.createTime, 'YYYY-MM-DD') : '--' }}</span>
               </div>
             </div>
             
@@ -99,6 +103,39 @@
             </div>
           </el-tab-pane>
           
+          <el-tab-pane label="评分与评价">
+            <div class="product-rating" v-loading="ratingLoading">
+              <h3>商品评分</h3>
+              <div v-if="ratingStats" class="rating-stats">
+                <div class="rating-overview">
+                  <div class="rating-average">
+                    <span class="average-num">{{ calculateAverageRating }}</span>
+                    <div class="average-stars">
+                      <el-rate
+                        v-model="calculateAverageRating"
+                        disabled
+                        show-score
+                        text-color="#ff9900"
+                      />
+                    </div>
+                  </div>
+                  <div class="rating-progress">
+                    <div v-for="n in 5" :key="n" class="rating-item">
+                      <span class="rating-label">{{ 6-n }}星</span>
+                      <el-progress 
+                        :percentage="calculateRatingPercentage(6-n)" 
+                        :stroke-width="12" 
+                        :color="getRatingColor(6-n)"
+                      />
+                      <span class="rating-count">{{ ratingStats[6-n] || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <el-empty v-else description="暂无评分数据" />
+            </div>
+          </el-tab-pane>
+          
           <el-tab-pane label="同类商品">
             <div class="similar-products" v-loading="similarLoading">
               <div class="product-grid" v-if="similarProducts.length > 0">
@@ -126,7 +163,8 @@ import { useProductStore } from '@/stores/product'
 import { useFavoriteStore } from '@/stores/favorite'
 import { useUserStore } from '@/stores/user'
 import { useFileStore } from '@/stores/file'
-import { getProductDetail, incrementViewCount } from '@/api/product'
+import { getProductDetail } from '@/api/product'
+import { getSellerInfo } from '@/api/user'
 import { 
   Picture, 
   Star, 
@@ -146,7 +184,8 @@ const favoriteStore = useFavoriteStore()
 const userStore = useUserStore()
 const fileStore = useFileStore()
 
-// 默认头像
+// 默认图片
+const defaultImage = 'http://localhost:8080/api/static/images/products/b2a22df3bee54c04bdba66a51059948a.jpg'
 const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
 
 // 商品 ID
@@ -156,12 +195,18 @@ const productId = computed(() => Number(route.params.id))
 const loading = ref(false)
 const similarLoading = ref(false)
 const favoriteLoading = ref(false)
+const sellerLoading = ref(false)
 const product = ref(null)
 const similarProducts = ref([])
+const sellerInfo = ref(null)
 
 // 用户状态
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const userId = computed(() => userStore.userId)
+
+// 评分统计
+const ratingLoading = ref(false)
+const ratingStats = ref(null)
 
 // 状态类型映射
 const statusTypeMap = {
@@ -192,15 +237,17 @@ const getStatusTagType = (status) => {
   return statusTypeMap[status] || 'info'
 }
 
+// 获取商品成色文本
+const getConditionText = (conditions) => {
+  return productStore.conditionMap[conditions] || '未知'
+}
+
 // 获取商品详情
 const fetchProductDetail = async () => {
   if (!productId.value) return
   
   loading.value = true
   try {
-    // 增加浏览次数
-    await incrementViewCount(productId.value)
-    
     // 获取详情
     const res = await getProductDetail(productId.value)
     if (res.code === 200 && res.data) {
@@ -213,8 +260,16 @@ const fetchProductDetail = async () => {
         checkFavoriteStatus()
       }
       
+      // 获取卖家信息
+      if (product.value.userId) {
+        fetchSellerInfo(product.value.userId)
+      }
+      
       // 加载同类商品
       fetchSimilarProducts()
+      
+      // 获取商品评分统计
+      fetchProductRating()
     }
   } catch (error) {
     console.error('获取商品详情失败:', error)
@@ -280,8 +335,34 @@ const fetchSimilarProducts = async () => {
     
     const result = await productStore.fetchProductList(params)
     if (result && result.records) {
-      // 过滤掉当前商品
-      similarProducts.value = result.records.filter(p => p.id !== productId.value)
+      // 处理商品数据并过滤当前商品（确保完整处理）
+      similarProducts.value = result.records
+        .filter(p => p.id !== productId.value)
+        .map(p => {
+          const processed = productStore.processProductData(p)
+          
+          // 确保图片数据存在
+          if (!processed.images && processed.imageUrls) {
+            processed.images = processed.imageUrls.map(url => fileStore.getFullUrl(url))
+          } else if (!processed.images) {
+            processed.images = []
+          }
+          
+          // 确保封面图片存在
+          if (!processed.coverImage && processed.images && processed.images.length > 0) {
+            processed.coverImage = processed.images[0]
+          } else if (!processed.coverImage) {
+            processed.coverImage = defaultImage
+          }
+          
+          // 确保卖家头像存在
+          if (processed.avatar && !processed.sellerAvatar) {
+            processed.sellerAvatar = fileStore.getFullUrl(processed.avatar)
+          }
+          
+          console.log('处理后的同类商品:', processed)
+          return processed
+        })
     }
   } catch (error) {
     console.error('获取同类商品失败:', error)
@@ -343,9 +424,95 @@ const buyProduct = () => {
     })
 }
 
+// 获取卖家信息
+const fetchSellerInfo = async (sellerId) => {
+  if (!sellerId) return
+  
+  sellerLoading.value = true
+  try {
+    const res = await getSellerInfo(sellerId)
+    if (res.code === 200 && res.data) {
+      sellerInfo.value = res.data
+      
+      // 处理注册时间格式
+      if (sellerInfo.value.createTime) {
+        sellerInfo.value.registerTime = sellerInfo.value.createTime
+      }
+      
+      // 如果商品数据中没有卖家头像，使用卖家信息中的头像
+      if (product.value && !product.value.sellerAvatar && sellerInfo.value.avatar) {
+        product.value.sellerAvatar = fileStore.getFullUrl(sellerInfo.value.avatar)
+      }
+      console.log('获取到卖家信息:', sellerInfo.value)
+    }
+  } catch (error) {
+    console.error('获取卖家信息失败:', error)
+  } finally {
+    sellerLoading.value = false
+  }
+}
+
+// 获取商品评分统计
+const fetchProductRating = async () => {
+  if (!productId.value) return
+  
+  ratingLoading.value = true
+  try {
+    const data = await productStore.fetchProductRatingStatistics(productId.value)
+    if (data) {
+      ratingStats.value = data
+    }
+  } catch (error) {
+    console.error('获取商品评分统计失败:', error)
+  } finally {
+    ratingLoading.value = false
+  }
+}
+
+// 计算平均评分
+const calculateAverageRating = computed(() => {
+  if (!ratingStats.value) return 0
+  
+  const ratings = Object.entries(ratingStats.value)
+  if (ratings.length === 0) return 0
+  
+  let totalScore = 0
+  let totalCount = 0
+  
+  ratings.forEach(([rating, count]) => {
+    totalScore += Number(rating) * Number(count)
+    totalCount += Number(count)
+  })
+  
+  return totalCount > 0 ? Number((totalScore / totalCount).toFixed(1)) : 0
+})
+
+// 计算评分百分比
+const calculateRatingPercentage = (rating) => {
+  if (!ratingStats.value) return 0
+  
+  const totalCount = Object.values(ratingStats.value).reduce((sum, val) => sum + Number(val), 0)
+  if (totalCount === 0) return 0
+  
+  const ratingCount = Number(ratingStats.value[rating] || 0)
+  return Math.round((ratingCount / totalCount) * 100)
+}
+
+// 获取评分对应的颜色
+const getRatingColor = (rating) => {
+  const colors = {
+    5: '#ff9900',
+    4: '#67c23a',
+    3: '#409eff',
+    2: '#e6a23c',
+    1: '#f56c6c'
+  }
+  return colors[rating] || '#909399'
+}
+
 // 监听路由变化
-watch(() => route.params.id, (newId) => {
-  if (newId) {
+watch(() => route.params.id, (newId, oldId) => {
+  if (newId && newId !== oldId) {
     fetchProductDetail()
   }
 })
@@ -505,6 +672,62 @@ onMounted(() => {
   color: #606266;
 }
 
+.product-rating {
+  padding: 20px 0;
+}
+
+.rating-stats {
+  margin-top: 20px;
+}
+
+.rating-overview {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.rating-average {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 150px;
+}
+
+.average-num {
+  font-size: 48px;
+  font-weight: bold;
+  color: #ff9900;
+  line-height: 1;
+}
+
+.average-stars {
+  margin-top: 10px;
+}
+
+.rating-progress {
+  flex: 1;
+}
+
+.rating-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.rating-label {
+  width: 40px;
+  text-align: right;
+  margin-right: 10px;
+  color: #606266;
+}
+
+.rating-count {
+  width: 40px;
+  margin-left: 10px;
+  text-align: left;
+  color: #606266;
+}
+
 .similar-products {
   padding: 10px 0;
 }
@@ -531,6 +754,15 @@ onMounted(() => {
   .action-buttons {
     flex-wrap: wrap;
   }
+  
+  .rating-overview {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .rating-average {
+    min-width: auto;
+  }
 }
 
 @media (max-width: 480px) {
@@ -546,4 +778,4 @@ onMounted(() => {
     font-size: 24px;
   }
 }
-</style> 
+</style>

@@ -24,7 +24,7 @@
         </div>
         
         <div class="nav-menu">
-          <el-menu mode="horizontal" router>
+          <el-menu mode="horizontal" router :default-active="activeIndex" :ellipsis="false">
             <el-menu-item index="/">首页</el-menu-item>
             <el-menu-item index="/products">全部商品</el-menu-item>
           </el-menu>
@@ -189,6 +189,7 @@ const { topCategories, fetchCategoryTree } = categoryStore
 
 // 搜索关键词
 const searchKeyword = ref('')
+const activeIndex = ref(window.location.pathname || '/')
 
 // 处理搜索
 const handleSearch = () => {
@@ -217,6 +218,14 @@ const handleLogout = async () => {
 // 页面加载时获取分类和未读通知数量
 onMounted(async () => {
   try {
+    // 初始化激活的菜单项
+    activeIndex.value = window.location.pathname || '/'
+    
+    // 监听路由变化
+    router.afterEach((to) => {
+      activeIndex.value = to.path
+    })
+    
     // 确保 topCategories 存在且为空数组时才加载分类
     if (!topCategories || !topCategories.value || topCategories.value.length === 0) {
       await fetchCategoryTree()
@@ -288,6 +297,17 @@ onMounted(async () => {
 
 .nav-menu {
   margin-right: 20px;
+  min-width: 200px;
+}
+
+.nav-menu .el-menu {
+  border-bottom: none;
+}
+
+.nav-menu .el-menu-item {
+  height: 60px;
+  line-height: 60px;
+  font-size: 16px;
 }
 
 .user-actions {
@@ -426,6 +446,17 @@ onMounted(async () => {
   .nav-menu {
     margin-right: 0;
     flex: 1;
+    min-width: 100%;
+    order: 4;
+  }
+  
+  .nav-menu .el-menu {
+    justify-content: space-around;
+    width: 100%;
+  }
+  
+  .user-actions {
+    margin-left: auto;
   }
   
   .footer-links {

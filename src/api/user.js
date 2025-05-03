@@ -23,7 +23,7 @@ export function getUserInfo() {
  */
 export function updateUserInfo(data) {
   return request({
-    url: '/user/update',
+    url: '/user/info',
     method: 'put',
     data
   })

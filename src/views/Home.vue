@@ -144,31 +144,6 @@ const refreshing = computed(() => recommendationStore.refreshing)
 // 用户推荐商品
 const userBasedProducts = computed(() => recommendationStore.userBasedProducts)
 
-// 轮播图数据
-const banners = ref([
-  {
-    title: '二手图书特卖',
-    description: '各类学习资料、文学书籍低至五折',
-    buttonText: '立即查看',
-    link: '/category/3',
-    image: fileStore.getFullUrl('/images/products/banner-books.jpg')
-  },
-  {
-    title: '数码产品',
-    description: '精选二手数码设备，品质保障',
-    buttonText: '查看详情',
-    link: '/category/1',
-    image: fileStore.getFullUrl('/images/products/banner-digital.jpg')
-  },
-  {
-    title: '服装鞋帽',
-    description: '潮流服装、经典款式，总有你喜欢的',
-    buttonText: '浏览商品',
-    link: '/category/2',
-    image: fileStore.getFullUrl('/images/products/banner-clothing.jpg')
-  }
-])
-
 // 刷新推荐
 const refreshRecommendations = async () => {
   await recommendationStore.refreshUserRecommendations()

@@ -8,7 +8,8 @@ import {
   updateProductStatus, 
   deleteProduct,
   incrementViewCount as incrementProductView,
-  getSellerProducts
+  getSellerProducts,
+  getProductRatingStatistics
 } from '@/api/product'
 import { useFileStore } from '@/stores/file'
 import { ElMessage } from 'element-plus'
@@ -95,10 +96,10 @@ export const useProductStore = defineStore('product', () => {
   const submitProduct = async (productData) => {
     loading.value = true
     try {
-      // 准备图片路径格式
-      if (productData.images && Array.isArray(productData.images)) {
+      // 确保图片路径格式正确
+      if (productData.imageUrls && Array.isArray(productData.imageUrls)) {
         // 只保留路径部分，不需要完整URL
-        productData.imageUrls = productData.images.map(img => {
+        productData.imageUrls = productData.imageUrls.map(img => {
           // 如果是完整URL，则提取路径部分
           if (typeof img === 'string' && img.startsWith('http')) {
             const url = new URL(img)
@@ -395,6 +396,21 @@ export const useProductStore = defineStore('product', () => {
     return counts
   })
   
+  // 获取商品评分统计
+  const fetchProductRatingStatistics = async (productId) => {
+    try {
+      const res = await getProductRatingStatistics(productId)
+      if (res.code === 200) {
+        return res.data
+      }
+      return null
+    } catch (error) {
+      console.error('获取商品评分统计失败', error)
+      ElMessage.error('获取商品评分统计失败')
+      return null
+    }
+  }
+  
   // 重置状态
   const resetState = () => {
     productDetail.value = null
@@ -435,6 +451,7 @@ export const useProductStore = defineStore('product', () => {
     changeUserProductPage,
     changeUserProductPageSize,
     incrementViewCount,
+    fetchProductRatingStatistics,
     resetState,
     advancedSearchProducts: searchProducts,
     processProductData,

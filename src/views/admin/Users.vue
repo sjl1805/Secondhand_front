@@ -78,9 +78,6 @@
                 >
                   取消管理员
                 </el-dropdown-item>
-                <el-dropdown-item @click="handleResetPassword(row)">
-                  重置密码
-                </el-dropdown-item>
                 <el-dropdown-item 
                   divided 
                   @click="handleDelete(row)"

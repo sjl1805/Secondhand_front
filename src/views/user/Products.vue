@@ -80,6 +80,15 @@
                 查看详情
               </el-button>
               
+              <el-button 
+                v-if="product.status === 1 || product.status === 3" 
+                type="success" 
+                size="small" 
+                @click="goToEditProduct(product.id)"
+              >
+                编辑商品
+              </el-button>
+              
               <el-dropdown @command="handleCommand($event, product)">
                 <el-button type="default" size="small">
                   更多操作<i class="el-icon-arrow-down el-icon--right"></i>
@@ -176,6 +185,11 @@ const goToProductDetail = (productId) => {
 // 跳转到发布商品页面
 const goToPublish = () => {
   router.push('/publish')
+}
+
+// 跳转到编辑商品页面
+const goToEditProduct = (productId) => {
+  router.push(`/user/edit-product/${productId}`)
 }
 
 // 处理更多操作命令

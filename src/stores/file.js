@@ -227,6 +227,41 @@ export const useFileStore = defineStore('file', {
     },
     
     /**
+     * 从完整URL中提取出文件路径
+     * @param {string} url - 完整的文件URL
+     * @returns {string} 文件路径
+     */
+    getPathFromUrl(url) {
+      if (!url) return ''
+      
+      try {
+        // 如果URL包含API基础路径和/static，则从中提取path部分
+        if (url.includes(API_BASE_URL) && url.includes('/static')) {
+          const staticPart = url.split('/static')[1]
+          console.log('从URL提取路径:', staticPart)
+          return staticPart
+        }
+        
+        // 如果URL包含/images/，可能是相对路径
+        if (url.includes('/images/')) {
+          const parts = url.split('/images/')
+          if (parts.length >= 2) {
+            const imagePath = '/images/' + parts[1]
+            console.log('从URL提取图片路径:', imagePath)
+            return imagePath
+          }
+        }
+        
+        // 如果不包含基础路径，可能是相对路径，直接返回
+        console.log('未能识别URL格式，原样返回:', url)
+        return url
+      } catch (error) {
+        console.error('从URL提取路径时发生错误:', error)
+        return url
+      }
+    },
+    
+    /**
      * 下载文件
      * @param {string} path - 文件路径
      */
