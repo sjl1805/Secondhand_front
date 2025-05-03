@@ -23,7 +23,12 @@ export const useAddressStore = defineStore('address', () => {
     try {
       const res = await getAddressList()
       if (res.code === 200) {
-        addressList.value = res.data || []
+        // 处理后端返回数据，将isDefault数字类型转为布尔值
+        addressList.value = (res.data || []).map(item => ({
+          ...item,
+          isDefault: item.isDefault === 1
+        }))
+        
         // 更新默认地址ID
         const defaultAddr = addressList.value.find(item => item.isDefault)
         if (defaultAddr) {
@@ -43,8 +48,12 @@ export const useAddressStore = defineStore('address', () => {
     try {
       const res = await getAddressDetail(id)
       if (res.code === 200) {
-        currentAddress.value = res.data
-        return res.data
+        // 处理isDefault字段
+        currentAddress.value = {
+          ...res.data,
+          isDefault: res.data.isDefault === 1
+        }
+        return currentAddress.value
       }
     } catch (error) {
       console.error('获取地址详情失败', error)
@@ -55,7 +64,13 @@ export const useAddressStore = defineStore('address', () => {
   // 添加新地址
   const createAddress = async (addressData) => {
     try {
-      const res = await addAddress(addressData)
+      // 转换isDefault为整数
+      const formattedData = {
+        ...addressData,
+        isDefault: addressData.isDefault ? 1 : 0
+      }
+      
+      const res = await addAddress(formattedData)
       if (res.code === 200) {
         // 如果新增的是默认地址，更新默认地址ID
         if (addressData.isDefault) {
@@ -78,7 +93,13 @@ export const useAddressStore = defineStore('address', () => {
   // 更新地址
   const updateAddressInfo = async (addressData) => {
     try {
-      const res = await updateAddress(addressData)
+      // 转换isDefault为整数
+      const formattedData = {
+        ...addressData,
+        isDefault: addressData.isDefault ? 1 : 0
+      }
+      
+      const res = await updateAddress(formattedData)
       if (res.code === 200) {
         // 如果更新为默认地址，更新默认地址ID
         if (addressData.isDefault) {

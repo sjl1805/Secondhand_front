@@ -257,9 +257,18 @@ router.beforeEach((to, from, next) => {
   
   // 需要管理员权限但用户不是管理员
   if (to.meta.requireAdmin && !(role === 9 || role === '9')) {
-    ElMessage.error('没有访问权限')
+    ElMessage.error('没有管理员权限')
+    
+    // 为管理员页面设置本地存储
+    if (to.path.startsWith('/admin')) {
+      localStorage.removeItem('isAdmin')
+    }
+    
     next({ path: '/' })
     return
+  } else if (to.path.startsWith('/admin') && (role === 9 || role === '9')) {
+    // 确保管理员访问管理页面时正确设置localStorage
+    localStorage.setItem('isAdmin', '1')
   }
   
   // 已登录用户访问登录/注册页面

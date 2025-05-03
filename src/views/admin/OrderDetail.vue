@@ -19,8 +19,24 @@
             <span class="value">{{ store.currentOrder.orderNo }}</span>
           </div>
           <div class="info-item">
+            <span class="label">交易流水号：</span>
+            <span class="value">{{ store.currentOrder.transactionNo || '--' }}</span>
+          </div>
+          <div class="info-item">
             <span class="label">创建时间：</span>
             <span class="value">{{ formatDate(store.currentOrder.createTime) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">付款时间：</span>
+            <span class="value">{{ formatDate(store.currentOrder.paymentTime) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">支付方式：</span>
+            <span class="value">{{ getPaymentMethodText(store.currentOrder.paymentMethod) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">支付状态：</span>
+            <span class="value">{{ getPaymentStatusText(store.currentOrder.paymentStatus) }}</span>
           </div>
           <div class="info-item">
             <span class="label">更新时间：</span>
@@ -41,29 +57,75 @@
             :src="fileStore.getFullUrl(store.currentOrder.productImage)"
             fit="cover"
             class="product-image"
-          />
+          >
+            <template #error>
+              <div class="image-error">
+                <el-icon><picture-filled /></el-icon>
+              </div>
+            </template>
+          </el-image>
           <div class="product-detail">
             <h3>{{ store.currentOrder.productTitle }}</h3>
+            <div class="product-quality" v-if="store.currentOrder.productQuality">
+              成色：{{ getProductQualityText(store.currentOrder.productQuality) }}
+            </div>
             <div class="price">¥{{ store.currentOrder.price }}</div>
           </div>
         </div>
       </el-card>
 
-      <!-- 买家信息 -->
-      <el-card class="box-card">
-        <template #header>
-          <div class="card-header">
-            <span>买家信息</span>
-          </div>
-        </template>
-        <div class="user-info">
-          <el-avatar :src="fileStore.getFullUrl(store.currentOrder.buyerAvatar)" />
-          <div class="user-detail">
-            <div class="name">{{ store.currentOrder.buyerNickname }}</div>
-            <div class="id">用户ID: {{ store.currentOrder.buyerId }}</div>
-          </div>
-        </div>
-      </el-card>
+      <!-- 交易双方信息 -->
+      <el-row :gutter="20">
+        <!-- 买家信息 -->
+        <el-col :span="12">
+          <el-card class="box-card">
+            <template #header>
+              <div class="card-header">
+                <span>买家信息</span>
+              </div>
+            </template>
+            <div class="user-info">
+              <el-avatar 
+                :src="fileStore.getFullUrl(store.currentOrder.buyerAvatar)"
+                :size="50"
+              >
+                <template #error>
+                  <el-icon><user-filled /></el-icon>
+                </template>
+              </el-avatar>
+              <div class="user-detail">
+                <div class="name">{{ store.currentOrder.buyerNickname }}</div>
+                <div class="id">用户ID: {{ store.currentOrder.buyerId }}</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+        
+        <!-- 卖家信息 -->
+        <el-col :span="12">
+          <el-card class="box-card">
+            <template #header>
+              <div class="card-header">
+                <span>卖家信息</span>
+              </div>
+            </template>
+            <div class="user-info">
+              <el-avatar 
+                :src="fileStore.getFullUrl(store.currentOrder.sellerAvatar)"
+                :size="50"
+              >
+                <template #error>
+                  <el-icon><user-filled /></el-icon>
+                </template>
+              </el-avatar>
+              <div class="user-detail">
+                <div class="name">{{ store.currentOrder.sellerNickname }}</div>
+                <div class="id">用户ID: {{ store.currentOrder.sellerId }}</div>
+              </div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
 
       <!-- 收货信息 -->
       <el-card class="box-card">
@@ -84,6 +146,10 @@
           <div class="info-item">
             <span class="label">收货地址：</span>
             <span class="value">{{ store.currentOrder.address }}</span>
+          </div>
+          <div class="info-item" v-if="store.currentOrder.message">
+            <span class="label">买家留言：</span>
+            <span class="value">{{ store.currentOrder.message }}</span>
           </div>
         </div>
       </el-card>
@@ -121,6 +187,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAdminOrderStore } from '@/stores/adminOrder'
 import { useFileStore } from '@/stores/file'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { PictureFilled, UserFilled } from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -138,6 +205,40 @@ const statusTagType = (status) => {
     case 5: return 'danger'   // 已取消
     default: return 'info'
   }
+}
+
+// 支付方式文本
+const getPaymentMethodText = (method) => {
+  const methodMap = {
+    1: '支付宝',
+    2: '微信支付',
+    3: '银行卡'
+  }
+  return methodMap[method] || '未知'
+}
+
+// 支付状态文本
+const getPaymentStatusText = (status) => {
+  const statusMap = {
+    0: '未支付',
+    1: '支付中',
+    2: '已支付',
+    3: '支付失败',
+    4: '已退款'
+  }
+  return statusMap[status] || '未知'
+}
+
+// 商品成色文本
+const getProductQualityText = (quality) => {
+  const qualityMap = {
+    1: '全新',
+    2: '几乎全新',
+    3: '二手良品',
+    4: '有使用痕迹',
+    5: '功能正常'
+  }
+  return qualityMap[quality] || '未知'
 }
 
 // 格式化日期
@@ -230,10 +331,27 @@ onMounted(() => {
   width: 120px;
   height: 120px;
   border-radius: 4px;
+  border: 1px solid #ebeef5;
+}
+
+.image-error {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #909399;
+  background-color: #f5f7fa;
+  font-size: 24px;
 }
 
 .product-detail h3 {
   margin: 0 0 10px 0;
+}
+
+.product-quality {
+  margin-bottom: 10px;
+  color: #606266;
 }
 
 .price {

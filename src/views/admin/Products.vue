@@ -77,21 +77,36 @@
           </el-image>
         </template>
       </el-table-column>
-      <el-table-column label="商品名称" prop="title" min-width="200" />
-      <el-table-column label="价格" prop="price" width="120" align="center">
+      <el-table-column label="商品名称" prop="title" min-width="180" />
+      <el-table-column label="卖家" width="120">
+        <template #default="{ row }">
+          <div class="seller-info">
+            <el-avatar 
+              :size="'small'" 
+              :src="row.avatar ? fileStore.getFullUrl(row.avatar) : ''"
+              @error="() => handleAvatarError(row)"
+            />
+            <span class="seller-name">{{ row.nickname || `用户${row.userId}` }}</span>
+          </div>
+        </template>
+      </el-table-column>
+      <el-table-column label="分类" prop="categoryName" width="90" align="center" />
+      <el-table-column label="价格" prop="price" width="90" align="center">
         <template #default="{ row }">￥{{ row.price }}</template>
       </el-table-column>
-      <el-table-column label="库存" width="100" align="center">
-        <template #default="{ row }">{{ row.stock || 'N/A' }}</template>
+      <el-table-column label="成色" width="90" align="center">
+        <template #default="{ row }">
+          {{ getProductQualityText(row.productQuality) }}
+        </template>
       </el-table-column>
-      <el-table-column label="状态" width="120" align="center">
+      <el-table-column label="状态" width="90" align="center">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)">
             {{ store.getProductStatusText(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220" align="center" fixed="right">
+      <el-table-column label="操作" width="160" align="center" fixed="right">
         <template #default="{ row }">
           <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
           <el-dropdown trigger="click">
@@ -152,9 +167,33 @@ const statusTagType = (status) => {
 
 // 初始化加载
 onMounted(() => {
-  store.setAdminRole(true)
-  store.fetchProductList()
+  try {
+    // 设置并持久化管理员权限
+    store.setAdminRole(true)
+    // 加载商品列表
+    store.fetchProductList()
+  } catch (error) {
+    console.error('加载商品列表失败', error)
+    ElMessage.error('加载商品列表失败，请稍后重试')
+  }
 })
+
+// 处理头像加载失败
+const handleAvatarError = (row) => {
+  row.avatar = null
+}
+
+// 获取商品成色文本
+const getProductQualityText = (quality) => {
+  const qualityMap = {
+    1: '全新',
+    2: '几乎全新',
+    3: '二手良品',
+    4: '有使用痕迹',
+    5: '功能正常'
+  }
+  return qualityMap[quality] || '未知'
+}
 
 // 搜索过滤
 const handleFilter = () => {
@@ -209,10 +248,15 @@ const changeStatus = async (row, status) => {
   }
 }
 
-  // 查看详情
-  const viewDetail = (id) => {
+// 查看详情
+const viewDetail = (id) => {
+  // 先检查管理员权限
+  if (store.checkAdminRole()) {
     router.push(`/admin/product/${id}`)
+  } else {
+    ElMessage.error('您没有管理员权限')
   }
+}
 
 // 删除单个商品
 const deleteProduct = async (id) => {
@@ -264,5 +308,26 @@ const deleteProduct = async (id) => {
   align-items: center;
   justify-content: center;
   color: #909399;
+}
+
+.seller-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seller-name {
+  font-size: 13px;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 支持深度选择器修改el-avatar样式 */
+:deep(.el-avatar--small) {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
 }
 </style>

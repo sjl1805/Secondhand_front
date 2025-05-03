@@ -45,10 +45,10 @@
           <span class="input-tip">元</span>
         </el-form-item>
         
-        <el-form-item label="商品成色" prop="conditions">
-          <el-select v-model="formData.conditions" placeholder="请选择商品成色">
+        <el-form-item label="商品成色" prop="productQuality">
+          <el-select v-model="formData.productQuality" placeholder="请选择商品成色">
             <el-option 
-              v-for="(value, key) in productStore.conditionMap" 
+              v-for="(value, key) in productStore.productQualityMap" 
               :key="key" 
               :label="value" 
               :value="Number(key)" 
@@ -132,7 +132,7 @@ const formData = reactive({
   description: '',
   price: 0,
   categoryId: null,
-  conditions: 1,
+  productQuality: 1,
   location: '',
   imageUrls: []
 })
@@ -150,7 +150,7 @@ const rules = {
   categoryId: [
     { required: true, message: '请选择商品分类', trigger: 'change' }
   ],
-  conditions: [
+  productQuality: [
     { required: true, message: '请选择商品成色', trigger: 'change' }
   ],
   description: [
@@ -228,7 +228,7 @@ const loadProductData = async () => {
     formData.description = product.description
     formData.price = product.price
     formData.categoryId = product.categoryId
-    formData.conditions = product.conditions
+    formData.productQuality = product.productQuality || product.conditions
     formData.location = product.location || ''
     
     // 处理图片URL，确保格式正确
@@ -408,7 +408,7 @@ const submitForm = async () => {
       description: formData.description,
       price: formData.price,
       categoryId: formData.categoryId,
-      conditions: formData.conditions,
+      productQuality: formData.productQuality,
       location: formData.location,
       imageUrls: [...formData.imageUrls] // 创建新数组
     }

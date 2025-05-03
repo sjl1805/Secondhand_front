@@ -40,11 +40,24 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
   // 设置管理员权限
   const setAdminRole = (isAdminRole) => {
     isAdmin.value = isAdminRole
+    // 将管理员状态存储到localStorage
+    localStorage.setItem('isAdmin', isAdminRole ? '1' : '0')
+  }
+  
+  // 检查管理员权限
+  const checkAdminRole = () => {
+    // 先从localStorage中获取权限状态
+    const storedIsAdmin = localStorage.getItem('isAdmin')
+    if (storedIsAdmin) {
+      isAdmin.value = storedIsAdmin === '1'
+    }
+    return isAdmin.value
   }
   
   // 获取商品列表
   const fetchProductList = async (params = {}) => {
-    if (!isAdmin.value) {
+    // 确保检查权限状态
+    if (!checkAdminRole()) {
       ElMessage.error('您没有管理员权限')
       return Promise.reject(new Error('没有权限'))
     }
@@ -78,7 +91,8 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
   
   // 获取商品详情
   const fetchProductDetail = async (id) => {
-    if (!isAdmin.value) {
+    // 确保检查权限状态
+    if (!checkAdminRole()) {
       ElMessage.error('您没有管理员权限')
       return Promise.reject(new Error('没有权限'))
     }
@@ -90,9 +104,11 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
         currentProduct.value = res.data
         return res.data
       }
+      return null
     } catch (error) {
       console.error('获取商品详情失败', error)
       ElMessage.error('获取商品详情失败')
+      return null
     } finally {
       loading.value = false
     }
@@ -100,7 +116,7 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
   
   // 更新商品状态
   const updateProductStatus = async (id, status) => {
-    if (!isAdmin.value) {
+    if (!checkAdminRole()) {
       ElMessage.error('您没有管理员权限')
       return Promise.reject(new Error('没有权限'))
     }
@@ -132,7 +148,7 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
   
   // 删除商品
   const removeProduct = async (id) => {
-    if (!isAdmin.value) {
+    if (!checkAdminRole()) {
       ElMessage.error('您没有管理员权限')
       return Promise.reject(new Error('没有权限'))
     }
@@ -159,7 +175,7 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
   
   // 批量更新商品状态
   const batchUpdateStatus = async (productIds, status) => {
-    if (!isAdmin.value) {
+    if (!checkAdminRole()) {
       ElMessage.error('您没有管理员权限')
       return Promise.reject(new Error('没有权限'))
     }
@@ -191,7 +207,7 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
   
   // 批量删除商品
   const batchRemoveProduct = async (productIds) => {
-    if (!isAdmin.value) {
+    if (!checkAdminRole()) {
       ElMessage.error('您没有管理员权限')
       return Promise.reject(new Error('没有权限'))
     }
@@ -244,6 +260,7 @@ export const useAdminProductStore = defineStore('adminProduct', () => {
     productStatusOptions,
     productStatusMap,
     setAdminRole,
+    checkAdminRole,
     fetchProductList,
     fetchProductDetail,
     updateProductStatus,

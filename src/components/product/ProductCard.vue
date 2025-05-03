@@ -20,7 +20,7 @@
     <div class="product-info">
       <h3 class="product-title">{{ localProduct.title }}</h3>
       <div class="product-meta">
-        <span class="product-condition">{{ getConditionText(localProduct.conditions) }}</span>
+        <span class="product-condition">{{ getConditionText(localProduct.productQuality) }}</span>
         <span class="product-views">
           <el-icon><View /></el-icon> {{ formatNumber(localProduct.viewCount) }}
         </span>
@@ -109,7 +109,7 @@ const ensureProductProcessed = () => {
     
     // 设置默认值
     localProduct.viewCount = localProduct.viewCount ?? 0
-    localProduct.conditions = localProduct.conditions ?? 1
+    localProduct.productQuality = localProduct.productQuality ?? 1
     
     console.log('处理后的商品数据:', localProduct)
   } catch (error) {
@@ -144,8 +144,8 @@ const formatNumber = (num) => {
 }
 
 // 获取商品成色文本
-const getConditionText = (conditions) => {
-  return productStore.conditionMap[conditions] || '未知'
+const getConditionText = (productQuality) => {
+  return productStore.productQualityMap[productQuality] || '未知'
 }
 
 // 格式化时间为相对时间

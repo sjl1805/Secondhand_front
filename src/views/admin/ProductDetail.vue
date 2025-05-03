@@ -8,16 +8,33 @@
         <h3>基本信息</h3>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="商品ID">{{ product.id }}</el-descriptions-item>
-          <el-descriptions-item label="商品名称">{{ product.name }}</el-descriptions-item>
+          <el-descriptions-item label="商品名称">{{ product.title }}</el-descriptions-item>
           <el-descriptions-item label="价格">￥{{ product.price }}</el-descriptions-item>
-          <el-descriptions-item label="库存">{{ product.stock }}</el-descriptions-item>
+          <el-descriptions-item label="分类">{{ product.categoryName }}</el-descriptions-item>
+          <el-descriptions-item label="成色">{{ getProductQualityText(product.productQuality) }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="statusTagType(product.status)">
               {{ store.getProductStatusText(product.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ product.createTime }}</el-descriptions-item>
+          <el-descriptions-item label="卖家">{{ product.nickname || `用户${product.userId}` }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间">{{ formatDateTime(product.createTime) }}</el-descriptions-item>
         </el-descriptions>
+      </div>
+
+      <!-- 商品图片 -->
+      <div class="section" v-if="product.imageUrls && product.imageUrls.length">
+        <h3>商品图片</h3>
+        <div class="images-container">
+          <el-image 
+            v-for="(url, index) in product.imageUrls" 
+            :key="index"
+            :src="fileStore.getFullUrl(url)"
+            :preview-src-list="product.imageUrls.map(img => fileStore.getFullUrl(img))"
+            fit="cover"
+            class="product-image"
+          />
+        </div>
       </div>
 
       <!-- 商品描述 -->
@@ -28,7 +45,6 @@
 
       <!-- 操作区 -->
       <div class="action-bar">
-        <el-button type="primary" @click="handleEdit">编辑信息</el-button>
         <el-button :type="product.status === 3 ? 'success' : 'danger'" @click="toggleStatus">
           {{ product.status === 3 ? '重新上架' : '下架商品' }}
         </el-button>
@@ -42,19 +58,60 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminProductStore } from '@/stores/adminProduct'
+import { useFileStore } from '@/stores/file'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import dayjs from 'dayjs'
 
 const route = useRoute()
 const router = useRouter()
 const store = useAdminProductStore()
+const fileStore = useFileStore()
 const productId = ref(null)
 const product = ref(null)
 
+// 格式化日期时间
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '--'
+  return dayjs(dateTime).format('YYYY-MM-DD HH:mm')
+}
+
+// 获取商品成色文本
+const getProductQualityText = (quality) => {
+  const qualityMap = {
+    1: '全新',
+    2: '几乎全新',
+    3: '二手良品',
+    4: '有使用痕迹',
+    5: '功能正常'
+  }
+  return qualityMap[quality] || '未知'
+}
+
 // 初始化加载数据
 onMounted(async () => {
-  productId.value = route.params.id
-  await store.fetchProductDetail(productId.value)
-  product.value = store.currentProduct
+  try {
+    // 设置管理员角色并确保权限
+    store.setAdminRole(true)
+    
+    productId.value = route.params.id
+    if (!productId.value) {
+      ElMessage.error('商品ID不能为空')
+      goBack()
+      return
+    }
+
+    const result = await store.fetchProductDetail(productId.value)
+    if (result) {
+      product.value = result
+    } else {
+      ElMessage.error('获取商品详情失败')
+      goBack()
+    }
+  } catch (error) {
+    console.error('加载商品详情失败', error)
+    ElMessage.error('加载商品详情失败，请稍后重试')
+    goBack()
+  }
 })
 
 // 返回列表
@@ -100,12 +157,6 @@ const handleDelete = async () => {
     }
   }
 }
-
-// 编辑商品
-const handleEdit = () => {
-  // 预留编辑功能入口
-  ElMessage.info('编辑功能开发中')
-}
 </script>
 
 <style scoped>
@@ -131,6 +182,21 @@ const handleEdit = () => {
   line-height: 1.6;
   border: 1px solid #ebeef5;
   border-radius: 4px;
+}
+
+.images-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.product-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 4px;
+  border: 1px solid #ebeef5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .action-bar {

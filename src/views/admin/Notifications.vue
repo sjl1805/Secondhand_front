@@ -85,8 +85,12 @@
       <el-table-column label="接收用户" width="150">
         <template #default="{ row }">
           <div v-if="row.userId" class="user-info">
-            <el-avatar :src="getFullUrl(row.userAvatar)" size="small" />
-            <span>{{ row.userNickname }}</span>
+            <el-avatar 
+              :size="'small'" 
+              :src="userCache[row.userId]?.avatar ? fileStore.getFullUrl(userCache[row.userId].avatar) : ''" 
+              @error="() => handleAvatarError(row.userId)"
+            />
+            <span>{{ getUserNameById(row.userId) || '--' }}</span>
           </div>
           <span v-else>全体用户</span>
         </template>
@@ -115,8 +119,8 @@
 
     <!-- 分页 -->
     <pagination
-      v-model:current="pagination.current"
-      v-model:size="pagination.size"
+      :current="pagination.current"
+      :size="pagination.size"
       :total="pagination.total"
       @change="handlePageChange"
       @size-change="handleSizeChange"
@@ -165,36 +169,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { 
-  getAdminNotificationList,
-  getAdminNotificationDetail,
-  sendNotification as apiSendNotification,
-  broadcastNotification,
-  deleteAdminNotification,
-  batchDeleteAdminNotifications
-} from '@/api/adminNotification'
-import { searchUser as apiSearchUser } from '@/api/adminUser'
+import { ref, onMounted, computed, reactive } from 'vue'
+import { searchUser as apiSearchUser, getUserById } from '@/api/adminUser'
 import Pagination from '@/components/Pagination/index.vue'
 import { useFileStore } from '@/stores/file'
+import { useAdminNotificationStore } from '@/stores/adminNotification'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import dayjs from 'dayjs'
 
 const fileStore = useFileStore()
+const notificationStore = useAdminNotificationStore()
 
 // 数据状态
-const loading = ref(false)
-const notificationList = ref([])
-const selectedNotifications = ref([])
 const userOptions = ref([])
 const sendDialogVisible = ref(false)
+const userCache = reactive({}) // 用于缓存用户信息
 
-// 分页
-const pagination = ref({
-  current: 1,
-  size: 10,
-  total: 0
-})
+// 获取Store中的状态
+const loading = computed(() => notificationStore.loading)
+const notificationList = computed(() => notificationStore.notifications)
+const pagination = computed(() => notificationStore.pagination)
+const selectedNotifications = ref([])
 
 // 查询条件
 const listQuery = ref({
@@ -210,15 +205,61 @@ const sendForm = ref({
   userId: null
 })
 
-// 获取完整URL
-const getFullUrl = (url) => {
-  return fileStore.getFullUrl(url)
-}
-
 // 格式化日期
 const formatDate = (date) => {
   if (!date) return '--'
   return dayjs(date).format('YYYY-MM-DD HH:mm')
+}
+
+// 异步加载用户数据
+const loadUserData = async (userId) => {
+  try {
+    const res = await getUserById(userId)
+    if (res.code === 200 && res.data) {
+      userCache[userId] = {
+        name: res.data.nickname || res.data.username || `用户${userId}`,
+        avatar: res.data.avatar || null
+      }
+    }
+  } catch (error) {
+    console.error('获取用户信息失败', error)
+  }
+}
+
+// 处理头像加载失败
+const handleAvatarError = (userId) => {
+  if (userCache[userId]) {
+    userCache[userId].avatar = null
+  }
+}
+
+// 根据ID获取用户名
+const getUserNameById = (userId) => {
+  if (!userId) return '--'
+  
+  // 如果缓存中有，直接返回
+  if (userCache[userId]?.name) return userCache[userId].name
+  
+  // 返回临时文本，异步加载
+  loadUserData(userId)
+  return `用户${userId}`
+}
+
+// 预加载当前页用户数据
+const preloadUserData = async () => {
+  const userIds = notificationList.value
+    .filter(item => item.userId)
+    .map(item => item.userId)
+    
+  // 去重
+  const uniqueUserIds = [...new Set(userIds)]
+  
+  // 加载不在缓存中的用户信息
+  const promises = uniqueUserIds
+    .filter(userId => !userCache[userId])
+    .map(loadUserData)
+    
+  await Promise.all(promises)
 }
 
 // 搜索用户
@@ -239,37 +280,22 @@ const searchUser = async (query) => {
 
 // 获取通知列表
 const fetchNotificationList = async () => {
-  loading.value = true
-  try {
-    const params = {
-      page: pagination.value.current,
-      size: pagination.value.size,
-      ...listQuery.value,
-      startTime: listQuery.value.dateRange?.[0] ? dayjs(listQuery.value.dateRange[0]).format('YYYY-MM-DD') : undefined,
-      endTime: listQuery.value.dateRange?.[1] ? dayjs(listQuery.value.dateRange[1]).format('YYYY-MM-DD') : undefined
-    }
-    delete params.dateRange
-
-    const res = await getAdminNotificationList(params)
-    if (res.code === 200) {
-      notificationList.value = res.data.records || []
-      pagination.value = {
-        current: res.data.current,
-        size: res.data.size,
-        total: res.data.total
-      }
-    }
-  } catch (error) {
-    console.error('获取通知列表失败', error)
-    ElMessage.error('获取通知列表失败')
-  } finally {
-    loading.value = false
+  const params = {
+    ...listQuery.value,
+    startTime: listQuery.value.dateRange?.[0] ? dayjs(listQuery.value.dateRange[0]).format('YYYY-MM-DD') : undefined,
+    endTime: listQuery.value.dateRange?.[1] ? dayjs(listQuery.value.dateRange[1]).format('YYYY-MM-DD') : undefined
   }
+  delete params.dateRange
+  
+  await notificationStore.fetchNotificationList(params)
+  
+  // 预加载用户数据
+  preloadUserData()
 }
 
 // 搜索过滤
 const handleFilter = () => {
-  pagination.value.current = 1
+  notificationStore.pagination.current = 1
   fetchNotificationList()
 }
 
@@ -281,15 +307,14 @@ const handleSelectionChange = (selection) => {
 // 查看详情
 const viewDetail = async (id) => {
   try {
-    const res = await getAdminNotificationDetail(id)
-    if (res.code === 200) {
-      ElMessageBox.alert(res.data.content, '通知详情', {
+    const detailData = await notificationStore.fetchNotificationDetail(id)
+    if (detailData) {
+      ElMessageBox.alert(detailData.content, '通知详情', {
         confirmButtonText: '确定'
       })
     }
   } catch (error) {
     console.error('获取通知详情失败', error)
-    ElMessage.error('获取通知详情失败')
   }
 }
 
@@ -299,9 +324,11 @@ const deleteNotification = async (id) => {
     await ElMessageBox.confirm('确定要删除该通知吗？', '提示', {
       type: 'warning'
     })
-    await deleteAdminNotification(id)
-    ElMessage.success('删除成功')
-    fetchNotificationList()
+    const result = await notificationStore.removeNotification(id)
+    if (result) {
+      ElMessage.success('删除成功')
+      fetchNotificationList()
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
@@ -311,14 +338,22 @@ const deleteNotification = async (id) => {
 
 // 批量删除
 const batchDelete = async () => {
+  if (selectedNotifications.value.length === 0) {
+    ElMessage.warning('请选择要删除的通知')
+    return
+  }
+  
   try {
     await ElMessageBox.confirm(`确定要删除选中的${selectedNotifications.value.length}条通知吗？`, '提示', {
       type: 'warning'
     })
-    await batchDeleteAdminNotifications(selectedNotifications.value)
-    ElMessage.success('批量删除成功')
-    selectedNotifications.value = []
-    fetchNotificationList()
+    
+    const result = await notificationStore.batchRemoveNotifications(selectedNotifications.value)
+    if (result > 0) {
+      ElMessage.success(`成功删除${result}条通知`)
+      selectedNotifications.value = []
+      fetchNotificationList()
+    }
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('批量删除失败')
@@ -344,35 +379,35 @@ const sendNotification = async () => {
   }
 
   try {
+    let result = false
+    
     if (sendForm.value.type === 1) {
-      await broadcastNotification(sendForm.value.content)
+      result = await notificationStore.broadcastToAllUsers(sendForm.value.content)
     } else {
       if (!sendForm.value.userId) {
         ElMessage.warning('请选择接收用户')
         return
       }
-      await apiSendNotification(sendForm.value.content, sendForm.value.userId)
+      result = await notificationStore.sendUserNotification(sendForm.value.content, sendForm.value.userId)
     }
-    ElMessage.success('发送成功')
-    sendDialogVisible.value = false
-    fetchNotificationList()
+    
+    if (result) {
+      sendDialogVisible.value = false
+      fetchNotificationList()
+    }
   } catch (error) {
     console.error('发送通知失败', error)
-    ElMessage.error('发送通知失败')
   }
 }
 
 // 分页变化
 const handlePageChange = (page) => {
-  pagination.value.current = page
-  fetchNotificationList()
+  notificationStore.changeNotificationPage(page)
 }
 
 // 每页数量变化
 const handleSizeChange = (size) => {
-  pagination.value.size = size
-  pagination.value.current = 1
-  fetchNotificationList()
+  notificationStore.changeNotificationPageSize(size)
 }
 
 // 初始化加载
@@ -409,5 +444,12 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* 添加头像样式 */
+:deep(.el-avatar--small) {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
 }
 </style>

@@ -13,6 +13,7 @@ import {
   getPaymentStatus
 } from '@/api/order'
 import { ElMessage } from 'element-plus'
+import QRCode from 'qrcode'
 
 export const useOrderStore = defineStore('order', () => {
   // 状态
@@ -21,6 +22,7 @@ export const useOrderStore = defineStore('order', () => {
   const sellerOrders = ref([])
   const loading = ref(false)
   const paymentResult = ref(null)
+  const orderQrCode = ref('') // 新增：订单支付二维码
   const buyerPagination = ref({
     current: 1,
     size: 10,
@@ -53,6 +55,43 @@ export const useOrderStore = defineStore('order', () => {
     1: '待支付',
     2: '支付成功',
     3: '支付失败'
+  }
+  
+  // 生成订单支付二维码
+  const generateOrderQrCode = async (orderId, paymentMethod, amount) => {
+    try {
+      // 创建包含订单信息的支付数据
+      const paymentData = {
+        orderId,
+        method: paymentMethod,
+        amount: amount,
+        timestamp: Date.now(),
+        simulated: true  // 标记为模拟支付
+      }
+      
+      // 转为JSON字符串
+      const paymentString = JSON.stringify(paymentData)
+      
+      // 生成二维码图片 (base64)
+      const qrImage = await QRCode.toDataURL(paymentString, {
+        width: 256,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      })
+      
+      // 保存二维码图片
+      orderQrCode.value = qrImage
+      
+      // 返回生成的二维码图片数据
+      return qrImage
+    } catch (error) {
+      console.error('生成支付二维码失败:', error)
+      ElMessage.error('生成支付二维码失败')
+      return null
+    }
   }
   
   // 创建订单
@@ -490,6 +529,7 @@ export const useOrderStore = defineStore('order', () => {
     buyerOrders.value = []
     sellerOrders.value = []
     paymentResult.value = null
+    orderQrCode.value = ''
     buyerPagination.value = {
       current: 1,
       size: 10,
@@ -508,6 +548,7 @@ export const useOrderStore = defineStore('order', () => {
     sellerOrders,
     loading,
     paymentResult,
+    orderQrCode,
     buyerPagination,
     sellerPagination,
     orderStatusMap,
@@ -526,6 +567,7 @@ export const useOrderStore = defineStore('order', () => {
     buyerReceiveOrder,
     submitPayment,
     checkPaymentStatus,
+    generateOrderQrCode,
     changeBuyerPage,
     changeBuyerPageSize,
     changeSellerPage,

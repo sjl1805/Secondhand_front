@@ -176,8 +176,11 @@
         </div>
         
         <div class="payment-qrcode">
-          <img src="../assets/images/qr-code-placeholder.png" alt="支付二维码" />
-          <div class="qrcode-tip">请使用{{ paymentMethodText }}扫描二维码完成支付</div>
+          <img :src="orderQrCode || defaultQrCode" alt="支付二维码" />
+          <div class="qrcode-tip">
+            <p>订单号: {{ currentOrderNo }}</p>
+            <p>请使用{{ paymentMethodText }}扫描二维码完成支付</p>
+          </div>
         </div>
         
         <div class="payment-status-wrapper">
@@ -237,6 +240,11 @@ const paymentMethod = ref(1)
 const message = ref('')
 const shipping = ref(0) // 运费
 const currentOrderId = ref(null) // 当前订单ID
+const currentOrderNo = ref('') // 当前订单编号
+const orderQrCode = ref('') // 订单支付二维码
+
+// 默认二维码Base64编码（简单的QR码）
+const defaultQrCode = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAVFSURBVHic7dzRbdswFIZRI5mgG7SDbtJ9O0k36QbdpCN0hI6gBUpABmLYz0l4DkDkJYjEBz8hUjbw8vLvDMDHftr9BICnJhAgCARIBAIkAgESgQCJQIBEIEAiECARCJAIBEgEAiQCAZLXoz/g5eXljz/n+/v7tPc6es+j9zzy3P/rzp+fv29//rzf/L39+Nm8l1//L7vnkcfv3bvTs3n9tX358V4QIBEIkAgESAQCJAIBEoEAiUCAZPo+yCPZsxizndZ1n7Ur45m93P97vSBAIhAgEQiQCARIBAIkAgESgQCJfZCTvdHZrbP3Kc7eJ9jLCwIkAgESgQCJQIBEIEAiECARCJDYB9nAvszZVthPedu91nv2LQQBEoEAiUCAZIsgnvGc4+hrz+zZs3/Oe8+j99n767CTFwRIBAIkAgESgQCJQIBEIEAiECDZYh/EMT8wjxcESAQCJAIBEoEAiUCAZPoq1tEVh7NXLaxGjLHitWfv5+w73hcefX8vCJAIBEgEAiQCARKBAIlAgEQgQDJ9H+SzR+2tWHU5em5Hfc7r7+cFARKBAIlAgEQgQCIQIBEIkAgESLbYB3mmfYx73Ptzzz7Hd/T9n/m7W80LAiQCARKBAIlAgEQgQCIQIBEIkGzxfJBn8sx7MUcdfb7KCp/zs3+WHbwgQCIQIBEIkAgESAQCJAIBki1WsWasJKywYuXl7NWWHSsf9z6/u78DXhAgEQiQCARIBAIkAgESgQCJQIBk+j7I7COAn9mKYz9GuOsYntn8f/GCAIlAgEQgQCIQIBEIkAgESAQCJE+/D3Lvvshnjx4DMuPcjj7z+3t6QYBEIEAiECARCJAIBEgEAiQCARLHnBxk9nEhM85txT7DCl4QIBEIkAgESAQCJAIBEoEAiUCA5On3QXZ45nNZsS9z9P283zwcLwiQCARIBAIkAgESgQCJQIBk+irW7KNXjh71MuPs1YoVR8TM/vrtWBmawQsCJAIBEgEAiUCAZIsgnvGc4+hrz+zZs3/Oe8+j99n767CTFwRIBAIkAgESgQCJQIBEIEAiECDZYh/EMT8wjxcESAQCJAIBEoEAiUCAZPoq1tEVh7NXLaxGjLHitWfv5+w73hcefX8vCJAIBEgEAiQCARKBAIlAgEQgQPIL9+6rqDLM+VsAAAAASUVORK5CYII='
 
 // 计算属性
 const selectedAddress = computed(() => {
@@ -677,7 +685,27 @@ const submitOrder = async () => {
       if (orderResult && orderResult.id) {
         // 保存订单ID到本地变量
         currentOrderId.value = orderResult.id
-        console.log('订单创建成功，ID:', currentOrderId.value)
+        
+        // 生成订单编号（使用时间戳+订单ID）
+        currentOrderNo.value = `ORDER${new Date().getTime()}${orderResult.id}`
+        
+        console.log('订单创建成功，ID:', currentOrderId.value, '编号:', currentOrderNo.value)
+        
+        // 生成支付二维码
+        try {
+          const qrCode = await orderStore.generateOrderQrCode(
+            currentOrderId.value,
+            paymentMethod.value,
+            totalAmount.value
+          )
+          
+          if (qrCode) {
+            orderQrCode.value = qrCode
+            console.log('支付二维码生成成功')
+          }
+        } catch (error) {
+          console.error('生成支付二维码失败:', error)
+        }
         
         // 显示支付对话框
         paymentDialogVisible.value = true
@@ -737,7 +765,8 @@ const confirmPayment = async () => {
     const paymentData = {
       amount: amount,
       paymentMethod: paymentMethod.value,
-      message: message.value || ''
+      message: message.value || '',
+      orderNo: currentOrderNo.value // 添加订单编号
     }
     
     console.log('支付订单ID:', currentOrderId.value, '类型:', typeof currentOrderId.value)
@@ -819,6 +848,18 @@ const cancelPayment = () => {
   // 重置支付状态
   paymentStatus.value = 0
   currentOrderId.value = null
+  currentOrderNo.value = ''
+  orderQrCode.value = ''
+  
+  // 跳转回商品详情页
+  if (productDetail.value && productDetail.value.id) {
+    router.push(`/product/${productDetail.value.id}`)
+  } else if (productId.value) {
+    router.push(`/product/${productId.value}`)
+  } else {
+    // 如果获取不到产品ID，则返回首页
+    router.push('/')
+  }
 }
 
 onMounted(async () => {
@@ -841,6 +882,8 @@ onBeforeUnmount(() => {
   // 重置支付状态
   paymentStatus.value = 0
   currentOrderId.value = null
+  currentOrderNo.value = ''
+  orderQrCode.value = ''
 })
 </script>
 
@@ -1050,31 +1093,65 @@ onBeforeUnmount(() => {
 }
 
 .payment-amount {
-  font-size: 18px;
+  font-size: 16px;
+  text-align: center;
   margin-bottom: 20px;
 }
 
+.payment-amount .price {
+  color: #ff4d4f;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.payment-method-info {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
 .payment-qrcode {
-  margin: 0 auto;
-  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto;
+  max-width: 250px;
+  text-align: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
 }
 
 .payment-qrcode img {
-  width: 100%;
-  height: auto;
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.payment-status {
+.qrcode-tip {
+  margin-top: 12px;
+  color: #606266;
+  font-size: 14px;
+  text-align: center;
+}
+
+.qrcode-tip p {
+  margin: 4px 0;
+}
+
+.payment-status-wrapper {
   margin-top: 20px;
   text-align: center;
 }
 
-.payment-status.success {
-  color: #67c23a;
-}
-
-.payment-status.error {
-  color: #f56c6c;
+.payment-status-tag {
+  font-size: 20px;
+  font-weight: bold;
 }
 
 @media (max-width: 768px) {
@@ -1122,54 +1199,5 @@ onBeforeUnmount(() => {
 .address-select-icon {
   color: #c0c4cc;
   font-size: 18px;
-}
-
-.payment-qrcode {
-  text-align: center;
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-}
-
-.payment-qrcode img {
-  width: 180px;
-  height: 180px;
-  margin-bottom: 10px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-}
-
-.payment-amount {
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.payment-amount .price {
-  color: #ff4d4f;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.payment-method-info {
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.qrcode-tip {
-  margin-top: 10px;
-  color: #909399;
-  font-size: 14px;
-}
-
-.payment-status-wrapper {
-  margin-top: 20px;
-  text-align: center;
-}
-
-.payment-status-tag {
-  font-size: 20px;
-  font-weight: bold;
 }
 </style> 

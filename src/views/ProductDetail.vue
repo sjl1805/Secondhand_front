@@ -46,7 +46,7 @@
             </div>
             <div class="meta-item">
               <span class="meta-label">商品成色：</span>
-              <el-tag size="small" type="success">{{ getConditionText(product.conditions) }}</el-tag>
+              <el-tag size="small" type="success">{{ getConditionText(product.productQuality) }}</el-tag>
             </div>
             <div class="meta-item">
               <span class="meta-label">浏览次数：</span>
@@ -238,8 +238,8 @@ const getStatusTagType = (status) => {
 }
 
 // 获取商品成色文本
-const getConditionText = (conditions) => {
-  return productStore.conditionMap[conditions] || '未知'
+const getConditionText = (productQuality) => {
+  return productStore.productQualityMap[productQuality] || '未知'
 }
 
 // 获取商品详情
@@ -253,6 +253,12 @@ const fetchProductDetail = async () => {
     if (res.code === 200 && res.data) {
       // 处理商品数据
       product.value = productStore.processProductData(res.data)
+      
+      // 确保productQuality字段存在（向后兼容）
+      if (product.value && !product.value.productQuality && product.value.conditions) {
+        product.value.productQuality = product.value.conditions
+      }
+      
       document.title = `${product.value.title} - 二手交易平台`
       
       // 如果用户已登录，检查收藏状态
@@ -358,6 +364,11 @@ const fetchSimilarProducts = async () => {
           // 确保卖家头像存在
           if (processed.avatar && !processed.sellerAvatar) {
             processed.sellerAvatar = fileStore.getFullUrl(processed.avatar)
+          }
+          
+          // 确保productQuality字段存在（向后兼容）
+          if (!processed.productQuality && processed.conditions) {
+            processed.productQuality = processed.conditions
           }
           
           console.log('处理后的同类商品:', processed)

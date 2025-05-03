@@ -139,7 +139,7 @@
             <div class="product-details" @click="viewProduct(order.product && order.product.id)">
               <h3 class="product-title">{{ order.product && order.product.title }}</h3>
               <p class="product-condition">
-                成色：{{ getConditionText(order.product && order.product.conditions) }}
+                成色：{{ getConditionText(order.product && order.product.productQuality) }}
               </p>
               <p class="product-desc">{{ truncateDesc(order.product && order.product.description) }}</p>
             </div>
@@ -442,15 +442,8 @@ const getProductImage = (product) => {
 }
 
 // 获取商品成色文本
-const getConditionText = (conditions) => {
-  const conditionMap = {
-    1: '全新',
-    2: '几乎全新',
-    3: '轻微使用痕迹',
-    4: '正常使用痕迹',
-    5: '明显使用痕迹'
-  }
-  return conditionMap[conditions] || '未知'
+const getConditionText = (productQuality) => {
+  return productStore.productQualityMap[productQuality] || '未知'
 }
 
 // 截断描述文本
@@ -571,8 +564,8 @@ const processOrderProductData = async () => {
       order.product.price = order.price || 0
     }
     
-    if (!order.product.condition) {
-      order.product.condition = 1
+    if (!order.product.productQuality) {
+      order.product.productQuality = order.product.conditions || 1
     }
     
     if (!order.product.description) {

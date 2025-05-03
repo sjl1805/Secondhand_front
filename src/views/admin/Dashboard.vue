@@ -72,9 +72,9 @@
             <div class="chart-header">
               <span>近30天数据趋势</span>
               <el-radio-group v-model="chartType" size="small">
-                <el-radio-button label="user">用户注册</el-radio-button>
-                <el-radio-button label="order">订单数量</el-radio-button>
-                <el-radio-button label="transaction">交易金额</el-radio-button>
+                <el-radio-button :value="'user'">用户注册</el-radio-button>
+                <el-radio-button :value="'order'">订单数量</el-radio-button>
+                <el-radio-button :value="'transaction'">交易金额</el-radio-button>
               </el-radio-group>
             </div>
           </template>
@@ -174,33 +174,6 @@
             <el-table-column prop="productCount" label="发布商品数" width="100" />
             <el-table-column prop="saleCount" label="售出数量" width="100" />
           </el-table>
-        </el-card>
-      </el-col>
-    </el-row>
-    
-    <!-- 商品评分分析卡片 -->
-    <el-row :gutter="20" class="chart-row">
-      <el-col :span="24">
-        <el-card shadow="hover" class="chart-card">
-          <template #header>
-            <div class="chart-header">
-              <span>商品评分分布</span>
-              <el-select v-model="selectedProduct" placeholder="选择商品" size="small" filterable @change="fetchProductRating">
-                <el-option
-                  v-for="item in statisticsStore.hotProductsStats"
-                  :key="item.id"
-                  :label="item.title"
-                  :value="item.id"
-                />
-              </el-select>
-            </div>
-          </template>
-          <div v-if="selectedProduct">
-            <div class="chart-container" ref="ratingChartRef"></div>
-          </div>
-          <div v-else class="empty-chart-placeholder">
-            <el-empty description="请选择商品查看评分分布" />
-          </div>
         </el-card>
       </el-col>
     </el-row>

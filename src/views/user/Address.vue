@@ -18,11 +18,9 @@
                 <span class="receiver-name">{{ item.receiverName }}</span>
                 <span class="receiver-phone">{{ item.receiverPhone }}</span>
                 <el-tag v-if="item.isDefault" size="small" type="success">默认</el-tag>
-                <el-tag v-if="item.tag" size="small" type="info" class="address-tag">{{ item.tag }}</el-tag>
               </div>
               <div class="address-detail">
                 {{ formatAddress(item) }}
-                <span v-if="item.postcode" class="address-postcode">邮编: {{ item.postcode }}</span>
               </div>
               <div class="address-update-time" v-if="item.updateTime">
                 更新时间: {{ formatDateTime(item.updateTime) }}
@@ -72,37 +70,25 @@
           <el-input v-model="addressForm.receiverPhone" placeholder="请输入手机号码" />
         </el-form-item>
         
-        <el-form-item label="所在地区" prop="region">
-          <el-cascader
-            v-model="selectedRegion"
-            :options="regionOptions"
-            placeholder="请选择省/市/区"
-            @change="handleRegionChange"
-          />
+        <el-form-item label="省份" prop="province">
+          <el-input v-model="addressForm.province" placeholder="请输入省份" />
         </el-form-item>
         
-        <el-form-item label="详细地址" prop="addressDetail">
+        <el-form-item label="城市" prop="city">
+          <el-input v-model="addressForm.city" placeholder="请输入城市" />
+        </el-form-item>
+        
+        <el-form-item label="区/县" prop="district">
+          <el-input v-model="addressForm.district" placeholder="请输入区/县" />
+        </el-form-item>
+        
+        <el-form-item label="详细地址" prop="detail">
           <el-input 
-            v-model="addressForm.addressDetail" 
+            v-model="addressForm.detail" 
             type="textarea" 
             placeholder="街道、小区、门牌号等" 
-            rows="3"
+            :rows="3"
           />
-        </el-form-item>
-        
-        <el-form-item label="邮政编码" prop="postcode">
-          <el-input v-model="addressForm.postcode" placeholder="请输入6位邮政编码" />
-        </el-form-item>
-        
-        <el-form-item label="地址标签">
-          <el-select v-model="addressForm.tag" placeholder="选择标签" allow-create filterable>
-            <el-option
-              v-for="tag in addressTags"
-              :key="tag"
-              :label="tag"
-              :value="tag"
-            />
-          </el-select>
         </el-form-item>
         
         <el-form-item label="设为默认">
@@ -127,7 +113,6 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAddressStore } from '@/stores/address'
 import { Edit, Delete } from '@element-plus/icons-vue'
-import regionData from '@/utils/region-data'
 import { formatDateTime } from '@/utils/format'
 
 // 初始化地址 store
@@ -139,7 +124,6 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('添加地址')
 const submitting = ref(false)
 const isEdit = ref(false)
-const selectedRegion = ref([])
 
 // 表单数据
 const addressForm = reactive({
@@ -149,9 +133,7 @@ const addressForm = reactive({
   province: '',
   city: '',
   district: '',
-  addressDetail: '',
-  postcode: '',
-  tag: '',
+  detail: '',
   isDefault: false
 })
 
@@ -165,31 +147,19 @@ const rules = {
     { required: true, message: '请输入手机号码', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
   ],
-  region: [
-    { required: true, message: '请选择所在地区', trigger: 'change' }
+  province: [
+    { required: true, message: '请输入省份', trigger: 'blur' }
   ],
-  addressDetail: [
+  city: [
+    { required: true, message: '请输入城市', trigger: 'blur' }
+  ],
+  district: [
+    { required: true, message: '请输入区/县', trigger: 'blur' }
+  ],
+  detail: [
     { required: true, message: '请输入详细地址', trigger: 'blur' },
     { min: 5, max: 100, message: '详细地址长度在 5 到 100 个字符', trigger: 'blur' }
-  ],
-  postcode: [
-    { pattern: /^\d{6}$/, message: '请输入正确的邮政编码', trigger: 'blur' }
   ]
-}
-
-// 地区选项
-const regionOptions = ref(regionData)
-
-// 预设地址标签
-const addressTags = ref(['家', '公司', '学校', '其他'])
-
-// 处理地区变更
-const handleRegionChange = (value) => {
-  if (value && value.length === 3) {
-    addressForm.province = value[0]
-    addressForm.city = value[1]
-    addressForm.district = value[2]
-  }
 }
 
 // 打开地址编辑对话框
@@ -207,13 +177,6 @@ const openAddressDialog = (address) => {
         addressForm[key] = address[key]
       }
     })
-    
-    // 设置地区级联选择器的值
-    selectedRegion.value = [
-      addressForm.province,
-      addressForm.city,
-      addressForm.district
-    ]
   } else {
     // 新增地址
     dialogTitle.value = '添加地址'
@@ -235,9 +198,6 @@ const resetForm = () => {
     addressForm[key] = key === 'isDefault' ? false : (key === 'id' ? null : '')
   })
   
-  // 重置地区选择
-  selectedRegion.value = []
-  
   // 重置表单验证状态
   if (addressFormRef.value) {
     addressFormRef.value.resetFields()
@@ -251,12 +211,6 @@ const submitAddress = async () => {
   try {
     // 表单验证
     await addressFormRef.value.validate()
-    
-    // 检查地区选择
-    if (!addressForm.province || !addressForm.city || !addressForm.district) {
-      ElMessage.warning('请选择完整的地区信息')
-      return
-    }
     
     submitting.value = true
     
@@ -313,7 +267,7 @@ const setAsDefault = async (id) => {
 const formatAddress = (address) => {
   if (!address) return ''
   
-  return `${address.province} ${address.city} ${address.district} ${address.addressDetail}`
+  return `${address.province} ${address.city} ${address.district} ${address.detail}`
 }
 
 // 组件挂载时获取地址列表
@@ -415,16 +369,5 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 5px;
-}
-
-.address-tag {
-  margin-left: 5px;
-}
-
-.address-postcode {
-  display: block;
-  font-size: 12px;
-  color: #909399;
-  margin-top: 3px;
 }
 </style>

@@ -43,7 +43,7 @@ export const useProductStore = defineStore('product', () => {
   }
   
   // 商品成色映射
-  const conditionMap = {
+  const productQualityMap = {
     1: '全新',
     2: '几乎全新',
     3: '轻微使用痕迹',
@@ -436,7 +436,7 @@ export const useProductStore = defineStore('product', () => {
     productPagination,
     userProductPagination,
     productStatusMap,
-    conditionMap,
+    productQualityMap,
     groupedUserProducts,
     productStatusCounts,
     submitProduct,

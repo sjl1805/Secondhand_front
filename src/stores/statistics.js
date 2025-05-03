@@ -2,18 +2,16 @@ import { ref, reactive, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { 
   getBasicStatistics,
+  getTodayStatistics,
   getUserRegisterStatistics,
   getOrderStatistics,
   getTransactionStatistics,
-  getCategoryProductStatistics,
   getUserActivityStatistics,
   getProductStatusStatistics,
   getOrderStatusStatistics,
-  getPlatformIncome,
   getHotProductsStatistics,
   getActiveSellersStatistics,
-  getActiveBuyersStatistics,
-  getProductRatingStatistics
+  getActiveBuyersStatistics
 } from '@/api/statistics'
 import { ElMessage } from 'element-plus'
 
@@ -27,11 +25,10 @@ export const useStatisticsStore = defineStore('statistics', () => {
     totalUsers: 0,
     totalProducts: 0,
     totalOrders: 0,
-    totalRevenue: 0,
+    totalTransaction: 0,
     todayNewUsers: 0,
     todayNewProducts: 0,
-    todayNewOrders: 0,
-    todayRevenue: 0
+    todayNewOrders: 0
   })
   
   // 时间单位选项
@@ -50,20 +47,14 @@ export const useStatisticsStore = defineStore('statistics', () => {
   // 交易额统计
   const transactionStats = ref([])
   
-  // 分类商品统计
-  const categoryProductStats = ref([])
-  
   // 用户活跃度统计
   const userActivityStats = ref([])
   
   // 商品状态统计
-  const productStatusStats = ref({})
+  const productStatusStats = ref([])
   
   // 订单状态统计
-  const orderStatusStats = ref({})
-  
-  // 平台收入
-  const platformIncome = ref(0)
+  const orderStatusStats = ref([])
   
   // 热门商品统计
   const hotProductsStats = ref([])
@@ -79,7 +70,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
     isAdmin.value = isAdminRole
   }
   
-  // 获取基本统计数据
+  // 获取仪表盘概览统计数据
   const fetchBasicStatistics = async () => {
     if (!isAdmin.value) {
       ElMessage.error('您没有管理员权限')
@@ -95,8 +86,33 @@ export const useStatisticsStore = defineStore('statistics', () => {
         return res.data
       }
     } catch (error) {
-      console.error('获取基本统计数据失败', error)
-      ElMessage.error('获取基本统计数据失败')
+      console.error('获取仪表盘概览数据失败', error)
+      ElMessage.error('获取仪表盘概览数据失败')
+    } finally {
+      loading.value = false
+    }
+  }
+  
+  // 获取今日数据统计
+  const fetchTodayStatistics = async () => {
+    if (!isAdmin.value) {
+      ElMessage.error('您没有管理员权限')
+      return Promise.reject(new Error('没有权限'))
+    }
+    
+    loading.value = true
+    try {
+      const res = await getTodayStatistics()
+      if (res.code === 200 && res.data) {
+        // 更新今日统计数据
+        basicStats.todayNewUsers = res.data.todayNewUsers || 0
+        basicStats.todayNewProducts = res.data.todayNewProducts || 0
+        basicStats.todayNewOrders = res.data.todayNewOrders || 0
+        return res.data
+      }
+    } catch (error) {
+      console.error('获取今日数据统计失败', error)
+      ElMessage.error('获取今日数据统计失败')
     } finally {
       loading.value = false
     }
@@ -168,28 +184,6 @@ export const useStatisticsStore = defineStore('statistics', () => {
     }
   }
   
-  // 获取分类商品统计数据
-  const fetchCategoryProductStatistics = async () => {
-    if (!isAdmin.value) {
-      ElMessage.error('您没有管理员权限')
-      return Promise.reject(new Error('没有权限'))
-    }
-    
-    loading.value = true
-    try {
-      const res = await getCategoryProductStatistics()
-      if (res.code === 200) {
-        categoryProductStats.value = res.data || []
-        return res.data
-      }
-    } catch (error) {
-      console.error('获取分类商品统计数据失败', error)
-      ElMessage.error('获取分类商品统计数据失败')
-    } finally {
-      loading.value = false
-    }
-  }
-  
   // 获取用户活跃度统计数据
   const fetchUserActivityStatistics = async (params) => {
     if (!isAdmin.value) {
@@ -223,7 +217,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
     try {
       const res = await getProductStatusStatistics()
       if (res.code === 200) {
-        productStatusStats.value = res.data || {}
+        productStatusStats.value = res.data || []
         return res.data
       }
     } catch (error) {
@@ -245,34 +239,12 @@ export const useStatisticsStore = defineStore('statistics', () => {
     try {
       const res = await getOrderStatusStatistics()
       if (res.code === 200) {
-        orderStatusStats.value = res.data || {}
+        orderStatusStats.value = res.data || []
         return res.data
       }
     } catch (error) {
       console.error('获取订单状态统计数据失败', error)
       ElMessage.error('获取订单状态统计数据失败')
-    } finally {
-      loading.value = false
-    }
-  }
-  
-  // 获取平台收入统计数据
-  const fetchPlatformIncome = async (params) => {
-    if (!isAdmin.value) {
-      ElMessage.error('您没有管理员权限')
-      return Promise.reject(new Error('没有权限'))
-    }
-    
-    loading.value = true
-    try {
-      const res = await getPlatformIncome(params)
-      if (res.code === 200) {
-        platformIncome.value = res.data || 0
-        return res.data
-      }
-    } catch (error) {
-      console.error('获取平台收入统计数据失败', error)
-      ElMessage.error('获取平台收入统计数据失败')
     } finally {
       loading.value = false
     }
@@ -344,24 +316,6 @@ export const useStatisticsStore = defineStore('statistics', () => {
     }
   }
   
-  // 获取商品评分统计
-  const fetchProductRatingStatistics = async (productId) => {
-    loading.value = true
-    try {
-      const res = await getProductRatingStatistics(productId)
-      if (res.code === 200) {
-        return res.data
-      }
-      return null
-    } catch (error) {
-      console.error('获取商品评分统计失败', error)
-      ElMessage.error('获取商品评分统计失败')
-      return null
-    } finally {
-      loading.value = false
-    }
-  }
-  
   // 获取当前日期
   const getCurrentDate = () => {
     const date = new Date()
@@ -401,12 +355,15 @@ export const useStatisticsStore = defineStore('statistics', () => {
       // 获取基本统计数据
       await fetchBasicStatistics()
       
+      // 获取今日统计数据
+      await fetchTodayStatistics()
+      
       // 获取最近30天数据
       const dateRange = getPast30Days()
       const params = {
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
-        timeUnit: 'day'
+        timeGranularity: 'day'
       }
       
       // 分别获取各种统计数据，避免一个失败导致所有失败
@@ -429,9 +386,9 @@ export const useStatisticsStore = defineStore('statistics', () => {
       }
       
       try {
-        await fetchCategoryProductStatistics()
+        await fetchUserActivityStatistics(params)
       } catch (error) {
-        console.error('获取分类商品统计失败', error)
+        console.error('获取用户活跃度统计失败', error)
       }
       
       try {
@@ -480,28 +437,24 @@ export const useStatisticsStore = defineStore('statistics', () => {
     userRegisterStats,
     orderStats,
     transactionStats,
-    categoryProductStats,
     userActivityStats,
     productStatusStats,
     orderStatusStats,
-    platformIncome,
     hotProductsStats,
     activeSellersStats,
     activeBuyersStats,
     setAdminRole,
     fetchBasicStatistics,
+    fetchTodayStatistics,
     fetchUserRegisterStatistics,
     fetchOrderStatistics,
     fetchTransactionStatistics,
-    fetchCategoryProductStatistics,
     fetchUserActivityStatistics,
     fetchProductStatusStatistics,
     fetchOrderStatusStatistics,
-    fetchPlatformIncome,
     fetchHotProductsStatistics,
     fetchActiveSellersStatistics,
     fetchActiveBuyersStatistics,
-    fetchProductRatingStatistics,
     getCurrentDate,
     getPast30Days,
     initDashboardData

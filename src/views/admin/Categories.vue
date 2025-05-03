@@ -4,8 +4,9 @@
     
     <!-- 操作按钮 -->
     <div class="operation-bar">
-      <el-button type="primary" @click="showAddDialog">添加分类</el-button>
+      <el-button type="primary" @click="showAddDialog" :disabled="!isAdmin">添加分类</el-button>
       <el-button type="success" @click="refreshCategories">刷新列表</el-button>
+      <el-tag v-if="!isAdmin" type="warning">您需要管理员权限才能执行添加、编辑和删除操作</el-tag>
     </div>
     
     <!-- 分类表格 -->
@@ -15,37 +16,38 @@
       style="width: 100%"
       border>
       <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="分类名称" />
-      <el-table-column label="父级分类">
+      <el-table-column prop="name" label="分类名称" min-width="180" />
+      <el-table-column label="父级分类" min-width="180">
         <template #default="scope">
           <span v-if="scope.row.parentId === 0">顶级分类</span>
           <span v-else>{{ getCategoryName(scope.row.parentId) }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="sort" label="排序" width="100" />
-      <el-table-column prop="status" label="状态" width="100">
+      <el-table-column prop="createTime" label="创建时间" width="180">
         <template #default="scope">
-          <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
-            {{ scope.row.status === 1 ? '启用' : '禁用' }}
-          </el-tag>
+          {{ formatDate(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="220">
+      <el-table-column label="操作" width="180" fixed="right">
         <template #default="scope">
           <el-button 
             type="primary" 
             size="small" 
             @click="handleEdit(scope.row)"
-            :disabled="!userStore.isLoggedIn || userStore.role !== 'admin'">
+            :disabled="!isAdmin">
             编辑
           </el-button>
           <el-button 
             type="danger" 
             size="small" 
             @click="handleDelete(scope.row)"
-            :disabled="!userStore.isLoggedIn || userStore.role !== 'admin' || categoryStore.hasSubCategories(scope.row.id)">
+            :disabled="!isAdmin || categoryStore.hasSubCategories(scope.row.id)">
             删除
           </el-button>
+          <el-tooltip v-if="categoryStore.hasSubCategories(scope.row.id)" content="此分类包含子分类，无法删除" placement="top">
+            <el-icon><InfoFilled /></el-icon>
+          </el-tooltip>
         </template>
       </el-table-column>
     </el-table>
@@ -79,12 +81,6 @@
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="categoryForm.sort" :min="0" :max="9999" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="categoryForm.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
-          </el-radio-group>
-        </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
@@ -97,17 +93,30 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { useAdminCategoryStore } from '@/stores/adminCategory'
+import { InfoFilled } from '@element-plus/icons-vue'
+import dayjs from 'dayjs'
 
 // 初始化store
 const userStore = useUserStore()
 const categoryStore = useAdminCategoryStore()
 
+// 管理员权限检查
+const isAdmin = computed(() => {
+  return userStore.isLoggedIn && (userStore.role === '9' || userStore.role === 9)
+})
+
 // 设置管理员权限
-categoryStore.setAdminRole(userStore.role === '9' || userStore.role === 9)
+categoryStore.setAdminRole(isAdmin.value)
+
+// 监听登录状态和角色变化
+watch(() => [userStore.isLoggedIn, userStore.role], () => {
+  const newIsAdmin = userStore.isLoggedIn && (userStore.role === '9' || userStore.role === 9)
+  categoryStore.setAdminRole(newIsAdmin)
+})
 
 // 表单相关
 const categoryFormRef = ref(null)
@@ -117,8 +126,7 @@ const categoryForm = ref({
   id: null,
   name: '',
   parentId: 0,
-  sort: 0,
-  status: 1
+  sort: 0
 })
 
 // 表单验证规则
@@ -132,9 +140,6 @@ const categoryRules = {
   ],
   sort: [
     { required: true, message: '请输入排序值', trigger: 'blur' }
-  ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
   ]
 }
 
@@ -171,6 +176,12 @@ const getCategoryName = (categoryId) => {
   return category ? category.name : '未知分类'
 }
 
+// 格式化日期
+const formatDate = (date) => {
+  if (!date) return '--'
+  return dayjs(date).format('YYYY-MM-DD HH:mm')
+}
+
 // 显示添加对话框
 const showAddDialog = () => {
   isEdit.value = false
@@ -178,8 +189,7 @@ const showAddDialog = () => {
     id: null,
     name: '',
     parentId: 0,
-    sort: 0,
-    status: 1
+    sort: 0
   }
   dialogVisible.value = true
 }
@@ -191,14 +201,20 @@ const handleEdit = (row) => {
     id: row.id,
     name: row.name,
     parentId: row.parentId,
-    sort: row.sort,
-    status: row.status
+    sort: row.sort
   }
   dialogVisible.value = true
 }
 
 // 处理删除
 const handleDelete = (row) => {
+  // 检查权限
+  if (!isAdmin.value) {
+    ElMessage.warning('您没有管理员权限，无法执行此操作')
+    return
+  }
+  
+  // 检查是否有子分类
   if (categoryStore.hasSubCategories(row.id)) {
     ElMessage.warning('该分类下有子分类，不能删除')
     return
@@ -248,10 +264,6 @@ const refreshCategories = async () => {
 
 // 页面加载时获取分类列表
 onMounted(async () => {
-  if (!userStore.isLoggedIn) {
-    ElMessage.error('请先登录')
-    return
-  }
   await categoryStore.initCategories()
 })
 </script>

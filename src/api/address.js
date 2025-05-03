@@ -30,7 +30,7 @@ export function getAddressDetail(id) {
  */
 export function addAddress(data) {
   return request({
-    url: '/address/add',
+    url: '/address',
     method: 'post',
     data
   })
@@ -43,7 +43,7 @@ export function addAddress(data) {
  */
 export function updateAddress(data) {
   return request({
-    url: '/address/update',
+    url: '/address',
     method: 'put',
     data
   })
@@ -56,7 +56,7 @@ export function updateAddress(data) {
  */
 export function deleteAddress(id) {
   return request({
-    url: `/address/delete/${id}`,
+    url: `/address/${id}`,
     method: 'delete'
   })
 }
@@ -68,7 +68,7 @@ export function deleteAddress(id) {
  */
 export function setDefaultAddress(id) {
   return request({
-    url: `/address/default/${id}`,
+    url: `/address/${id}/default`,
     method: 'put'
   })
 } 

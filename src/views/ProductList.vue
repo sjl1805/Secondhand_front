@@ -203,14 +203,13 @@ const fetchProducts = async () => {
       params.maxPrice = maxPrice.value
     }
     
+    console.log('查询参数:', params)
+    
     // 发起请求
     const result = await productStore.fetchProductList(params)
     if (result) {
       products.value = result.records || []
       total.value = result.total || 0
-      
-      // 更新URL参数
-      updateUrlParams()
     }
   } catch (error) {
     console.error('获取商品列表失败:', error)
@@ -220,41 +219,57 @@ const fetchProducts = async () => {
   }
 }
 
-// 处理页码变化
-const handlePageChange = (page) => {
-  currentPage.value = page
-  fetchProducts()
-}
-
-// 处理每页数量变化
-const handleSizeChange = (size) => {
-  pageSize.value = size
-  currentPage.value = 1 // 重置到第一页
-  fetchProducts()
-}
-
-// 处理排序变化
-const handleSortChange = () => {
-  currentPage.value = 1 // 重置到第一页
-  fetchProducts()
-}
-
-// 处理价格区间变化
-const handlePriceChange = () => {
-  if (!priceRange.value) {
-    // 全部价格
-    minPrice.value = null
-    maxPrice.value = null
-  } else {
-    // 解析价格范围
-    const [min, max] = priceRange.value.split(',')
-    minPrice.value = min ? Number(min) : null
-    maxPrice.value = max ? Number(max) : null
-  }
-  
-  currentPage.value = 1 // 重置到第一页
-  fetchProducts()
-}
+// 监听路由变化
+watch(
+  () => [route.path, route.query],
+  () => {
+    console.log('路由变化', route.path, route.query)
+    
+    // 从URL中获取页码和页面大小
+    if (route.query.page) {
+      currentPage.value = Number(route.query.page)
+    } else {
+      currentPage.value = 1
+    }
+    
+    if (route.query.size) {
+      pageSize.value = Number(route.query.size)
+    }
+    
+    // 从URL同步分类ID
+    if (route.query.categoryId) {
+      selectedCategory.value = Number(route.query.categoryId)
+    } else if (route.name === 'CategoryProducts' && route.params.id) {
+      selectedCategory.value = Number(route.params.id)
+    } else {
+      selectedCategory.value = ''
+    }
+    
+    // 从URL同步排序方式
+    if (route.query.sort) {
+      sortOrder.value = route.query.sort
+    }
+    
+    // 从URL同步价格区间
+    if (route.query.minPrice || route.query.maxPrice) {
+      const min = route.query.minPrice || ''
+      const max = route.query.maxPrice || ''
+      priceRange.value = `${min},${max}`
+      minPrice.value = min ? Number(min) : null
+      maxPrice.value = max ? Number(max) : null
+    } else {
+      priceRange.value = ''
+      minPrice.value = null
+      maxPrice.value = null
+    }
+    
+    // 获取分类名称
+    fetchCategoryName()
+    // 获取商品
+    fetchProducts()
+  },
+  { immediate: true, deep: true }
+)
 
 // 更新URL查询参数
 const updateUrlParams = () => {
@@ -284,43 +299,54 @@ const updateUrlParams = () => {
     delete query.maxPrice
   }
   
-  // 更新路由
-  router.push({
+  // 使用replace代替push，防止创建新的历史记录
+  router.replace({
     path: route.path,
     query
+  }, () => {}, (error) => {
+    console.error('Router replace error:', error);
   })
 }
 
-// 从URL参数恢复筛选条件
-const restoreFiltersFromUrl = () => {
-  // 恢复页码
-  if (route.query.page) {
-    currentPage.value = Number(route.query.page)
-  }
-  
-  // 恢复每页数量
-  if (route.query.size) {
-    pageSize.value = Number(route.query.size)
-  }
-  
-  // 恢复排序
-  if (route.query.sort) {
-    sortOrder.value = route.query.sort
-  }
-  
-  // 恢复价格区间
-  if (route.query.minPrice || route.query.maxPrice) {
-    const min = route.query.minPrice || ''
-    const max = route.query.maxPrice || ''
-    priceRange.value = `${min},${max}`
+// 处理页码变化
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  // 先更新URL参数，再获取数据
+  updateUrlParams();
+  fetchProducts();
+}
+
+// 处理每页数量变化
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1 // 重置到第一页
+  updateUrlParams()
+  fetchProducts()
+}
+
+// 处理排序变化
+const handleSortChange = () => {
+  currentPage.value = 1 // 重置到第一页
+  updateUrlParams()
+  fetchProducts()
+}
+
+// 处理价格区间变化
+const handlePriceChange = () => {
+  if (!priceRange.value) {
+    // 全部价格
+    minPrice.value = null
+    maxPrice.value = null
+  } else {
+    // 解析价格范围
+    const [min, max] = priceRange.value.split(',')
     minPrice.value = min ? Number(min) : null
     maxPrice.value = max ? Number(max) : null
   }
   
-  // 恢复分类ID
-  if (route.query.categoryId) {
-    selectedCategory.value = Number(route.query.categoryId)
-  }
+  currentPage.value = 1 // 重置到第一页
+  updateUrlParams()
+  fetchProducts()
 }
 
 // 获取所有分类
@@ -342,60 +368,37 @@ const fetchCategories = async () => {
 const handleCategoryChange = () => {
   currentPage.value = 1 // 重置到第一页
   
-  // 更新URL中的分类参数
+  // 构建新的查询参数对象
+  const query = { ...route.query }
+  
   if (selectedCategory.value) {
-    router.push({
-      query: {
-        ...route.query,
-        categoryId: selectedCategory.value
-      }
-    })
+    query.categoryId = selectedCategory.value
   } else {
     // 如果选择了"全部分类"，则移除分类参数
-    const query = { ...route.query }
     delete query.categoryId
-    router.push({ query })
   }
   
-  // 获取商品数据
-  fetchProducts()
-}
-
-// 监听路由变化
-watch(
-  () => [route.params.id, route.query.categoryId, route.query.keyword],
-  () => {
-    // 重置页码
-    currentPage.value = 1
-    
-    // 从URL同步分类ID
-    if (route.query.categoryId) {
-      selectedCategory.value = Number(route.query.categoryId)
-    } else if (route.name === 'CategoryProducts' && route.params.id) {
-      selectedCategory.value = Number(route.params.id)
-    } else {
-      selectedCategory.value = ''
-    }
-    
-    // 获取分类名称
-    fetchCategoryName()
-    // 获取商品
+  // 重置页码
+  query.page = 1
+  
+  // 使用replace代替push
+  router.replace({ 
+    path: route.path,
+    query 
+  }, () => {
+    // 获取商品数据
     fetchProducts()
-  },
-  { immediate: true }
-)
+  }, (error) => {
+    console.error('Router replace error:', error)
+    // 确保失败时也能获取数据
+    fetchProducts()
+  })
+}
 
 // 页面加载时
 onMounted(() => {
   // 获取所有分类
   fetchCategories()
-  
-  // 从URL恢复筛选条件
-  restoreFiltersFromUrl()
-  // 获取分类名称
-  fetchCategoryName()
-  // 获取商品
-  fetchProducts()
   
   // 设置页面标题（非搜索结果页面）
   if (!props.isSearchResult) {

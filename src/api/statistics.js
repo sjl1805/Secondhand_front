@@ -1,12 +1,23 @@
 import request from '@/utils/request'
 
 /**
- * 获取基本统计数据
+ * 获取仪表盘概览数据
  * @returns {Promise}
  */
 export function getBasicStatistics() {
   return request({
-    url: '/admin/statistics/basic',
+    url: '/admin/statistics/dashboard/overview',
+    method: 'get'
+  })
+}
+
+/**
+ * 获取今日数据统计
+ * @returns {Promise}
+ */
+export function getTodayStatistics() {
+  return request({
+    url: '/admin/statistics/today',
     method: 'get'
   })
 }
@@ -16,7 +27,7 @@ export function getBasicStatistics() {
  * @param {Object} params - 查询参数
  * @param {string} params.startDate - 开始日期，格式：yyyy-MM-dd
  * @param {string} params.endDate - 结束日期，格式：yyyy-MM-dd
- * @param {string} [params.timeUnit=day] - 时间单位：day-天、week-周、month-月
+ * @param {string} [params.timeGranularity=day] - 时间粒度：day-天、week-周、month-月
  * @returns {Promise}
  */
 export function getUserRegisterStatistics(params) {
@@ -32,12 +43,12 @@ export function getUserRegisterStatistics(params) {
  * @param {Object} params - 查询参数
  * @param {string} params.startDate - 开始日期，格式：yyyy-MM-dd
  * @param {string} params.endDate - 结束日期，格式：yyyy-MM-dd
- * @param {string} [params.timeUnit=day] - 时间单位：day-天、week-周、month-月
+ * @param {string} [params.timeGranularity=day] - 时间粒度：day-天、week-周、month-月
  * @returns {Promise}
  */
 export function getOrderStatistics(params) {
   return request({
-    url: '/admin/statistics/order',
+    url: '/admin/statistics/order/count',
     method: 'get',
     params
   })
@@ -48,7 +59,7 @@ export function getOrderStatistics(params) {
  * @param {Object} params - 查询参数
  * @param {string} params.startDate - 开始日期，格式：yyyy-MM-dd
  * @param {string} params.endDate - 结束日期，格式：yyyy-MM-dd
- * @param {string} [params.timeUnit=day] - 时间单位：day-天、week-周、month-月
+ * @param {string} [params.timeGranularity=day] - 时间粒度：day-天、week-周、month-月
  * @returns {Promise}
  */
 export function getTransactionStatistics(params) {
@@ -60,34 +71,7 @@ export function getTransactionStatistics(params) {
 }
 
 /**
- * 获取分类商品统计数据
- * @returns {Promise}
- */
-export function getCategoryProductStatistics() {
-  return request({
-    url: '/admin/statistics/category/product',
-    method: 'get'
-  })
-}
-
-/**
- * 获取用户活跃度统计数据
- * @param {Object} params - 查询参数
- * @param {string} params.startDate - 开始日期，格式：yyyy-MM-dd
- * @param {string} params.endDate - 结束日期，格式：yyyy-MM-dd
- * @param {string} [params.timeUnit=day] - 时间单位：day-天、week-周、month-月
- * @returns {Promise}
- */
-export function getUserActivityStatistics(params) {
-  return request({
-    url: '/admin/statistics/user/activity',
-    method: 'get',
-    params
-  })
-}
-
-/**
- * 获取商品状态统计数据
+ * 获取商品状态统计
  * @returns {Promise}
  */
 export function getProductStatusStatistics() {
@@ -98,7 +82,7 @@ export function getProductStatusStatistics() {
 }
 
 /**
- * 获取订单状态统计数据
+ * 获取订单状态统计
  * @returns {Promise}
  */
 export function getOrderStatusStatistics() {
@@ -109,15 +93,16 @@ export function getOrderStatusStatistics() {
 }
 
 /**
- * 获取平台收入统计数据
+ * 获取用户活跃度统计数据
  * @param {Object} params - 查询参数
  * @param {string} params.startDate - 开始日期，格式：yyyy-MM-dd
  * @param {string} params.endDate - 结束日期，格式：yyyy-MM-dd
+ * @param {string} [params.timeGranularity=day] - 时间粒度：day-天、week-周、month-月
  * @returns {Promise}
  */
-export function getPlatformIncome(params) {
+export function getUserActivityStatistics(params) {
   return request({
-    url: '/admin/statistics/platform/income',
+    url: '/admin/statistics/user/activity',
     method: 'get',
     params
   })
@@ -131,7 +116,7 @@ export function getPlatformIncome(params) {
  */
 export function getHotProductsStatistics(params) {
   return request({
-    url: '/admin/statistics/hot/products',
+    url: '/admin/statistics/product/hot',
     method: 'get',
     params
   })
@@ -145,7 +130,7 @@ export function getHotProductsStatistics(params) {
  */
 export function getActiveSellersStatistics(params) {
   return request({
-    url: '/admin/statistics/active/sellers',
+    url: '/admin/statistics/seller/active',
     method: 'get',
     params
   })
@@ -159,7 +144,7 @@ export function getActiveSellersStatistics(params) {
  */
 export function getActiveBuyersStatistics(params) {
   return request({
-    url: '/admin/statistics/active/buyers',
+    url: '/admin/statistics/buyer/active',
     method: 'get',
     params
   })

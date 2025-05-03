@@ -31,6 +31,18 @@ export function searchUser(params) {
 }
 
 /**
+ * 根据ID获取用户信息
+ * @param {number} userId - 用户ID
+ * @returns {Promise}
+ */
+export function getUserById(userId) {
+  return request({
+    url: `/admin/user/users/${userId}`,
+    method: 'get'
+  })
+}
+
+/**
  * 修改用户状态
  * @param {number} userId - 用户ID
  * @param {Object} params - 修改参数

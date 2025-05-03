@@ -211,25 +211,34 @@
     <!-- 支付确认对话框 -->
     <el-dialog v-model="paymentDialogVisible" title="支付确认" width="400px" :close-on-click-modal="false" :close-on-press-escape="false">
       <div v-if="currentOrder" class="payment-confirm">
-        <p class="payment-amount">支付订单: <span class="price">￥{{ currentOrder && currentOrder.totalAmount ? currentOrder.totalAmount.toFixed(2) : '0.00' }}</span></p>
+        <div class="payment-amount">
+          <div>支付金额</div>
+          <div class="price">￥{{ currentOrder && currentOrder.totalAmount ? currentOrder.totalAmount.toFixed(2) : '0.00' }}</div>
+        </div>
         
         <!-- 支付方式选择 -->
-        <div class="payment-methods">
-          <h4>选择支付方式</h4>
-          <el-radio-group v-model="paymentMethod" :disabled="paymentStatus > 0">
-            <el-radio :value="1">支付宝</el-radio>
-            <el-radio :value="2">微信支付</el-radio>
-            <el-radio :value="3">银行卡</el-radio>
+        <div class="payment-method-info">
+          <div>支付方式:</div>
+          <el-radio-group v-model="paymentMethod" @change="onPaymentMethodChange" :disabled="paymentStatus > 0">
+            <el-radio :label="1">支付宝</el-radio>
+            <el-radio :label="2">微信支付</el-radio>
+            <el-radio :label="3">银行卡</el-radio>
           </el-radio-group>
         </div>
         
         <div class="payment-qrcode">
-          <img src="../../assets/images/qr-code-placeholder.png" alt="支付二维码" />
-          <p>请使用{{ paymentMethodText }}扫码支付</p>
+          <img :src="orderQrCode || defaultQrCode" alt="支付二维码" />
+          <div class="qrcode-tip">
+            <p>订单号: {{ currentOrderNo }}</p>
+            <p>请使用{{ paymentMethodText }}扫码支付</p>
+          </div>
         </div>
         
-        <div class="payment-status" :class="{'success': paymentStatus === 2, 'error': paymentStatus === 3}">
-          <el-tag v-if="paymentStatus > 0" :type="paymentStatus === 2 ? 'success' : paymentStatus === 3 ? 'danger' : 'info'">
+        <div class="payment-status-wrapper">
+          <el-tag v-if="paymentStatus > 0" 
+                  :type="paymentStatus === 2 ? 'success' : paymentStatus === 3 ? 'danger' : 'info'"
+                  size="large"
+                  class="payment-status-tag">
             {{ paymentStatusText }}
           </el-tag>
         </div>
@@ -268,19 +277,22 @@
 </template> 
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue'
+import { ref, computed, onMounted, watch, reactive, nextTick, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useOrderStore } from '@/stores/order'
-import { formatDateTime } from '@/utils/format'
+import { useUserStore } from '@/stores/user'
 import { useProductStore } from '@/stores/product'
 import { useFileStore } from '@/stores/file'
 import { useCommentStore } from '@/stores/comment'
 import { Picture, Plus } from '@element-plus/icons-vue'
 import CommentForm from '@/components/CommentForm.vue'
+import { formatDateTime } from '@/utils/format'
 
 // 默认图片路径
 const DEFAULT_PRODUCT_IMAGE = '/images/default-product.png'
+// 使用Base64默认二维码图片
+const defaultQrCode = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADICAYAAACtWK6eAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEgAACxIB0t1+/AAAABx0RVh0U29mdHdhcmUAQWRvYmUgRmlyZXdvcmtzIENTNui8sowAAAVFSURBVHic7dzRbdswFIZRI5mgG7SDbtJ9O0k36QbdpCN0hI6gBUpABmLYz0l4DkDkJYjEBz8hUjbw8vLvDMDHftr9BICnJhAgCARIBAIkAgESgQCJQIBEIEAiECARCJAIBEgEAiQCAZLXoz/g5eXljz/n+/v7tPc6es+j9zzy3P/rzp+fv29//rzf/L39+Nm8l1//L7vnkcfv3bvTs3n9tX358V4QIBEIkAgESAQCJAIBEoEAiUCAZPo+yCPZsxizndZ1n7Ur45m93P97vSBAIhAgEQiQCARIBAIkAgESgQCJfZCTvdHZrbP3Kc7eJ9jLCwIkAgESgQCJQIBEIEAiECARCJDYB9nAvszZVthPedu91nv2LQQBEoEAiUCAZIsgnvGc4+hrz+zZs3/Oe8+j99n767CTFwRIBAIkAgESgQCJQIBEIEAiECDZYh/EMT8wjxcESAQCJAIBEoEAiUCAZPoq1tEVh7NXLaxGjLHitWfv5+w73hcefX8vCJAIBEgEAiQCARKBAIlAgEQgQDJ9H+SzR+2tWHU5em5Hfc7r7+cFARKBAIlAgEQgQCIQIBEIkAgESLbYB/ns2fdKnjmOHYbrXr94QYBEIEAiECARCJAIBEgEAiQCAZKn3wfZsTdw9Nzs15/NOcpXeUGARCBAIhAgEQiQCARIBAIkAgESx5wcZIXM6lfzhz94QYBEIEAiECARCJAIBEgEAiQCAZKn3wdZ4RmP+fkqLwiQCARIBAIkAgESgQCJQIBEIEDyNPsgK/YSZvw9uO7sczN3fH8cX+MFARKBAIlAgEQgQCIQIBEIkAgESLbYB3mmfYx73Ptzzz7Hd/T9n/m7W80LAiQCARKBAIlAgEQgQCIQIBEIkGzxfJBn8sx7MUcdfb7KCp/zs3+WHbwgQCIQIBEIkAgESAQCJAIBki1WsWasJKywYuXl7NWWHSsf9z6/u78DXhAgEQiQCARIBAIkAgESgQCJQIDkkZ/xffbeyQr3HoPy/f05zn52nxcESAQCJAIBEoEAiUCAZPovG1f85TMrVk3O/svn7O/B0VWpFX+d3Zt9P7wgQCIQIBEIkAgESAQCJAIBEoEAyd/3foBrK4598XyOe3//2Y7+Hp7x+CMvCJAIBEgEAiQCARKBAIlAgEQgQPIL9+6rqDLM+VsAAAAASUVORK5CYII='
 
 const router = useRouter()
 const orderStore = useOrderStore()
@@ -300,6 +312,8 @@ const paymentDialogVisible = ref(false)
 const paymentMethod = ref(1)
 const paymentStatus = ref(0) // 0-未支付 1-支付中 2-支付成功 3-支付失败
 const currentOrder = ref(null)
+const orderQrCode = ref('') // 订单支付二维码
+const currentOrderNo = ref('') // 当前订单编号
 
 // 评价相关状态
 const commentDialogVisible = ref(false)
@@ -470,9 +484,9 @@ const handleTabClick = () => {
 // 显示的订单列表
 const displayOrders = computed(() => {
   if (activeRole.value === 'buyer') {
-    return orderStore.buyerOrders
+    return orderStore.buyerOrders || [];
   } else {
-    return orderStore.sellerOrders
+    return orderStore.sellerOrders || [];
   }
 })
 
@@ -603,12 +617,35 @@ const payOrder = (order) => {
     }
   }
   
+  // 生成订单编号（如果不存在）
+  currentOrderNo.value = order.orderNo || `ORDER${new Date().getTime()}${order.id}`
+  
   // 重置支付状态
   paymentStatus.value = 0
   paymentMethod.value = 1
   
   // 显示支付对话框
   paymentDialogVisible.value = true
+  
+  // 在对话框显示后生成支付二维码
+  setTimeout(() => {
+    // 生成支付二维码
+    generateOrderQrCode(order.id, paymentMethod.value, currentOrder.value.totalAmount)
+  }, 100)
+}
+
+// 生成订单支付二维码
+const generateOrderQrCode = async (orderId, method, amount) => {
+  try {
+    const qrCode = await orderStore.generateOrderQrCode(orderId, method, amount)
+    if (qrCode) {
+      orderQrCode.value = qrCode
+      console.log('支付二维码生成成功')
+    }
+  } catch (error) {
+    console.error('生成支付二维码失败:', error)
+    ElMessage.error('生成支付二维码失败')
+  }
 }
 
 // 确认支付
@@ -635,7 +672,8 @@ const confirmPayment = async () => {
     const paymentData = {
       amount: currentOrder.value.totalAmount || 0,
       paymentMethod: paymentMethod.value,
-      message: currentOrder.value.message || ''
+      message: currentOrder.value.message || '',
+      orderNo: currentOrderNo.value // 添加订单编号
     }
     
     console.log('支付数据:', currentOrder.value.id, paymentData)
@@ -650,6 +688,8 @@ const confirmPayment = async () => {
       // 2秒后自动关闭对话框并刷新
       setTimeout(() => {
         paymentDialogVisible.value = false
+        orderQrCode.value = ''
+        currentOrderNo.value = ''
         initPage()
       }, 2000)
     } else {
@@ -670,6 +710,8 @@ const cancelPayment = () => {
   
   paymentDialogVisible.value = false
   currentOrder.value = null
+  orderQrCode.value = ''
+  currentOrderNo.value = ''
   ElMessage.info('已取消支付')
 }
 
@@ -876,6 +918,27 @@ const submitComment = async () => {
     commentSubmitting.value = false
   }
 }
+
+// 获取商品成色文本
+const getConditionText = (productQuality) => {
+  return productStore.productQualityMap[productQuality] || '未知'
+}
+
+// 组件卸载时清理资源
+onBeforeUnmount(() => {
+  // 重置支付相关状态
+  paymentStatus.value = 0
+  currentOrder.value = null
+  orderQrCode.value = ''
+  currentOrderNo.value = ''
+})
+
+// 支付方式变更时重新生成二维码
+const onPaymentMethodChange = () => {
+  if (!currentOrder.value) return
+  // 重新生成二维码
+  generateOrderQrCode(currentOrder.value.id, paymentMethod.value, currentOrder.value.totalAmount)
+}
 </script>
 
 <style scoped>
@@ -1039,6 +1102,29 @@ const submitComment = async () => {
   margin-bottom: 20px;
 }
 
+.payment-amount .price {
+  color: #ff4d4f;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.payment-method-info {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.payment-method-info div:first-child {
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #606266;
+}
+
+.payment-method-info .el-radio-group {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
 .payment-methods {
   margin-bottom: 20px;
 }
@@ -1050,26 +1136,43 @@ const submitComment = async () => {
 }
 
 .payment-qrcode {
-  margin: 0 auto;
-  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto;
+  max-width: 250px;
 }
 
 .payment-qrcode img {
-  width: 100%;
-  height: auto;
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.payment-status {
+.qrcode-tip {
+  margin-top: 12px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.qrcode-tip p {
+  margin: 4px 0;
+}
+
+.payment-status-wrapper {
   margin-top: 20px;
   text-align: center;
 }
 
-.payment-status.success {
-  color: #67c23a;
-}
-
-.payment-status.error {
-  color: #f56c6c;
+.payment-status-tag {
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .price {
