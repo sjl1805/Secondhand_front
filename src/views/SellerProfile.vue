@@ -1,13 +1,15 @@
 <template>
   <div class="seller-profile">
-    <div class="seller-header" v-loading="loading">
+    <div v-loading="loading" class="seller-header">
       <div class="seller-info">
-        <el-avatar 
-          :size="80" 
-          :src="sellerAvatar" 
-          class="seller-avatar"
+        <el-avatar
+            :size="80"
+            :src="sellerAvatar"
+            class="seller-avatar"
         >
-          <el-icon><User /></el-icon>
+          <el-icon>
+            <User/>
+          </el-icon>
         </el-avatar>
         <div class="seller-detail">
           <h1 class="seller-name">{{ sellerName }}</h1>
@@ -24,40 +26,42 @@
           </div>
         </div>
       </div>
-      
+
       <div class="action-buttons">
-        <el-button type="primary" @click="handleContact" :disabled="isCurrentUser">
-          <el-icon><ChatDotRound /></el-icon>
+        <el-button :disabled="isCurrentUser" type="primary" @click="handleContact">
+          <el-icon>
+            <ChatDotRound/>
+          </el-icon>
           联系卖家
         </el-button>
       </div>
     </div>
-    
-    <el-divider />
-    
+
+    <el-divider/>
+
     <div class="seller-products">
       <h2 class="section-title">{{ sellerName }}的商品</h2>
-      
+
       <div v-loading="productsLoading">
         <div v-if="products.length > 0" class="product-grid">
-          <product-card 
-            v-for="product in products" 
-            :key="product.id" 
-            :product="product"
+          <product-card
+              v-for="product in products"
+              :key="product.id"
+              :product="product"
           />
         </div>
-        <el-empty v-else-if="!productsLoading" description="暂无商品" />
+        <el-empty v-else-if="!productsLoading" description="暂无商品"/>
       </div>
-      
+
       <!-- 分页 -->
-      <div class="pagination-container" v-if="total > 0">
+      <div v-if="total > 0" class="pagination-container">
         <el-pagination
-          background
-          layout="prev, pager, next"
-          :total="total"
-          :page-size="pageSize"
-          :current-page="currentPage"
-          @current-change="handlePageChange"
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :total="total"
+            background
+            layout="prev, pager, next"
+            @current-change="handlePageChange"
         />
       </div>
     </div>
@@ -65,15 +69,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { useProductStore } from '@/stores/product'
-import { getSellerInfo } from '@/api/user'
-import { ElMessage } from 'element-plus'
-import { User, ChatDotRound } from '@element-plus/icons-vue'
+import {computed, onMounted, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useUserStore} from '@/stores/user'
+import {useProductStore} from '@/stores/product'
+import {getSellerInfo} from '@/api/user'
+import {ElMessage} from 'element-plus'
+import {ChatDotRound, User} from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
-import { useFileStore } from '@/stores/file'
+import {useFileStore} from '@/stores/file'
 
 // 路由和存储
 const route = useRoute()
@@ -110,7 +114,7 @@ const pageSize = ref(12)
 // 获取卖家信息
 const fetchSellerInfo = async () => {
   if (!sellerId.value) return
-  
+
   loading.value = true
   try {
     const res = await getSellerInfo(sellerId.value)
@@ -118,12 +122,12 @@ const fetchSellerInfo = async () => {
       const seller = res.data
       sellerName.value = seller.nickname || seller.username || '未知用户'
       sellerBio.value = seller.bio || ''
-      
+
       // 处理头像
       if (seller.avatar) {
         sellerAvatar.value = fileStore.getFullUrl(seller.avatar)
       }
-      
+
       // 设置页面标题
       document.title = `${sellerName.value}的店铺 - 二手交易平台`
     }
@@ -138,7 +142,7 @@ const fetchSellerInfo = async () => {
 // 获取卖家商品统计
 const fetchSellerProductsStats = async () => {
   if (!sellerId.value) return
-  
+
   try {
     // 获取在售商品数量
     const onSaleParams = {
@@ -151,7 +155,7 @@ const fetchSellerProductsStats = async () => {
     if (onSaleRes) {
       productsCount.value = onSaleRes.total || 0
     }
-    
+
     // 获取已售商品数量
     const soldParams = {
       userId: sellerId.value,
@@ -171,7 +175,7 @@ const fetchSellerProductsStats = async () => {
 // 获取卖家商品
 const fetchSellerProducts = async () => {
   if (!sellerId.value) return
-  
+
   productsLoading.value = true
   try {
     const params = {
@@ -180,7 +184,7 @@ const fetchSellerProducts = async () => {
       size: pageSize.value,
       status: 1 // 只显示在售商品
     }
-    
+
     const res = await productStore.fetchSellerProducts(params)
     if (res) {
       products.value = res.records || []
@@ -206,11 +210,11 @@ const handleContact = () => {
     ElMessage.warning('请先登录')
     router.push({
       path: '/login',
-      query: { redirect: route.fullPath }
+      query: {redirect: route.fullPath}
     })
     return
   }
-  
+
   // 跳转到聊天页面
   router.push(`/user/chat/${sellerId.value}`)
 }
@@ -223,13 +227,13 @@ onMounted(() => {
     router.push('/')
     return
   }
-  
+
   // 获取卖家信息
   fetchSellerInfo()
-  
+
   // 获取卖家商品统计
   fetchSellerProductsStats()
-  
+
   // 获取卖家商品
   fetchSellerProducts()
 })
@@ -315,11 +319,11 @@ onMounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .action-buttons {
     margin-top: 20px;
   }
-  
+
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;

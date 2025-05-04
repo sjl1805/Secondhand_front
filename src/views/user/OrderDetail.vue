@@ -1,13 +1,13 @@
 <template>
   <div class="order-detail-container">
     <div class="page-header">
-      <el-page-header @back="goBack" content="订单详情" />
+      <el-page-header content="订单详情" @back="goBack"/>
     </div>
-    
+
     <div v-if="loading" class="loading-container">
-      <el-skeleton :rows="10" animated />
+      <el-skeleton :rows="10" animated/>
     </div>
-    
+
     <template v-else-if="order">
       <!-- 订单状态进度条 -->
       <el-card class="order-status-card">
@@ -18,65 +18,65 @@
               {{ order.statusText }}
             </el-tag>
           </div>
-          
+
           <div class="order-actions">
             <!-- 买家操作 -->
-            <el-button 
-              v-if="showPayButton" 
-              type="primary"
-              @click="payOrder(order)"
+            <el-button
+                v-if="showPayButton"
+                type="primary"
+                @click="payOrder(order)"
             >
               立即支付
             </el-button>
-            
-            <el-button 
-              v-if="showReceiveButton" 
-              type="success"
-              @click="confirmReceive(order.id)"
+
+            <el-button
+                v-if="showReceiveButton"
+                type="success"
+                @click="confirmReceive(order.id)"
             >
               确认收货
             </el-button>
-            
-            <el-button 
-              v-if="showCancelButton" 
-              type="danger"
-              @click="cancelOrder(order.id)"
+
+            <el-button
+                v-if="showCancelButton"
+                type="danger"
+                @click="cancelOrder(order.id)"
             >
               取消订单
             </el-button>
-            
+
             <!-- 评价按钮 -->
-            <el-button 
-              v-if="showCommentButton" 
-              type="success"
-              @click="openCommentDialog(order)"
+            <el-button
+                v-if="showCommentButton"
+                type="success"
+                @click="openCommentDialog(order)"
             >
               评价商品
             </el-button>
-            
+
             <!-- 卖家操作 -->
-            <el-button 
-              v-if="showShipButton" 
-              type="primary"
-              @click="shipOrder(order.id)"
+            <el-button
+                v-if="showShipButton"
+                type="primary"
+                @click="shipOrder(order.id)"
             >
               确认发货
             </el-button>
           </div>
         </div>
-        
-        <el-steps 
-          :active="getStatusStep(order.status)" 
-          finish-status="success"
-          class="order-steps"
+
+        <el-steps
+            :active="getStatusStep(order.status)"
+            class="order-steps"
+            finish-status="success"
         >
-          <el-step title="提交订单" :description="formatDate(order.createTime)" />
-          <el-step title="付款成功" :description="getStatusTime(2)" />
-          <el-step title="商品发货" :description="getStatusTime(3)" />
-          <el-step title="交易完成" :description="getStatusTime(4)" />
+          <el-step :description="formatDate(order.createTime)" title="提交订单"/>
+          <el-step :description="getStatusTime(2)" title="付款成功"/>
+          <el-step :description="getStatusTime(3)" title="商品发货"/>
+          <el-step :description="getStatusTime(4)" title="交易完成"/>
         </el-steps>
       </el-card>
-      
+
       <!-- 订单基本信息 -->
       <el-card class="info-card">
         <template #header>
@@ -87,12 +87,20 @@
         <el-descriptions :column="2" border>
           <el-descriptions-item label="订单编号">{{ order.orderNo }}</el-descriptions-item>
           <el-descriptions-item label="下单时间">{{ formatDate(order.createTime) }}</el-descriptions-item>
-          <el-descriptions-item v-if="isSeller" label="买家">{{ order.buyer?.username || '未知' }}</el-descriptions-item>
-          <el-descriptions-item v-if="isBuyer" label="卖家">{{ order.seller?.username || '未知' }}</el-descriptions-item>
+          <el-descriptions-item v-if="isSeller" label="买家">{{
+              order.buyer?.username || '未知'
+            }}
+          </el-descriptions-item>
+          <el-descriptions-item v-if="isBuyer" label="卖家">{{
+              order.seller?.username || '未知'
+            }}
+          </el-descriptions-item>
           <el-descriptions-item v-if="order.status >= 2" label="支付方式">
-            {{ order.paymentMethod === 1 ? '支付宝' : 
-               order.paymentMethod === 2 ? '微信支付' : 
-               order.paymentMethod === 3 ? '银行卡' : '未知' }}
+            {{
+              order.paymentMethod === 1 ? '支付宝' :
+                  order.paymentMethod === 2 ? '微信支付' :
+                      order.paymentMethod === 3 ? '银行卡' : '未知'
+            }}
           </el-descriptions-item>
           <el-descriptions-item v-if="order.status >= 2" label="支付时间">
             {{ order.paymentTime ? formatDate(order.paymentTime) : '未知' }}
@@ -102,16 +110,18 @@
           </el-descriptions-item>
           <el-descriptions-item v-if="order.status >= 2" label="支付状态">
             <el-tag :type="order.paymentStatus === 2 ? 'success' : (order.paymentStatus === 3 ? 'danger' : 'info')">
-              {{ order.paymentStatus === 1 ? '待支付' : 
-                 order.paymentStatus === 2 ? '支付成功' : 
-                 order.paymentStatus === 3 ? '支付失败' : '未知' }}
+              {{
+                order.paymentStatus === 1 ? '待支付' :
+                    order.paymentStatus === 2 ? '支付成功' :
+                        order.paymentStatus === 3 ? '支付失败' : '未知'
+              }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="交易方式" :span="order.status >= 2 ? 1 : 2">线下交易</el-descriptions-item>
-          <el-descriptions-item label="买家留言" :span="2">{{ order.message || '无留言' }}</el-descriptions-item>
+          <el-descriptions-item :span="order.status >= 2 ? 1 : 2" label="交易方式">线下交易</el-descriptions-item>
+          <el-descriptions-item :span="2" label="买家留言">{{ order.message || '无留言' }}</el-descriptions-item>
         </el-descriptions>
       </el-card>
-      
+
       <!-- 商品信息 -->
       <el-card class="info-card">
         <template #header>
@@ -119,19 +129,21 @@
             <span>商品信息</span>
           </div>
         </template>
-        
+
         <div class="product-card">
           <div class="product-info">
-            <el-image 
-              :src="order.product && order.product.coverImage ? order.product.coverImage : (order.product && order.product.imageUrl ? order.product.imageUrl : getProductImage(order.product))" 
-              class="product-image"
-              fit="cover"
-              :preview-src-list="order.product && order.product.images ? order.product.images : []"
-              @click="viewProduct(order.product && order.product.id)"
+            <el-image
+                :preview-src-list="order.product && order.product.images ? order.product.images : []"
+                :src="order.product && order.product.coverImage ? order.product.coverImage : (order.product && order.product.imageUrl ? order.product.imageUrl : getProductImage(order.product))"
+                class="product-image"
+                fit="cover"
+                @click="viewProduct(order.product && order.product.id)"
             >
               <template #error>
                 <div class="image-error">
-                  <el-icon><Picture /></el-icon>
+                  <el-icon>
+                    <Picture/>
+                  </el-icon>
                   <span>加载失败</span>
                 </div>
               </template>
@@ -147,7 +159,9 @@
           <div class="product-price-info">
             <div class="price-item">
               <span class="price-label">单价</span>
-              <span class="price-value">¥{{ order.product && order.product.price ? order.product.price.toFixed(2) : '0.00' }}</span>
+              <span class="price-value">¥{{
+                  order.product && order.product.price ? order.product.price.toFixed(2) : '0.00'
+                }}</span>
             </div>
             <div class="price-item">
               <span class="price-label">数量</span>
@@ -159,7 +173,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="order-summary">
           <div class="summary-item">
             <span class="summary-label">商品金额：</span>
@@ -167,22 +181,24 @@
           </div>
           <div class="summary-item">
             <span class="summary-label">实付款：</span>
-            <span class="summary-value highlight">¥{{ order.totalAmount ? order.totalAmount.toFixed(2) : '0.00' }}</span>
+            <span class="summary-value highlight">¥{{
+                order.totalAmount ? order.totalAmount.toFixed(2) : '0.00'
+              }}</span>
           </div>
         </div>
       </el-card>
-      
+
       <!-- 交易地点 -->
-      <el-card class="info-card" v-if="order.product.location">
+      <el-card v-if="order.product.location" class="info-card">
         <template #header>
           <div class="card-header">
             <span>交易地点</span>
           </div>
         </template>
-        
+
         <p class="location-text">{{ order.product.location }}</p>
       </el-card>
-      
+
       <!-- 联系信息 -->
       <el-card class="info-card contact-card">
         <template #header>
@@ -190,9 +206,9 @@
             <span>联系方式</span>
           </div>
         </template>
-        
+
         <div class="contact-info">
-          <div class="contact-item" v-if="isBuyer && order.seller">
+          <div v-if="isBuyer && order.seller" class="contact-item">
             <h4>卖家联系方式</h4>
             <p>
               <el-tag size="small" type="info">联系人</el-tag>
@@ -204,8 +220,8 @@
             </p>
             <p v-else class="no-contact">订单支付后可查看联系方式</p>
           </div>
-          
-          <div class="contact-item" v-if="isSeller && order.buyer">
+
+          <div v-if="isSeller && order.buyer" class="contact-item">
             <h4>买家联系方式</h4>
             <p>
               <el-tag size="small" type="info">联系人</el-tag>
@@ -220,18 +236,21 @@
         </div>
       </el-card>
     </template>
-    
+
     <div v-else-if="!loading" class="error-container">
       <el-empty description="订单不存在或已被删除">
         <el-button type="primary" @click="goBack">返回订单列表</el-button>
       </el-empty>
     </div>
-    
+
     <!-- 支付确认对话框 -->
-    <el-dialog v-model="paymentDialogVisible" title="支付确认" width="400px" :close-on-click-modal="false" :close-on-press-escape="false">
+    <el-dialog v-model="paymentDialogVisible" :close-on-click-modal="false" :close-on-press-escape="false" title="支付确认"
+               width="400px">
       <div v-if="order" class="payment-confirm">
-        <p class="payment-amount">支付订单: <span class="price">￥{{ order.totalAmount && !isNaN(order.totalAmount) ? order.totalAmount.toFixed(2) : '0.00' }}</span></p>
-        
+        <p class="payment-amount">支付订单: <span class="price">￥{{
+            order.totalAmount && !isNaN(order.totalAmount) ? order.totalAmount.toFixed(2) : '0.00'
+          }}</span></p>
+
         <!-- 支付方式选择 -->
         <div class="payment-methods">
           <h4>选择支付方式</h4>
@@ -241,45 +260,47 @@
             <el-radio :label="3">银行卡</el-radio>
           </el-radio-group>
         </div>
-        
+
         <div class="payment-qrcode">
-          <img src="../../assets/images/qr-code-placeholder.png" alt="支付二维码" />
+          <img alt="支付二维码" src="../../assets/images/qr-code-placeholder.png"/>
           <p>请使用{{ paymentMethodText }}扫码支付</p>
         </div>
-        
-        <div class="payment-status" :class="{'success': paymentStatus === 2, 'error': paymentStatus === 3}">
-          <el-tag v-if="paymentStatus > 0" :type="paymentStatus === 2 ? 'success' : paymentStatus === 3 ? 'danger' : 'info'">
+
+        <div :class="{'success': paymentStatus === 2, 'error': paymentStatus === 3}" class="payment-status">
+          <el-tag v-if="paymentStatus > 0"
+                  :type="paymentStatus === 2 ? 'success' : paymentStatus === 3 ? 'danger' : 'info'">
             {{ paymentStatusText }}
           </el-tag>
         </div>
       </div>
-      
+
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="cancelPayment" :disabled="paymentStatus === 1">取消支付</el-button>
-          <el-button type="primary" @click="confirmPayment" :loading="paymentStatus === 1" :disabled="paymentStatus === 2 || paymentStatus === 3">
+          <el-button :disabled="paymentStatus === 1" @click="cancelPayment">取消支付</el-button>
+          <el-button :disabled="paymentStatus === 2 || paymentStatus === 3" :loading="paymentStatus === 1" type="primary"
+                     @click="confirmPayment">
             {{ paymentStatus === 0 ? '确认支付' : '查询支付状态' }}
           </el-button>
         </span>
       </template>
     </el-dialog>
-    
+
     <!-- 评价对话框 -->
-    <el-dialog v-model="commentDialogVisible" title="评价商品" width="500px" :close-on-click-modal="true">
+    <el-dialog v-model="commentDialogVisible" :close-on-click-modal="true" title="评价商品" width="500px">
       <comment-form
-        :order-id="order?.id"
-        :product-id="order?.productId"
-        :product="order?.product"
-        v-model:rating="commentForm.rating"
-        v-model:content="commentForm.content"
-        @update:images="commentForm.images = $event"
-        ref="commentFormRef"
+          ref="commentFormRef"
+          v-model:content="commentForm.content"
+          v-model:rating="commentForm.rating"
+          :order-id="order?.id"
+          :product="order?.product"
+          :product-id="order?.productId"
+          @update:images="commentForm.images = $event"
       />
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="cancelComment">取消</el-button>
-          <el-button type="primary" @click="submitComment" :loading="commentSubmitting">提交评价</el-button>
+          <el-button :loading="commentSubmitting" type="primary" @click="submitComment">提交评价</el-button>
         </span>
       </template>
     </el-dialog>
@@ -287,16 +308,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useOrderStore } from '@/stores/order'
-import { useUserStore } from '@/stores/user'
-import { useProductStore } from '@/stores/product'
-import { useFileStore } from '@/stores/file'
-import { useCommentStore } from '@/stores/comment'
-import { formatDateTime } from '@/utils/format'
-import { Picture, Plus } from '@element-plus/icons-vue'
+import {computed, nextTick, onMounted, reactive, ref, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {useOrderStore} from '@/stores/order'
+import {useUserStore} from '@/stores/user'
+import {useProductStore} from '@/stores/product'
+import {useFileStore} from '@/stores/file'
+import {useCommentStore} from '@/stores/comment'
+import {formatDateTime} from '@/utils/format'
+import {Picture} from '@element-plus/icons-vue'
 import CommentForm from '@/components/CommentForm.vue'
 
 const route = useRoute()
@@ -325,16 +346,16 @@ const isSeller = computed(() => {
 // 是否允许查看联系方式
 const canViewContactInfo = computed(() => {
   if (!order.value) return false
-  
+
   // 订单已完成或已取消，可以查看联系方式
   if (order.value.status === 4) return true
-  
+
   // 卖家在订单支付后可以查看买家联系方式
   if (isSeller.value && order.value.status >= 2) return true
-  
+
   // 买家在订单支付后可以查看卖家联系方式
   if (isBuyer.value && order.value.status >= 2) return true
-  
+
   return false
 })
 
@@ -385,7 +406,7 @@ const getStatusStep = (status) => {
 // 获取订单状态变更时间
 const getStatusTime = (status) => {
   if (!order.value) return ''
-  
+
   // 这里根据不同状态返回对应的时间
   if (status === 2 && order.value.paymentTime) {
     return formatDate(order.value.paymentTime)
@@ -394,7 +415,7 @@ const getStatusTime = (status) => {
   } else if (status === 4 && order.value.completeTime) {
     return formatDate(order.value.completeTime)
   }
-  
+
   // 根据当前订单状态推断
   if (order.value.status >= status) {
     if (status === 2) {
@@ -407,7 +428,7 @@ const getStatusTime = (status) => {
     if (status === 3 && order.value.status >= 3) return formatDate(order.value.updateTime)
     if (status === 4 && order.value.status === 4) return formatDate(order.value.updateTime)
   }
-  
+
   return '未完成'
 }
 
@@ -467,14 +488,14 @@ const loadOrderDetail = async () => {
       goBack()
       return
     }
-    
+
     await orderStore.fetchOrderDetail(orderId)
     if (!orderStore.orderDetail) {
       ElMessage.error('订单不存在')
     } else {
       // 处理商品数据
       await processOrderProductData()
-      
+
       // 检查订单是否已评价
       if (orderStore.orderDetail.status === 4) {
         // 优先使用order对象中的isCommented字段
@@ -497,9 +518,9 @@ const loadOrderDetail = async () => {
 // 处理订单中的商品数据
 const processOrderProductData = async () => {
   const order = orderStore.orderDetail
-  
+
   if (!order) return
-  
+
   // 如果有productId但没有完整的product数据，尝试从product store获取
   if (order.productId && (!order.product || !order.product.id)) {
     try {
@@ -512,7 +533,7 @@ const processOrderProductData = async () => {
       console.error('获取商品详情失败:', error)
     }
   }
-  
+
   // 确保商品数据存在
   if (!order.product) {
     order.product = {
@@ -522,8 +543,8 @@ const processOrderProductData = async () => {
       description: '暂无描述',
       imageUrl: order.productImage ? fileStore.getFullUrl(order.productImage) : '/images/default-product.png'
     }
-  } 
-  
+  }
+
   // 处理商品图片
   if (order.product) {
     // 1. 设置默认图片属性
@@ -532,13 +553,13 @@ const processOrderProductData = async () => {
     } else if (!order.product.imageUrl) {
       order.product.imageUrl = '/images/default-product.png'
     }
-    
+
     // 2. 处理图片URL数组
     if (order.product.imageUrls && Array.isArray(order.product.imageUrls) && !order.product.images) {
       order.product.images = order.product.imageUrls.map(url => fileStore.getFullUrl(url))
       order.product.coverImage = order.product.images[0] || null
     }
-    
+
     // 3. 确保 JSON 字符串形式的 images 被解析
     if (order.product.images && typeof order.product.images === 'string') {
       try {
@@ -548,26 +569,26 @@ const processOrderProductData = async () => {
         order.product.images = []
       }
     }
-    
+
     // 4. 如果只有imageUrl但没有coverImage和images
     if (order.product.imageUrl && !order.product.coverImage && (!order.product.images || order.product.images.length === 0)) {
       order.product.coverImage = order.product.imageUrl
       order.product.images = [order.product.imageUrl]
     }
-    
+
     // 设置其它默认值
     if (!order.product.title) {
       order.product.title = order.productTitle || '商品信息不完整'
     }
-    
+
     if (!order.product.price) {
       order.product.price = order.price || 0
     }
-    
+
     if (!order.product.productQuality) {
       order.product.productQuality = order.product.conditions || 1
     }
-    
+
     if (!order.product.description) {
       order.product.description = '暂无描述'
     }
@@ -580,12 +601,12 @@ const viewProduct = async (productId) => {
   if (!productId && order.value && order.value.productId) {
     productId = order.value.productId
   }
-  
+
   if (!productId) {
     ElMessage.warning('商品信息不可用')
     return
   }
-  
+
   router.push(`/product/${productId}`)
 }
 
@@ -620,7 +641,7 @@ const payOrder = (order) => {
   // 重置支付状态
   paymentStatus.value = 0
   paymentMethod.value = 1
-  
+
   // 显示支付对话框
   paymentDialogVisible.value = true
 }
@@ -628,45 +649,45 @@ const payOrder = (order) => {
 // 确认支付
 const confirmPayment = async () => {
   if (!order.value) return
-  
+
   // 如果已经支付成功或失败，直接关闭对话框
   if (paymentStatus.value === 2) {
     paymentDialogVisible.value = false
     loadOrderDetail()
     return
   }
-  
+
   if (paymentStatus.value === 3) {
     paymentDialogVisible.value = false
     return
   }
-  
+
   // 设置为支付中
   paymentStatus.value = 1
   loading.value = true
-  
+
   try {
     // 确保金额是有效数字
-    const amount = order.value.totalAmount && !isNaN(order.value.totalAmount) ? 
-      Number(order.value.totalAmount) : 0
-      
+    const amount = order.value.totalAmount && !isNaN(order.value.totalAmount) ?
+        Number(order.value.totalAmount) : 0
+
     // 构建支付数据
     const paymentData = {
       amount: amount,
       paymentMethod: paymentMethod.value,
       message: order.value.message || ''
     }
-    
+
     console.log('支付订单ID:', order.value.id, '类型:', typeof order.value.id)
     console.log('支付数据:', paymentData)
-    
+
     // 调用支付API
     const paymentResult = await orderStore.submitPayment(order.value.id, paymentData)
-    
+
     if (paymentResult) {
       paymentStatus.value = 2 // 支付成功
       ElMessage.success('支付成功！')
-      
+
       // 设置订单对象的支付相关字段
       if (order.value) {
         order.value.paymentMethod = paymentMethod.value
@@ -674,7 +695,7 @@ const confirmPayment = async () => {
         order.value.paymentTime = new Date()
         order.value.transactionNo = paymentResult.transactionNo || `TX${Date.now()}`
       }
-      
+
       // 3秒后自动关闭对话框并刷新
       setTimeout(() => {
         paymentDialogVisible.value = false
@@ -697,7 +718,7 @@ const confirmPayment = async () => {
 const cancelPayment = () => {
   // 如果支付中，不允许取消
   if (paymentStatus.value === 1) return
-  
+
   paymentDialogVisible.value = false
   ElMessage.info('已取消支付')
 }
@@ -705,85 +726,85 @@ const cancelPayment = () => {
 // 确认收货
 const confirmReceive = (orderId) => {
   ElMessageBox.confirm(
-    '确认已收到商品吗？',
-    '确认收货',
-    {
-      confirmButtonText: '确认收货',
-      cancelButtonText: '取消',
-      type: 'info'
-    }
-  )
-    .then(async () => {
-      try {
-        const success = await orderStore.buyerReceiveOrder(orderId)
-        if (success) {
-          // 重新加载订单详情
-          loadOrderDetail()
-        }
-      } catch (error) {
-        console.error('确认收货失败:', error)
-        ElMessage.error('操作失败，请重试')
+      '确认已收到商品吗？',
+      '确认收货',
+      {
+        confirmButtonText: '确认收货',
+        cancelButtonText: '取消',
+        type: 'info'
       }
-    })
-    .catch(() => {
-      ElMessage.info('已取消操作')
-    })
+  )
+      .then(async () => {
+        try {
+          const success = await orderStore.buyerReceiveOrder(orderId)
+          if (success) {
+            // 重新加载订单详情
+            loadOrderDetail()
+          }
+        } catch (error) {
+          console.error('确认收货失败:', error)
+          ElMessage.error('操作失败，请重试')
+        }
+      })
+      .catch(() => {
+        ElMessage.info('已取消操作')
+      })
 }
 
 // 取消订单
 const cancelOrder = (orderId) => {
   ElMessageBox.confirm(
-    '确认取消此订单吗？',
-    '取消订单',
-    {
-      confirmButtonText: '确认取消',
-      cancelButtonText: '返回',
-      type: 'warning'
-    }
-  )
-    .then(async () => {
-      try {
-        const success = await orderStore.cancelUserOrder(orderId)
-        if (success) {
-          // 重新加载订单详情
-          loadOrderDetail()
-        }
-      } catch (error) {
-        console.error('取消订单失败:', error)
-        ElMessage.error('操作失败，请重试')
+      '确认取消此订单吗？',
+      '取消订单',
+      {
+        confirmButtonText: '确认取消',
+        cancelButtonText: '返回',
+        type: 'warning'
       }
-    })
-    .catch(() => {
-      ElMessage.info('已取消操作')
-    })
+  )
+      .then(async () => {
+        try {
+          const success = await orderStore.cancelUserOrder(orderId)
+          if (success) {
+            // 重新加载订单详情
+            loadOrderDetail()
+          }
+        } catch (error) {
+          console.error('取消订单失败:', error)
+          ElMessage.error('操作失败，请重试')
+        }
+      })
+      .catch(() => {
+        ElMessage.info('已取消操作')
+      })
 }
 
 // 发货
 const shipOrder = (orderId) => {
   ElMessageBox.confirm(
-    '确认商品已发货吗？',
-    '确认发货',
-    {
-      confirmButtonText: '确认发货',
-      cancelButtonText: '取消',
-      type: 'info'
-    }
-  )
-    .then(async () => {
-      try {
-        const success = await orderStore.sellerShipOrder(orderId)
-        if (success) {
-          // 重新加载订单详情
-          loadOrderDetail()
-        }
-      } catch (error) {
-        console.error('发货失败:', error)
-        ElMessage.error('操作失败，请重试')
+      '确认商品已发货吗？',
+      '确认发货',
+      {
+        confirmButtonText: '确认发货',
+        cancelButtonText: '取消',
+        type: 'info'
       }
-    })
-    .catch(() => {
-      ElMessage.info('已取消操作')
-    })
+  )
+      .then(async () => {
+        try {
+          const success = await orderStore.sellerShipOrder(orderId)
+          if (success) {
+            // 重新加载订单详情
+            loadOrderDetail()
+          }
+        } catch (error) {
+          console.error('发货失败:', error)
+          ElMessage.error('操作失败，请重试')
+        }
+      })
+      .catch(() => {
+        ElMessage.info('已取消操作')
+      })
 }
 
 // 评价相关状态
@@ -806,16 +827,16 @@ const commentFormRef = ref(null)
 // 打开评价对话框
 const openCommentDialog = (order) => {
   if (!order) return
-  
+
   // 重置评价表单
   commentForm.orderId = order.id
   commentForm.productId = order.productId
   commentForm.rating = 5
   commentForm.content = ''
   commentForm.images = []
-  
+
   commentDialogVisible.value = true
-  
+
   // 在下一个tick中重置表单
   nextTick(() => {
     if (commentFormRef.value) {
@@ -835,9 +856,9 @@ const submitComment = async () => {
     ElMessage.warning('请输入评价内容')
     return
   }
-  
+
   commentSubmitting.value = true
-  
+
   try {
     // 构建评价数据
     const commentData = {
@@ -847,10 +868,10 @@ const submitComment = async () => {
       content: commentForm.content,
       images: commentForm.images
     }
-    
+
     // 调用评价API
     const result = await commentStore.submitComment(commentData)
-    
+
     if (result) {
       ElMessage.success('评价提交成功')
       // 更新订单评价状态
@@ -859,7 +880,7 @@ const submitComment = async () => {
         order.value.isCommented = 1
       }
       commentDialogVisible.value = false
-      
+
       // 重新加载订单详情
       loadOrderDetail()
     }
@@ -873,12 +894,12 @@ const submitComment = async () => {
 
 // 监听路由参数变化
 watch(
-  () => route.params.id,
-  (newId) => {
-    if (newId) {
-      loadOrderDetail()
+    () => route.params.id,
+    (newId) => {
+      if (newId) {
+        loadOrderDetail()
+      }
     }
-  }
 )
 
 // 组件挂载时加载订单详情

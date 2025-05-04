@@ -7,12 +7,12 @@ import request from '@/utils/request'
  * @param {number} [params.size=10] - 每页数量
  * @returns {Promise}
  */
-export function getNotificationList(params = { page: 1, size: 10 }) {
-  return request({
-    url: '/notification/list',
-    method: 'get',
-    params
-  })
+export function getNotificationList(params = {page: 1, size: 10}) {
+    return request({
+        url: '/notification/list',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -22,12 +22,12 @@ export function getNotificationList(params = { page: 1, size: 10 }) {
  * @param {number} [params.size=10] - 每页数量
  * @returns {Promise}
  */
-export function getUnreadNotifications(params = { page: 1, size: 10 }) {
-  return request({
-    url: '/notification/unread',
-    method: 'get',
-    params
-  })
+export function getUnreadNotifications(params = {page: 1, size: 10}) {
+    return request({
+        url: '/notification/unread',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -36,10 +36,10 @@ export function getUnreadNotifications(params = { page: 1, size: 10 }) {
  * @returns {Promise}
  */
 export function getNotificationDetail(notificationId) {
-  return request({
-    url: `/notification/${notificationId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/notification/${notificationId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -48,10 +48,10 @@ export function getNotificationDetail(notificationId) {
  * @returns {Promise}
  */
 export function markAsRead(notificationId) {
-  return request({
-    url: `/notification/${notificationId}/read`,
-    method: 'put'
-  })
+    return request({
+        url: `/notification/${notificationId}/read`,
+        method: 'put'
+    })
 }
 
 /**
@@ -59,10 +59,10 @@ export function markAsRead(notificationId) {
  * @returns {Promise}
  */
 export function markAllAsRead() {
-  return request({
-    url: '/notification/read/all',
-    method: 'put'
-  })
+    return request({
+        url: '/notification/read/all',
+        method: 'put'
+    })
 }
 
 /**
@@ -70,8 +70,8 @@ export function markAllAsRead() {
  * @returns {Promise}
  */
 export function getUnreadCount() {
-  return request({
-    url: '/notification/unread/count',
-    method: 'get'
-  })
+    return request({
+        url: '/notification/unread/count',
+        method: 'get'
+    })
 } 

@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import { API_BASE_URL } from './config'
+import {API_BASE_URL} from './config'
 
 /**
  * 上传商品图片
@@ -7,17 +7,17 @@ import { API_BASE_URL } from './config'
  * @returns {Promise<Object>} 包含图片路径和URL的响应
  */
 export function uploadProductImage(file) {
-  const formData = new FormData()
-  formData.append('file', file)
-  
-  return request({
-    url: '/file/upload/product',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return request({
+        url: '/file/upload/product',
+        method: 'post',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
 }
 
 /**
@@ -26,17 +26,17 @@ export function uploadProductImage(file) {
  * @returns {Promise<Object>} 包含头像路径和URL的响应
  */
 export function uploadAvatar(file) {
-  const formData = new FormData()
-  formData.append('file', file)
-  
-  return request({
-    url: '/file/upload/avatar',
-    method: 'post',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+    const formData = new FormData()
+    formData.append('file', file)
+
+    return request({
+        url: '/file/upload/avatar',
+        method: 'post',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
 }
 
 /**
@@ -45,11 +45,11 @@ export function uploadAvatar(file) {
  * @returns {Promise<Object>} 删除结果
  */
 export function deleteFile(path) {
-  return request({
-    url: '/file/delete',
-    method: 'delete',
-    params: { path }
-  })
+    return request({
+        url: '/file/delete',
+        method: 'delete',
+        params: {path}
+    })
 }
 
 /**
@@ -59,7 +59,7 @@ export function deleteFile(path) {
  * @returns {string} 文件预览URL
  */
 export function getPreviewUrl(type, filename) {
-  return `${API_BASE_URL}/file/preview/${type}/${filename}`
+    return `${API_BASE_URL}/file/preview/${type}/${filename}`
 }
 
 /**
@@ -69,7 +69,7 @@ export function getPreviewUrl(type, filename) {
  * @returns {string} 文件下载URL
  */
 export function getDownloadUrl(type, filename) {
-  return `${API_BASE_URL}/file/download/${type}/${filename}`
+    return `${API_BASE_URL}/file/download/${type}/${filename}`
 }
 
 /**
@@ -78,8 +78,8 @@ export function getDownloadUrl(type, filename) {
  * @param {string} filename - 文件名
  */
 export function downloadFile(type, filename) {
-  const url = getDownloadUrl(type, filename)
-  window.open(url, '_blank')
+    const url = getDownloadUrl(type, filename)
+    window.open(url, '_blank')
 }
 
 /**
@@ -88,9 +88,9 @@ export function downloadFile(type, filename) {
  * @returns {Promise<Object>} 文件信息
  */
 export function getFileInfo(path) {
-  return request({
-    url: '/file/info',
-    method: 'get',
-    params: { path }
-  })
+    return request({
+        url: '/file/info',
+        method: 'get',
+        params: {path}
+    })
 } 

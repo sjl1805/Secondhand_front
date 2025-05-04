@@ -3,50 +3,50 @@
     <!-- 搜索和操作区域 -->
     <div class="filter-container">
       <el-input
-        v-model="listQuery.keyword"
-        placeholder="搜索通知内容"
-        class="filter-item"
-        style="width: 300px"
-        clearable
-        @keyup.enter="handleFilter"
+          v-model="listQuery.keyword"
+          class="filter-item"
+          clearable
+          placeholder="搜索通知内容"
+          style="width: 300px"
+          @keyup.enter="handleFilter"
       />
       <el-select
-        v-model="listQuery.userId"
-        placeholder="选择用户"
-        clearable
-        filterable
-        remote
-        :remote-method="searchUser"
-        class="filter-item"
-        style="width: 200px"
+          v-model="listQuery.userId"
+          :remote-method="searchUser"
+          class="filter-item"
+          clearable
+          filterable
+          placeholder="选择用户"
+          remote
+          style="width: 200px"
       >
         <el-option
-          v-for="user in userOptions"
-          :key="user.id"
-          :label="user.nickname"
-          :value="user.id"
+            v-for="user in userOptions"
+            :key="user.id"
+            :label="user.nickname"
+            :value="user.id"
         />
       </el-select>
       <el-date-picker
-        v-model="listQuery.dateRange"
-        type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        class="filter-item"
-        style="width: 250px"
+          v-model="listQuery.dateRange"
+          class="filter-item"
+          end-placeholder="结束日期"
+          range-separator="至"
+          start-placeholder="开始日期"
+          style="width: 250px"
+          type="daterange"
       />
       <el-button
-        type="primary"
-        class="filter-item"
-        @click="handleFilter"
+          class="filter-item"
+          type="primary"
+          @click="handleFilter"
       >
         搜索
       </el-button>
       <el-button
-        type="success"
-        class="filter-item"
-        @click="showSendDialog"
+          class="filter-item"
+          type="success"
+          @click="showSendDialog"
       >
         发送通知
       </el-button>
@@ -56,7 +56,7 @@
     <div v-if="selectedNotifications.length" class="batch-actions">
       <el-dropdown>
         <el-button type="primary">
-          批量操作（已选{{ selectedNotifications.length }}项）<i class="el-icon-arrow-down" />
+          批量操作（已选{{ selectedNotifications.length }}项）<i class="el-icon-arrow-down"/>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
@@ -68,15 +68,15 @@
 
     <!-- 通知表格 -->
     <el-table
-      v-loading="loading"
-      :data="notificationList"
-      border
-      fit
-      highlight-current-row
-      @selection-change="handleSelectionChange"
+        v-loading="loading"
+        :data="notificationList"
+        border
+        fit
+        highlight-current-row
+        @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="通知ID" prop="id" width="80" align="center" />
+      <el-table-column align="center" type="selection" width="55"/>
+      <el-table-column align="center" label="通知ID" prop="id" width="80"/>
       <el-table-column label="通知内容" min-width="200">
         <template #default="{ row }">
           <div class="content">{{ row.content }}</div>
@@ -85,29 +85,29 @@
       <el-table-column label="接收用户" width="150">
         <template #default="{ row }">
           <div v-if="row.userId" class="user-info">
-            <el-avatar 
-              :size="'small'" 
-              :src="userCache[row.userId]?.avatar ? fileStore.getFullUrl(userCache[row.userId].avatar) : ''" 
-              @error="() => handleAvatarError(row.userId)"
+            <el-avatar
+                :size="'small'"
+                :src="userCache[row.userId]?.avatar ? fileStore.getFullUrl(userCache[row.userId].avatar) : ''"
+                @error="() => handleAvatarError(row.userId)"
             />
             <span>{{ getUserNameById(row.userId) || '--' }}</span>
           </div>
           <span v-else>全体用户</span>
         </template>
       </el-table-column>
-      <el-table-column label="发送时间" width="180" align="center">
+      <el-table-column align="center" label="发送时间" width="180">
         <template #default="{ row }">
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="100" align="center">
+      <el-table-column align="center" label="状态" width="100">
         <template #default="{ row }">
           <el-tag :type="row.isRead ? 'success' : 'info'">
             {{ row.isRead ? '已读' : '未读' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120" align="center" fixed="right">
+      <el-table-column align="center" fixed="right" label="操作" width="120">
         <template #default="{ row }">
           <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
           <el-button size="small" type="danger" @click="deleteNotification(row.id)">
@@ -119,11 +119,11 @@
 
     <!-- 分页 -->
     <pagination
-      :current="pagination.current"
-      :size="pagination.size"
-      :total="pagination.total"
-      @change="handlePageChange"
-      @size-change="handleSizeChange"
+        :current="pagination.current"
+        :size="pagination.size"
+        :total="pagination.total"
+        @change="handlePageChange"
+        @size-change="handleSizeChange"
     />
 
     <!-- 发送通知对话框 -->
@@ -131,10 +131,10 @@
       <el-form :model="sendForm" label-width="80px">
         <el-form-item label="通知内容">
           <el-input
-            v-model="sendForm.content"
-            type="textarea"
-            :rows="4"
-            placeholder="请输入通知内容"
+              v-model="sendForm.content"
+              :rows="4"
+              placeholder="请输入通知内容"
+              type="textarea"
           />
         </el-form-item>
         <el-form-item label="接收用户">
@@ -143,19 +143,19 @@
             <el-radio :label="2">指定用户</el-radio>
           </el-radio-group>
           <el-select
-            v-if="sendForm.type === 2"
-            v-model="sendForm.userId"
-            placeholder="选择用户"
-            filterable
-            remote
-            :remote-method="searchUser"
-            style="width: 100%; margin-top: 10px"
+              v-if="sendForm.type === 2"
+              v-model="sendForm.userId"
+              :remote-method="searchUser"
+              filterable
+              placeholder="选择用户"
+              remote
+              style="width: 100%; margin-top: 10px"
           >
             <el-option
-              v-for="user in userOptions"
-              :key="user.id"
-              :label="user.nickname"
-              :value="user.id"
+                v-for="user in userOptions"
+                :key="user.id"
+                :label="user.nickname"
+                :value="user.id"
             />
           </el-select>
         </el-form-item>
@@ -169,12 +169,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue'
-import { searchUser as apiSearchUser, getUserById } from '@/api/adminUser'
+import {computed, onMounted, reactive, ref} from 'vue'
+import {getUserById, searchUser as apiSearchUser} from '@/api/adminUser'
 import Pagination from '@/components/Pagination/index.vue'
-import { useFileStore } from '@/stores/file'
-import { useAdminNotificationStore } from '@/stores/adminNotification'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import {useFileStore} from '@/stores/file'
+import {useAdminNotificationStore} from '@/stores/adminNotification'
+import {ElMessage, ElMessageBox} from 'element-plus'
 import dayjs from 'dayjs'
 
 const fileStore = useFileStore()
@@ -236,10 +236,10 @@ const handleAvatarError = (userId) => {
 // 根据ID获取用户名
 const getUserNameById = (userId) => {
   if (!userId) return '--'
-  
+
   // 如果缓存中有，直接返回
   if (userCache[userId]?.name) return userCache[userId].name
-  
+
   // 返回临时文本，异步加载
   loadUserData(userId)
   return `用户${userId}`
@@ -248,17 +248,17 @@ const getUserNameById = (userId) => {
 // 预加载当前页用户数据
 const preloadUserData = async () => {
   const userIds = notificationList.value
-    .filter(item => item.userId)
-    .map(item => item.userId)
-    
+      .filter(item => item.userId)
+      .map(item => item.userId)
+
   // 去重
   const uniqueUserIds = [...new Set(userIds)]
-  
+
   // 加载不在缓存中的用户信息
   const promises = uniqueUserIds
-    .filter(userId => !userCache[userId])
-    .map(loadUserData)
-    
+      .filter(userId => !userCache[userId])
+      .map(loadUserData)
+
   await Promise.all(promises)
 }
 
@@ -269,9 +269,9 @@ const searchUser = async (query) => {
     return
   }
   try {
-    const res = await apiSearchUser({ keyword: query })
+    const res = await apiSearchUser({keyword: query})
     if (res.code === 200) {
-      userOptions.value = res.data.records || []
+      userOptions.value = res.data || []
     }
   } catch (error) {
     console.error('搜索用户失败', error)
@@ -286,9 +286,9 @@ const fetchNotificationList = async () => {
     endTime: listQuery.value.dateRange?.[1] ? dayjs(listQuery.value.dateRange[1]).format('YYYY-MM-DD') : undefined
   }
   delete params.dateRange
-  
+
   await notificationStore.fetchNotificationList(params)
-  
+
   // 预加载用户数据
   preloadUserData()
 }
@@ -342,12 +342,12 @@ const batchDelete = async () => {
     ElMessage.warning('请选择要删除的通知')
     return
   }
-  
+
   try {
     await ElMessageBox.confirm(`确定要删除选中的${selectedNotifications.value.length}条通知吗？`, '提示', {
       type: 'warning'
     })
-    
+
     const result = await notificationStore.batchRemoveNotifications(selectedNotifications.value)
     if (result > 0) {
       ElMessage.success(`成功删除${result}条通知`)
@@ -380,7 +380,7 @@ const sendNotification = async () => {
 
   try {
     let result = false
-    
+
     if (sendForm.value.type === 1) {
       result = await notificationStore.broadcastToAllUsers(sendForm.value.content)
     } else {
@@ -390,7 +390,7 @@ const sendNotification = async () => {
       }
       result = await notificationStore.sendUserNotification(sendForm.value.content, sendForm.value.userId)
     }
-    
+
     if (result) {
       sendDialogVisible.value = false
       fetchNotificationList()
@@ -423,6 +423,7 @@ onMounted(() => {
 
 .filter-container {
   margin-bottom: 20px;
+
   .filter-item {
     margin-right: 10px;
   }

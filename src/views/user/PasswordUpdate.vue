@@ -1,44 +1,44 @@
 <template>
   <div class="password-update-container">
     <h2 class="page-title">修改密码</h2>
-    
+
     <el-card class="password-card">
       <el-form
-        ref="passwordFormRef"
-        :model="passwordForm"
-        :rules="passwordRules"
-        label-width="100px"
+          ref="passwordFormRef"
+          :model="passwordForm"
+          :rules="passwordRules"
+          label-width="100px"
       >
         <el-form-item label="旧密码" prop="oldPassword">
-          <el-input 
-            v-model="passwordForm.oldPassword" 
-            placeholder="请输入旧密码" 
-            type="password"
-            show-password
+          <el-input
+              v-model="passwordForm.oldPassword"
+              placeholder="请输入旧密码"
+              show-password
+              type="password"
           />
         </el-form-item>
-        
+
         <el-form-item label="新密码" prop="newPassword">
-          <el-input 
-            v-model="passwordForm.newPassword" 
-            placeholder="请输入新密码" 
-            type="password"
-            show-password
+          <el-input
+              v-model="passwordForm.newPassword"
+              placeholder="请输入新密码"
+              show-password
+              type="password"
           />
           <span class="form-tip">密码长度不少于6位，建议包含字母和数字</span>
         </el-form-item>
-        
+
         <el-form-item label="确认新密码" prop="confirmPassword">
-          <el-input 
-            v-model="passwordForm.confirmPassword" 
-            placeholder="请再次输入新密码" 
-            type="password"
-            show-password
+          <el-input
+              v-model="passwordForm.confirmPassword"
+              placeholder="请再次输入新密码"
+              show-password
+              type="password"
           />
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button type="primary" @click="updatePassword" :loading="loading">确认修改</el-button>
+          <el-button :loading="loading" type="primary" @click="updatePassword">确认修改</el-button>
           <el-button @click="resetForm">重置</el-button>
         </el-form-item>
       </el-form>
@@ -47,9 +47,9 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import {reactive, ref} from 'vue'
+import {ElMessage} from 'element-plus'
+import {useUserStore} from '@/stores/user'
 
 const userStore = useUserStore()
 
@@ -78,15 +78,15 @@ const validateConfirmPassword = (rule, value, callback) => {
 // 表单验证规则
 const passwordRules = {
   oldPassword: [
-    { required: true, message: '请输入旧密码', trigger: 'blur' }
+    {required: true, message: '请输入旧密码', trigger: 'blur'}
   ],
   newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不少于6个字符', trigger: 'blur' }
+    {required: true, message: '请输入新密码', trigger: 'blur'},
+    {min: 6, message: '密码长度不少于6个字符', trigger: 'blur'}
   ],
   confirmPassword: [
-    { required: true, message: '请再次输入新密码', trigger: 'blur' },
-    { validator: validateConfirmPassword, trigger: 'blur' }
+    {required: true, message: '请再次输入新密码', trigger: 'blur'},
+    {validator: validateConfirmPassword, trigger: 'blur'}
   ]
 }
 
@@ -95,22 +95,22 @@ const updatePassword = async () => {
   try {
     // 表单验证
     await passwordFormRef.value.validate()
-    
+
     loading.value = true
-    
+
     // 判断新旧密码是否相同
     if (passwordForm.oldPassword === passwordForm.newPassword) {
       ElMessage.warning('新密码不能与旧密码相同')
       loading.value = false
       return
     }
-    
+
     // 提交更新
     await userStore.changePassword({
       oldPassword: passwordForm.oldPassword,
       newPassword: passwordForm.newPassword
     })
-    
+
     // 修改成功后由store中的方法自动处理登出和提示
   } catch (error) {
     console.error('修改密码失败', error)
@@ -128,7 +128,7 @@ const resetForm = () => {
   passwordForm.oldPassword = ''
   passwordForm.newPassword = ''
   passwordForm.confirmPassword = ''
-  
+
   // 清除表单验证结果
   if (passwordFormRef.value) {
     passwordFormRef.value.resetFields()

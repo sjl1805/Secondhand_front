@@ -14,11 +14,11 @@
           </el-radio-group>
         </div>
       </template>
-      
+
       <div v-loading="orderStore.loading">
         <!-- 订单列表为空时的提示 -->
-        <el-empty v-if="displayOrders.length === 0" description="暂无相关订单" />
-        
+        <el-empty v-if="displayOrders.length === 0" description="暂无相关订单"/>
+
         <!-- 订单列表 -->
         <div v-else class="order-list">
           <div v-for="order in displayOrders" :key="order.id" class="order-item">
@@ -30,7 +30,7 @@
                 </div>
                 <el-tag :type="getOrderStatusType(order.status)">{{ order.statusText }}</el-tag>
               </div>
-              
+
               <div class="order-content">
                 <div class="product-info" @click="viewOrderDetail(order.id)">
                   <img :src="getImageUrl(order.productImage)" class="product-image">
@@ -39,41 +39,45 @@
                     <p class="product-price">￥{{ (order.price || 0).toFixed(2) }}</p>
                   </div>
                 </div>
-                
+
                 <div class="buyer-info">
                   <p>买家：{{ order.buyerNickname || '用户' + order.buyerId }}</p>
                   <p v-if="order.receiverPhone">联系电话：{{ order.receiverPhone }}</p>
                   <p v-if="order.address">收货地址：{{ order.address }}</p>
                 </div>
               </div>
-              
+
               <div class="order-footer">
                 <div class="action-buttons">
-                  <el-button @click="viewOrderDetail(order.id)" type="info" plain size="small">查看详情</el-button>
-                  <el-button @click="contactBuyer(order.buyerId)" type="primary" plain size="small">联系买家</el-button>
-                  
+                  <el-button plain size="small" type="info" @click="viewOrderDetail(order.id)">查看详情</el-button>
+                  <el-button plain size="small" type="primary" @click="contactBuyer(order.buyerId)">联系买家</el-button>
+
                   <!-- 待发货状态显示发货按钮 -->
-                  <el-button v-if="order.status === 2" type="success" size="small" @click="handleShipOrder(order.id)">发货</el-button>
-                  
+                  <el-button v-if="order.status === 2" size="small" type="success" @click="handleShipOrder(order.id)">
+                    发货
+                  </el-button>
+
                   <!-- 待付款状态显示取消按钮 -->
-                  <el-button v-if="order.status === 1" type="danger" plain size="small" @click="handleCancelOrder(order.id)">取消订单</el-button>
+                  <el-button v-if="order.status === 1" plain size="small" type="danger"
+                             @click="handleCancelOrder(order.id)">取消订单
+                  </el-button>
                 </div>
               </div>
             </el-card>
           </div>
         </div>
-        
+
         <!-- 分页 -->
-        <div class="pagination-container" v-if="orderStore.sellerPagination.total > 0">
+        <div v-if="orderStore.sellerPagination.total > 0" class="pagination-container">
           <el-pagination
-            background
-            layout="prev, pager, next, sizes"
-            :current-page="orderStore.sellerPagination.current"
-            :page-size="orderStore.sellerPagination.size"
-            :total="orderStore.sellerPagination.total"
-            :page-sizes="[5, 10, 20, 50]"
-            @current-change="handlePageChange"
-            @size-change="handleSizeChange"
+              :current-page="orderStore.sellerPagination.current"
+              :page-size="orderStore.sellerPagination.size"
+              :page-sizes="[5, 10, 20, 50]"
+              :total="orderStore.sellerPagination.total"
+              background
+              layout="prev, pager, next, sizes"
+              @current-change="handlePageChange"
+              @size-change="handleSizeChange"
           />
         </div>
       </div>
@@ -82,12 +86,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useOrderStore } from '@/stores/order'
-import { useFileStore } from '@/stores/file'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { formatDateTime } from '@/utils/format'
+import {computed, onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useOrderStore} from '@/stores/order'
+import {useFileStore} from '@/stores/file'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {formatDateTime} from '@/utils/format'
 
 const router = useRouter()
 const orderStore = useOrderStore()
@@ -137,15 +141,15 @@ const contactBuyer = (buyerId) => {
 const handleShipOrder = async (orderId) => {
   try {
     const result = await ElMessageBox.confirm(
-      '确定已经发货了吗？发货后不可撤销。',
-      '发货确认',
-      {
-        confirmButtonText: '确定发货',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+        '确定已经发货了吗？发货后不可撤销。',
+        '发货确认',
+        {
+          confirmButtonText: '确定发货',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
     )
-    
+
     if (result) {
       const success = await orderStore.sellerShipOrder(orderId)
       if (success) {
@@ -162,15 +166,15 @@ const handleShipOrder = async (orderId) => {
 const handleCancelOrder = async (orderId) => {
   try {
     const result = await ElMessageBox.confirm(
-      '确定要取消这个订单吗？此操作不可撤销。',
-      '取消订单',
-      {
-        confirmButtonText: '确定取消',
-        cancelButtonText: '返回',
-        type: 'warning'
-      }
+        '确定要取消这个订单吗？此操作不可撤销。',
+        '取消订单',
+        {
+          confirmButtonText: '确定取消',
+          cancelButtonText: '返回',
+          type: 'warning'
+        }
     )
-    
+
     if (result) {
       const success = await orderStore.cancelUserOrder(orderId)
       if (success) {
@@ -327,16 +331,16 @@ onMounted(() => {
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .order-content {
     flex-direction: column;
   }
-  
+
   .buyer-info {
     text-align: left;
     margin-top: 10px;
   }
-  
+
   .action-buttons {
     flex-wrap: wrap;
   }

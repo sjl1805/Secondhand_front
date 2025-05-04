@@ -5,11 +5,11 @@
       <el-button type="primary" @click="openAddressDialog()">添加新地址</el-button>
     </div>
 
-    <div class="address-list" v-loading="addressStore.loading">
+    <div v-loading="addressStore.loading" class="address-list">
       <el-empty v-if="addressStore.addressList.length === 0" description="暂无收货地址">
         <el-button type="primary" @click="openAddressDialog()">添加新地址</el-button>
       </el-empty>
-      
+
       <div v-else class="address-cards">
         <el-card v-for="item in addressStore.addressList" :key="item.id" class="address-card">
           <div class="address-card-content">
@@ -22,24 +22,28 @@
               <div class="address-detail">
                 {{ formatAddress(item) }}
               </div>
-              <div class="address-update-time" v-if="item.updateTime">
+              <div v-if="item.updateTime" class="address-update-time">
                 更新时间: {{ formatDateTime(item.updateTime) }}
               </div>
             </div>
             <div class="address-actions">
-              <el-button type="primary" link @click="openAddressDialog(item)">
-                <el-icon><Edit /></el-icon>
+              <el-button link type="primary" @click="openAddressDialog(item)">
+                <el-icon>
+                  <Edit/>
+                </el-icon>
                 编辑
               </el-button>
-              <el-button type="danger" link @click="confirmDelete(item.id)">
-                <el-icon><Delete /></el-icon>
+              <el-button link type="danger" @click="confirmDelete(item.id)">
+                <el-icon>
+                  <Delete/>
+                </el-icon>
                 删除
               </el-button>
-              <el-button 
-                v-if="!item.isDefault" 
-                type="success" 
-                link 
-                @click="setAsDefault(item.id)"
+              <el-button
+                  v-if="!item.isDefault"
+                  link
+                  type="success"
+                  @click="setAsDefault(item.id)"
               >
                 设为默认
               </el-button>
@@ -50,56 +54,56 @@
     </div>
 
     <!-- 地址编辑对话框 -->
-    <el-dialog 
-      v-model="dialogVisible" 
-      :title="dialogTitle" 
-      width="500px"
-      destroy-on-close
+    <el-dialog
+        v-model="dialogVisible"
+        :title="dialogTitle"
+        destroy-on-close
+        width="500px"
     >
-      <el-form 
-        ref="addressFormRef" 
-        :model="addressForm" 
-        :rules="rules"
-        label-width="100px"
+      <el-form
+          ref="addressFormRef"
+          :model="addressForm"
+          :rules="rules"
+          label-width="100px"
       >
         <el-form-item label="收货人" prop="receiverName">
-          <el-input v-model="addressForm.receiverName" placeholder="请输入收货人姓名" />
+          <el-input v-model="addressForm.receiverName" placeholder="请输入收货人姓名"/>
         </el-form-item>
-        
+
         <el-form-item label="手机号码" prop="receiverPhone">
-          <el-input v-model="addressForm.receiverPhone" placeholder="请输入手机号码" />
+          <el-input v-model="addressForm.receiverPhone" placeholder="请输入手机号码"/>
         </el-form-item>
-        
+
         <el-form-item label="省份" prop="province">
-          <el-input v-model="addressForm.province" placeholder="请输入省份" />
+          <el-input v-model="addressForm.province" placeholder="请输入省份"/>
         </el-form-item>
-        
+
         <el-form-item label="城市" prop="city">
-          <el-input v-model="addressForm.city" placeholder="请输入城市" />
+          <el-input v-model="addressForm.city" placeholder="请输入城市"/>
         </el-form-item>
-        
+
         <el-form-item label="区/县" prop="district">
-          <el-input v-model="addressForm.district" placeholder="请输入区/县" />
+          <el-input v-model="addressForm.district" placeholder="请输入区/县"/>
         </el-form-item>
-        
+
         <el-form-item label="详细地址" prop="detail">
-          <el-input 
-            v-model="addressForm.detail" 
-            type="textarea" 
-            placeholder="街道、小区、门牌号等" 
-            :rows="3"
+          <el-input
+              v-model="addressForm.detail"
+              :rows="3"
+              placeholder="街道、小区、门牌号等"
+              type="textarea"
           />
         </el-form-item>
-        
+
         <el-form-item label="设为默认">
-          <el-switch v-model="addressForm.isDefault" />
+          <el-switch v-model="addressForm.isDefault"/>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitAddress" :loading="submitting">
+          <el-button :loading="submitting" type="primary" @click="submitAddress">
             确定
           </el-button>
         </span>
@@ -109,11 +113,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useAddressStore } from '@/stores/address'
-import { Edit, Delete } from '@element-plus/icons-vue'
-import { formatDateTime } from '@/utils/format'
+import {onMounted, reactive, ref} from 'vue'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {useAddressStore} from '@/stores/address'
+import {Delete, Edit} from '@element-plus/icons-vue'
+import {formatDateTime} from '@/utils/format'
 
 // 初始化地址 store
 const addressStore = useAddressStore()
@@ -140,37 +144,37 @@ const addressForm = reactive({
 // 表单验证规则
 const rules = {
   receiverName: [
-    { required: true, message: '请输入收货人姓名', trigger: 'blur' },
-    { min: 2, max: 20, message: '姓名长度在 2 到 20 个字符', trigger: 'blur' }
+    {required: true, message: '请输入收货人姓名', trigger: 'blur'},
+    {min: 2, max: 20, message: '姓名长度在 2 到 20 个字符', trigger: 'blur'}
   ],
   receiverPhone: [
-    { required: true, message: '请输入手机号码', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+    {required: true, message: '请输入手机号码', trigger: 'blur'},
+    {pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur'}
   ],
   province: [
-    { required: true, message: '请输入省份', trigger: 'blur' }
+    {required: true, message: '请输入省份', trigger: 'blur'}
   ],
   city: [
-    { required: true, message: '请输入城市', trigger: 'blur' }
+    {required: true, message: '请输入城市', trigger: 'blur'}
   ],
   district: [
-    { required: true, message: '请输入区/县', trigger: 'blur' }
+    {required: true, message: '请输入区/县', trigger: 'blur'}
   ],
   detail: [
-    { required: true, message: '请输入详细地址', trigger: 'blur' },
-    { min: 5, max: 100, message: '详细地址长度在 5 到 100 个字符', trigger: 'blur' }
+    {required: true, message: '请输入详细地址', trigger: 'blur'},
+    {min: 5, max: 100, message: '详细地址长度在 5 到 100 个字符', trigger: 'blur'}
   ]
 }
 
 // 打开地址编辑对话框
 const openAddressDialog = (address) => {
   resetForm()
-  
+
   if (address) {
     // 编辑已有地址
     dialogTitle.value = '编辑地址'
     isEdit.value = true
-    
+
     // 填充表单数据
     Object.keys(addressForm).forEach(key => {
       if (address[key] !== undefined) {
@@ -181,13 +185,13 @@ const openAddressDialog = (address) => {
     // 新增地址
     dialogTitle.value = '添加地址'
     isEdit.value = false
-    
+
     // 如果没有默认地址，则设置为默认
     if (addressStore.addressList.length === 0) {
       addressForm.isDefault = true
     }
   }
-  
+
   dialogVisible.value = true
 }
 
@@ -197,7 +201,7 @@ const resetForm = () => {
   Object.keys(addressForm).forEach(key => {
     addressForm[key] = key === 'isDefault' ? false : (key === 'id' ? null : '')
   })
-  
+
   // 重置表单验证状态
   if (addressFormRef.value) {
     addressFormRef.value.resetFields()
@@ -207,13 +211,13 @@ const resetForm = () => {
 // 提交地址表单
 const submitAddress = async () => {
   if (!addressFormRef.value) return
-  
+
   try {
     // 表单验证
     await addressFormRef.value.validate()
-    
+
     submitting.value = true
-    
+
     if (isEdit.value) {
       // 更新地址
       await addressStore.updateAddressInfo(addressForm)
@@ -221,7 +225,7 @@ const submitAddress = async () => {
       // 添加地址
       await addressStore.createAddress(addressForm)
     }
-    
+
     // 关闭对话框
     dialogVisible.value = false
     ElMessage.success(isEdit.value ? '地址更新成功' : '地址添加成功')
@@ -236,21 +240,21 @@ const submitAddress = async () => {
 // 确认删除地址
 const confirmDelete = (id) => {
   ElMessageBox.confirm(
-    '确定要删除这个地址吗？',
-    '删除地址',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
+      '确定要删除这个地址吗？',
+      '删除地址',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
   )
-    .then(async () => {
-      await addressStore.removeAddress(id)
-      ElMessage.success('地址删除成功')
-    })
-    .catch(() => {
-      // 用户取消删除
-    })
+      .then(async () => {
+        await addressStore.removeAddress(id)
+        ElMessage.success('地址删除成功')
+      })
+      .catch(() => {
+        // 用户取消删除
+      })
 }
 
 // 设置为默认地址
@@ -266,7 +270,7 @@ const setAsDefault = async (id) => {
 // 格式化地址显示
 const formatAddress = (address) => {
   if (!address) return ''
-  
+
   return `${address.province} ${address.city} ${address.district} ${address.detail}`
 }
 

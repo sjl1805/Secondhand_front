@@ -1,16 +1,16 @@
 <template>
   <div class="selling-detail-container">
     <div class="page-header">
-      <el-page-header @back="goBack" title="卖出详情" />
+      <el-page-header title="卖出详情" @back="goBack"/>
     </div>
-    
+
     <div v-loading="loading">
       <template v-if="orderDetail">
         <!-- 订单状态卡片 -->
         <el-card class="status-card">
           <div class="status-container">
             <div class="status-icon">
-              <el-icon size="40" :color="getStatusColor(orderDetail.status)">
+              <el-icon :color="getStatusColor(orderDetail.status)" size="40">
                 <component :is="getStatusIcon(orderDetail.status)"></component>
               </el-icon>
             </div>
@@ -20,7 +20,7 @@
             </div>
           </div>
         </el-card>
-        
+
         <!-- 订单信息卡片 -->
         <el-card class="detail-card">
           <template #header>
@@ -28,20 +28,30 @@
               <h3>订单信息</h3>
             </div>
           </template>
-          
+
           <el-descriptions :column="1" border>
             <el-descriptions-item label="订单编号">{{ orderDetail.orderNo }}</el-descriptions-item>
             <el-descriptions-item label="创建时间">{{ formatDateTime(orderDetail.createTime) }}</el-descriptions-item>
-            <el-descriptions-item label="支付时间" v-if="orderDetail.payTime">{{ formatDateTime(orderDetail.payTime) }}</el-descriptions-item>
-            <el-descriptions-item label="发货时间" v-if="orderDetail.shipTime">{{ formatDateTime(orderDetail.shipTime) }}</el-descriptions-item>
-            <el-descriptions-item label="完成时间" v-if="orderDetail.finishTime">{{ formatDateTime(orderDetail.finishTime) }}</el-descriptions-item>
-            <el-descriptions-item label="取消时间" v-if="orderDetail.cancelTime">{{ formatDateTime(orderDetail.cancelTime) }}</el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.payTime" label="支付时间">{{
+                formatDateTime(orderDetail.payTime)
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.shipTime" label="发货时间">{{
+                formatDateTime(orderDetail.shipTime)
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.finishTime" label="完成时间">
+              {{ formatDateTime(orderDetail.finishTime) }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.cancelTime" label="取消时间">
+              {{ formatDateTime(orderDetail.cancelTime) }}
+            </el-descriptions-item>
             <el-descriptions-item label="订单总额">
               <span class="price">￥{{ (orderDetail.price || 0).toFixed(2) }}</span>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
-        
+
         <!-- 商品信息卡片 -->
         <el-card class="detail-card">
           <template #header>
@@ -50,7 +60,7 @@
               <el-button link type="primary" @click="viewProduct(orderDetail.productId)">查看商品</el-button>
             </div>
           </template>
-          
+
           <div class="product-container">
             <div class="product-info">
               <img :src="getImageUrl(orderDetail.productImage)" class="product-image">
@@ -61,7 +71,7 @@
             </div>
           </div>
         </el-card>
-        
+
         <!-- 买家信息卡片 -->
         <el-card class="detail-card">
           <template #header>
@@ -70,48 +80,57 @@
               <el-button link type="primary" @click="contactBuyer(orderDetail.buyerId)">联系买家</el-button>
             </div>
           </template>
-          
+
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="买家昵称">{{ orderDetail.buyerNickname || '用户' + orderDetail.buyerId }}</el-descriptions-item>
-            <el-descriptions-item label="联系电话" v-if="orderDetail.receiverPhone">{{ orderDetail.receiverPhone }}</el-descriptions-item>
-            <el-descriptions-item label="收货人" v-if="orderDetail.receiverName">{{ orderDetail.receiverName }}</el-descriptions-item>
-            <el-descriptions-item label="收货地址" v-if="orderDetail.address">{{ orderDetail.address }}</el-descriptions-item>
-            <el-descriptions-item label="买家留言" v-if="orderDetail.message">{{ orderDetail.message }}</el-descriptions-item>
+            <el-descriptions-item label="买家昵称">{{
+                orderDetail.buyerNickname || '用户' + orderDetail.buyerId
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.receiverPhone" label="联系电话">{{
+                orderDetail.receiverPhone
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.receiverName" label="收货人">{{
+                orderDetail.receiverName
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.address" label="收货地址">{{
+                orderDetail.address
+              }}
+            </el-descriptions-item>
+            <el-descriptions-item v-if="orderDetail.message" label="买家留言">{{
+                orderDetail.message
+              }}
+            </el-descriptions-item>
           </el-descriptions>
         </el-card>
-        
+
         <!-- 操作按钮区域 -->
         <div class="action-container">
           <el-button @click="goBack">返回列表</el-button>
-          <el-button type="primary" plain @click="contactBuyer(orderDetail.buyerId)">联系买家</el-button>
-          
+          <el-button plain type="primary" @click="contactBuyer(orderDetail.buyerId)">联系买家</el-button>
+
           <!-- 待发货状态显示发货按钮 -->
           <el-button v-if="orderDetail.status === 2" type="success" @click="handleShipOrder">确认发货</el-button>
-          
+
           <!-- 待付款状态显示取消按钮 -->
-          <el-button v-if="orderDetail.status === 1" type="danger" plain @click="handleCancelOrder">取消订单</el-button>
+          <el-button v-if="orderDetail.status === 1" plain type="danger" @click="handleCancelOrder">取消订单</el-button>
         </div>
       </template>
-      
-      <el-empty v-else description="订单不存在或已被删除" />
+
+      <el-empty v-else description="订单不存在或已被删除"/>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useOrderStore } from '@/stores/order'
-import { useFileStore } from '@/stores/file'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { formatDateTime } from '@/utils/format'
-import { 
-  Check, 
-  Loading, 
-  Ship, 
-  CircleCheck, 
-  CircleClose 
-} from '@element-plus/icons-vue'
+import {onMounted, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useOrderStore} from '@/stores/order'
+import {useFileStore} from '@/stores/file'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {formatDateTime} from '@/utils/format'
+import {CircleCheck, CircleClose, Loading, Ship} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -183,15 +202,15 @@ const viewProduct = (productId) => {
 const handleShipOrder = async () => {
   try {
     const result = await ElMessageBox.confirm(
-      '确定已经发货了吗？发货后不可撤销。',
-      '发货确认',
-      {
-        confirmButtonText: '确定发货',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
+        '确定已经发货了吗？发货后不可撤销。',
+        '发货确认',
+        {
+          confirmButtonText: '确定发货',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }
     )
-    
+
     if (result) {
       const success = await orderStore.sellerShipOrder(orderId)
       if (success) {
@@ -209,15 +228,15 @@ const handleShipOrder = async () => {
 const handleCancelOrder = async () => {
   try {
     const result = await ElMessageBox.confirm(
-      '确定要取消这个订单吗？此操作不可撤销。',
-      '取消订单',
-      {
-        confirmButtonText: '确定取消',
-        cancelButtonText: '返回',
-        type: 'warning'
-      }
+        '确定要取消这个订单吗？此操作不可撤销。',
+        '取消订单',
+        {
+          confirmButtonText: '确定取消',
+          cancelButtonText: '返回',
+          type: 'warning'
+        }
     )
-    
+
     if (result) {
       const success = await orderStore.cancelUserOrder(orderId)
       if (success) {
@@ -357,7 +376,7 @@ onMounted(() => {
   .action-container {
     flex-direction: column;
   }
-  
+
   .action-container .el-button {
     margin-left: 0 !important;
     margin-bottom: 10px;

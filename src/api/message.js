@@ -11,11 +11,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function sendMessage(data) {
-  return request({
-    url: '/message',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/message',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -24,10 +24,10 @@ export function sendMessage(data) {
  * @returns {Promise}
  */
 export function getMessageDetail(messageId) {
-  return request({
-    url: `/message/${messageId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/message/${messageId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -39,11 +39,11 @@ export function getMessageDetail(messageId) {
  * @returns {Promise}
  */
 export function getChatHistory(targetUserId, params = {}) {
-  return request({
-    url: `/message/chat/${targetUserId}`,
-    method: 'get',
-    params
-  })
+    return request({
+        url: `/message/chat/${targetUserId}`,
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -51,10 +51,10 @@ export function getChatHistory(targetUserId, params = {}) {
  * @returns {Promise}
  */
 export function getMessageList() {
-  return request({
-    url: '/message/list',
-    method: 'get'
-  })
+    return request({
+        url: '/message/list',
+        method: 'get'
+    })
 }
 
 /**
@@ -63,10 +63,10 @@ export function getMessageList() {
  * @returns {Promise}
  */
 export function markAsRead(messageId) {
-  return request({
-    url: `/message/${messageId}/read`,
-    method: 'put'
-  })
+    return request({
+        url: `/message/${messageId}/read`,
+        method: 'put'
+    })
 }
 
 /**
@@ -75,10 +75,10 @@ export function markAsRead(messageId) {
  * @returns {Promise}
  */
 export function markAllAsRead(targetUserId) {
-  return request({
-    url: `/message/read/all/${targetUserId}`,
-    method: 'put'
-  })
+    return request({
+        url: `/message/read/all/${targetUserId}`,
+        method: 'put'
+    })
 }
 
 /**
@@ -86,10 +86,10 @@ export function markAllAsRead(targetUserId) {
  * @returns {Promise}
  */
 export function getUnreadCount() {
-  return request({
-    url: '/message/unread/count',
-    method: 'get'
-  })
+    return request({
+        url: '/message/unread/count',
+        method: 'get'
+    })
 }
 
 /**
@@ -98,10 +98,10 @@ export function getUnreadCount() {
  * @returns {Promise}
  */
 export function deleteMessage(messageId) {
-  return request({
-    url: `/message/${messageId}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/message/${messageId}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -109,10 +109,10 @@ export function deleteMessage(messageId) {
  * @returns {Promise}
  */
 export function getContactList() {
-  return request({
-    url: '/message/contacts',
-    method: 'get'
-  })
+    return request({
+        url: '/message/contacts',
+        method: 'get'
+    })
 }
 
 /**
@@ -121,8 +121,8 @@ export function getContactList() {
  * @returns {Promise}
  */
 export function getUserBasicInfo(userId) {
-  return request({
-    url: `/user/basic/${userId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/user/basic/${userId}`,
+        method: 'get'
+    })
 }

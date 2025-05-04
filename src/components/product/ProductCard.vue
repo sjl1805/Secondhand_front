@@ -1,15 +1,17 @@
 <template>
   <div class="product-card" @click="navigateToDetail">
     <div class="product-image">
-      <el-image 
-        :src="localProduct.coverImage || defaultImage" 
-        fit="cover"
-        :preview-src-list="localProduct.images || []"
-        :initial-index="0"
+      <el-image
+          :initial-index="0"
+          :preview-src-list="localProduct.images || []"
+          :src="localProduct.coverImage || defaultImage"
+          fit="cover"
       >
         <template #error>
           <div class="image-error">
-            <el-icon><Picture /></el-icon>
+            <el-icon>
+              <Picture/>
+            </el-icon>
             <span>加载失败</span>
           </div>
         </template>
@@ -22,7 +24,7 @@
       <div class="product-meta">
         <span class="product-condition">{{ getConditionText(localProduct.productQuality) }}</span>
         <span class="product-views">
-          <el-icon><View /></el-icon> {{ formatNumber(localProduct.viewCount) }}
+          <el-icon><View/></el-icon> {{ formatNumber(localProduct.viewCount) }}
         </span>
       </div>
       <div class="seller-info">
@@ -35,11 +37,11 @@
 </template>
 
 <script setup>
-import { reactive, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useProductStore } from '@/stores/product'
-import { useFileStore } from '@/stores/file'
-import { Picture, View } from '@element-plus/icons-vue'
+import {onMounted, reactive, watch} from 'vue'
+import {useRouter} from 'vue-router'
+import {useProductStore} from '@/stores/product'
+import {useFileStore} from '@/stores/file'
+import {Picture, View} from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
@@ -69,13 +71,13 @@ const defaultAvatar = 'http://localhost:8080/api/static/images/products/b2a22df3
 
 
 // 创建本地响应式商品数据副本（确保初始化处理）
-const localProduct = reactive(productStore.processProductData({ ...props.product }))
+const localProduct = reactive(productStore.processProductData({...props.product}))
 
 // 确保商品数据已处理
 const ensureProductProcessed = () => {
   try {
     if (!localProduct) return
-    
+
     // 检查图片数据是否已处理
     if (!localProduct.coverImage && localProduct.imageUrls) {
       if (Array.isArray(localProduct.imageUrls)) {
@@ -85,7 +87,7 @@ const ensureProductProcessed = () => {
         productStore.processProductData(localProduct)
       }
     }
-    
+
     // 处理images字段格式
     if (localProduct.images && typeof localProduct.images === 'string') {
       try {
@@ -94,23 +96,23 @@ const ensureProductProcessed = () => {
         localProduct.images = []
       }
     }
-    
+
     // 确保封面图片存在
     if (!localProduct.coverImage && localProduct.images && localProduct.images.length > 0) {
       localProduct.coverImage = localProduct.images[0]
     } else if (!localProduct.coverImage) {
       localProduct.coverImage = defaultImage
     }
-    
+
     // 确保卖家头像存在
     if (localProduct.avatar && !localProduct.sellerAvatar) {
       localProduct.sellerAvatar = fileStore.getFullUrl(localProduct.avatar)
     }
-    
+
     // 设置默认值
     localProduct.viewCount = localProduct.viewCount ?? 0
     localProduct.productQuality = localProduct.productQuality ?? 1
-    
+
     console.log('处理后的商品数据:', localProduct)
   } catch (error) {
     console.error('处理商品数据时出错:', error)
@@ -121,7 +123,7 @@ const ensureProductProcessed = () => {
 watch(() => props.product, (newProduct) => {
   Object.assign(localProduct, newProduct)
   ensureProductProcessed()
-}, { immediate: true })
+}, {immediate: true})
 
 // 在组件挂载后处理当前商品数据
 onMounted(() => {

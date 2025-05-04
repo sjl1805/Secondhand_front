@@ -20,23 +20,23 @@ import * as fileApi from './file'
 // 导出所有API
 
 export {
-  authApi,
-  userApi,
-  addressApi,
-  categoryApi,
-  orderApi,
-  productApi,
-  statisticsApi,
-  adminUserApi,
-  commentApi,
-  favoriteApi,
-  messageApi,
-  adminOrderApi,
-  adminProductApi,
-  recommendationApi,
-  notificationApi,
-  adminNotificationApi,
-  fileApi
+    authApi,
+    userApi,
+    addressApi,
+    categoryApi,
+    orderApi,
+    productApi,
+    statisticsApi,
+    adminUserApi,
+    commentApi,
+    favoriteApi,
+    messageApi,
+    adminOrderApi,
+    adminProductApi,
+    recommendationApi,
+    notificationApi,
+    adminNotificationApi,
+    fileApi
 }
 
 // 按需添加其他模块的API

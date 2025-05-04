@@ -5,10 +5,10 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getBasicStatistics() {
-  return request({
-    url: '/admin/statistics/dashboard/overview',
-    method: 'get'
-  })
+    return request({
+        url: '/admin/statistics/dashboard/overview',
+        method: 'get'
+    })
 }
 
 /**
@@ -16,10 +16,10 @@ export function getBasicStatistics() {
  * @returns {Promise}
  */
 export function getTodayStatistics() {
-  return request({
-    url: '/admin/statistics/today',
-    method: 'get'
-  })
+    return request({
+        url: '/admin/statistics/today',
+        method: 'get'
+    })
 }
 
 /**
@@ -31,11 +31,11 @@ export function getTodayStatistics() {
  * @returns {Promise}
  */
 export function getUserRegisterStatistics(params) {
-  return request({
-    url: '/admin/statistics/user/register',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/user/register',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -47,11 +47,11 @@ export function getUserRegisterStatistics(params) {
  * @returns {Promise}
  */
 export function getOrderStatistics(params) {
-  return request({
-    url: '/admin/statistics/order/count',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/order/count',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -63,11 +63,11 @@ export function getOrderStatistics(params) {
  * @returns {Promise}
  */
 export function getTransactionStatistics(params) {
-  return request({
-    url: '/admin/statistics/transaction',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/transaction',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -75,10 +75,10 @@ export function getTransactionStatistics(params) {
  * @returns {Promise}
  */
 export function getProductStatusStatistics() {
-  return request({
-    url: '/admin/statistics/product/status',
-    method: 'get'
-  })
+    return request({
+        url: '/admin/statistics/product/status',
+        method: 'get'
+    })
 }
 
 /**
@@ -86,10 +86,10 @@ export function getProductStatusStatistics() {
  * @returns {Promise}
  */
 export function getOrderStatusStatistics() {
-  return request({
-    url: '/admin/statistics/order/status',
-    method: 'get'
-  })
+    return request({
+        url: '/admin/statistics/order/status',
+        method: 'get'
+    })
 }
 
 /**
@@ -101,11 +101,11 @@ export function getOrderStatusStatistics() {
  * @returns {Promise}
  */
 export function getUserActivityStatistics(params) {
-  return request({
-    url: '/admin/statistics/user/activity',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/user/activity',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -115,11 +115,11 @@ export function getUserActivityStatistics(params) {
  * @returns {Promise}
  */
 export function getHotProductsStatistics(params) {
-  return request({
-    url: '/admin/statistics/product/hot',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/product/hot',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -129,11 +129,11 @@ export function getHotProductsStatistics(params) {
  * @returns {Promise}
  */
 export function getActiveSellersStatistics(params) {
-  return request({
-    url: '/admin/statistics/seller/active',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/seller/active',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -143,11 +143,11 @@ export function getActiveSellersStatistics(params) {
  * @returns {Promise}
  */
 export function getActiveBuyersStatistics(params) {
-  return request({
-    url: '/admin/statistics/buyer/active',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/statistics/buyer/active',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -156,9 +156,9 @@ export function getActiveBuyersStatistics(params) {
  * @returns {Promise}
  */
 export function getProductRatingStatistics(productId) {
-  return request({
-    url: `/admin/statistics/product/rating`,
-    method: 'get',
-    params: { productId }
-  })
+    return request({
+        url: `/admin/statistics/product/rating`,
+        method: 'get',
+        params: {productId}
+    })
 } 

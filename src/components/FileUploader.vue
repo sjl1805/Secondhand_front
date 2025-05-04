@@ -1,108 +1,108 @@
 <template>
   <div class="file-uploader">
     <h3>文件上传</h3>
-    
+
     <!-- 上传区域 -->
     <div class="upload-area">
       <el-upload
-        :auto-upload="false"
-        :show-file-list="true"
-        :limit="1"
-        accept="image/*"
-        :on-change="handleFileChange"
-        :on-exceed="handleExceed"
-        :file-list="fileList"
+          :auto-upload="false"
+          :file-list="fileList"
+          :limit="1"
+          :on-change="handleFileChange"
+          :on-exceed="handleExceed"
+          :show-file-list="true"
+          accept="image/*"
       >
         <template #trigger>
           <el-button type="primary">选择文件</el-button>
         </template>
-        
+
         <template #tip>
           <div class="el-upload__tip">
             只能上传 jpg/png/jpeg 文件，且不超过 5MB
           </div>
         </template>
       </el-upload>
-      
+
       <div class="upload-buttons">
-        <el-button 
-          type="success" 
-          @click="uploadProductImage"
-          :loading="fileStore.isUploading"
-          :disabled="!selectedFile"
+        <el-button
+            :disabled="!selectedFile"
+            :loading="fileStore.isUploading"
+            type="success"
+            @click="uploadProductImage"
         >
           上传商品图片
         </el-button>
-        
-        <el-button 
-          type="primary" 
-          @click="uploadAvatar"
-          :loading="fileStore.isUploading"
-          :disabled="!selectedFile"
+
+        <el-button
+            :disabled="!selectedFile"
+            :loading="fileStore.isUploading"
+            type="primary"
+            @click="uploadAvatar"
         >
           上传头像
         </el-button>
       </div>
-      
+
       <!-- 上传进度 -->
       <div v-if="fileStore.isUploading" class="upload-progress">
-        <el-progress 
-          :percentage="fileStore.getUploadProgress" 
-          :format="percentageFormat"
+        <el-progress
+            :format="percentageFormat"
+            :percentage="fileStore.getUploadProgress"
         />
       </div>
     </div>
-    
+
     <!-- 上传历史 -->
     <div v-if="fileStore.getAllUploadedFiles.length > 0" class="upload-history">
       <h4>上传历史</h4>
       <el-table :data="fileStore.getAllUploadedFiles" style="width: 100%">
-        <el-table-column prop="name" label="文件名" />
-        <el-table-column prop="type" label="类型" />
-        <el-table-column prop="size" label="大小" :formatter="formatFileSize" />
-        <el-table-column prop="uploadTime" label="上传时间" :formatter="formatDate" />
+        <el-table-column label="文件名" prop="name"/>
+        <el-table-column label="类型" prop="type"/>
+        <el-table-column :formatter="formatFileSize" label="大小" prop="size"/>
+        <el-table-column :formatter="formatDate" label="上传时间" prop="uploadTime"/>
         <el-table-column label="操作" width="280">
           <template #default="scope">
-            <el-button 
-              type="primary" 
-              size="small" 
-              @click="previewFile(scope.row)"
+            <el-button
+                size="small"
+                type="primary"
+                @click="previewFile(scope.row)"
             >
               预览
             </el-button>
-            <el-button 
-              type="success" 
-              size="small" 
-              @click="downloadFileAction(scope.row)"
+            <el-button
+                size="small"
+                type="success"
+                @click="downloadFileAction(scope.row)"
             >
               下载
             </el-button>
-            <el-button 
-              type="danger" 
-              size="small" 
-              @click="deleteFileAction(scope.row.path)"
+            <el-button
+                size="small"
+                type="danger"
+                @click="deleteFileAction(scope.row.path)"
             >
               删除
             </el-button>
           </template>
         </el-table-column>
       </el-table>
-      
+
       <div class="clear-history">
         <el-button type="warning" @click="fileStore.clearUploadHistory">
           清除历史记录
         </el-button>
       </div>
     </div>
-    
+
     <!-- 预览对话框 -->
     <el-dialog v-model="previewVisible" title="文件预览">
       <div class="preview-content">
-        <img 
-          v-if="previewUrl" 
-          :src="previewUrl" 
-          class="preview-image" 
-          alt="预览图片"
+        <img
+            v-if="previewUrl"
+            :src="previewUrl"
+            alt="预览图片"
+            class="preview-image"
         />
       </div>
     </el-dialog>
@@ -110,10 +110,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useFileStore } from '@/stores'
-import { FILE_TYPES } from '@/api/config'
+import {ref} from 'vue'
+import {ElMessage} from 'element-plus'
+import {useFileStore} from '@/stores'
 
 // 初始化文件存储
 const fileStore = useFileStore()
@@ -141,7 +140,7 @@ const uploadProductImage = async () => {
     ElMessage.warning('请先选择文件')
     return
   }
-  
+
   try {
     const result = await fileStore.uploadProductImage(selectedFile.value)
     ElMessage.success('商品图片上传成功')
@@ -159,7 +158,7 @@ const uploadAvatar = async () => {
     ElMessage.warning('请先选择文件')
     return
   }
-  
+
   try {
     const result = await fileStore.uploadAvatar(selectedFile.value)
     ElMessage.success('头像上传成功')
@@ -196,23 +195,23 @@ const deleteFileAction = async (path) => {
 // 格式化文件大小
 const formatFileSize = (row, column, cellValue) => {
   if (!cellValue) return '未知'
-  
+
   const units = ['B', 'KB', 'MB', 'GB']
   let size = cellValue
   let unitIndex = 0
-  
+
   while (size > 1024 && unitIndex < units.length - 1) {
     size /= 1024
     unitIndex++
   }
-  
+
   return `${size.toFixed(2)} ${units[unitIndex]}`
 }
 
 // 格式化日期
 const formatDate = (row, column, cellValue) => {
   if (!cellValue) return '未知'
-  
+
   const date = new Date(cellValue)
   return date.toLocaleString()
 }

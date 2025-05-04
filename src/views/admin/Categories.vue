@@ -1,85 +1,88 @@
 <template>
   <div class="category-container">
     <h1>分类管理</h1>
-    
+
     <!-- 操作按钮 -->
     <div class="operation-bar">
-      <el-button type="primary" @click="showAddDialog" :disabled="!isAdmin">添加分类</el-button>
+      <el-button :disabled="!isAdmin" type="primary" @click="showAddDialog">添加分类</el-button>
       <el-button type="success" @click="refreshCategories">刷新列表</el-button>
       <el-tag v-if="!isAdmin" type="warning">您需要管理员权限才能执行添加、编辑和删除操作</el-tag>
     </div>
-    
+
     <!-- 分类表格 -->
-    <el-table 
-      v-loading="categoryStore.loading"
-      :data="categoryStore.categoryList" 
-      style="width: 100%"
-      border>
-      <el-table-column prop="id" label="ID" width="80" />
-      <el-table-column prop="name" label="分类名称" min-width="180" />
+    <el-table
+        v-loading="categoryStore.loading"
+        :data="categoryStore.categoryList"
+        border
+        style="width: 100%">
+      <el-table-column label="ID" prop="id" width="80"/>
+      <el-table-column label="分类名称" min-width="180" prop="name"/>
       <el-table-column label="父级分类" min-width="180">
         <template #default="scope">
           <span v-if="scope.row.parentId === 0">顶级分类</span>
           <span v-else>{{ getCategoryName(scope.row.parentId) }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="sort" label="排序" width="100" />
-      <el-table-column prop="createTime" label="创建时间" width="180">
+      <el-table-column label="排序" prop="sort" width="100"/>
+      <el-table-column label="创建时间" prop="createTime" width="180">
         <template #default="scope">
           {{ formatDate(scope.row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" fixed="right">
+      <el-table-column fixed="right" label="操作" width="180">
         <template #default="scope">
-          <el-button 
-            type="primary" 
-            size="small" 
-            @click="handleEdit(scope.row)"
-            :disabled="!isAdmin">
+          <el-button
+              :disabled="!isAdmin"
+              size="small"
+              type="primary"
+              @click="handleEdit(scope.row)">
             编辑
           </el-button>
-          <el-button 
-            type="danger" 
-            size="small" 
-            @click="handleDelete(scope.row)"
-            :disabled="!isAdmin || categoryStore.hasSubCategories(scope.row.id)">
+          <el-button
+              :disabled="!isAdmin || categoryStore.hasSubCategories(scope.row.id)"
+              size="small"
+              type="danger"
+              @click="handleDelete(scope.row)">
             删除
           </el-button>
-          <el-tooltip v-if="categoryStore.hasSubCategories(scope.row.id)" content="此分类包含子分类，无法删除" placement="top">
-            <el-icon><InfoFilled /></el-icon>
+          <el-tooltip v-if="categoryStore.hasSubCategories(scope.row.id)" content="此分类包含子分类，无法删除"
+                      placement="top">
+            <el-icon>
+              <InfoFilled/>
+            </el-icon>
           </el-tooltip>
         </template>
       </el-table-column>
     </el-table>
-    
+
     <!-- 添加/编辑分类对话框 -->
-    <el-dialog 
-      v-model="dialogVisible" 
-      :title="isEdit ? '编辑分类' : '添加分类'" 
-      width="500px">
-      <el-form 
-        ref="categoryFormRef"
-        :model="categoryForm"
-        :rules="categoryRules"
-        label-width="100px">
+    <el-dialog
+        v-model="dialogVisible"
+        :title="isEdit ? '编辑分类' : '添加分类'"
+        width="500px">
+      <el-form
+          ref="categoryFormRef"
+          :model="categoryForm"
+          :rules="categoryRules"
+          label-width="100px">
         <el-form-item label="分类名称" prop="name">
-          <el-input v-model="categoryForm.name" placeholder="请输入分类名称" />
+          <el-input v-model="categoryForm.name" placeholder="请输入分类名称"/>
         </el-form-item>
         <el-form-item label="父级分类" prop="parentId">
-          <el-select 
-            v-model="categoryForm.parentId" 
-            placeholder="请选择父级分类"
-            style="width: 100%">
-            <el-option :value="0" label="顶级分类" />
-            <el-option 
-              v-for="item in availableParentCategories" 
-              :key="item.id" 
-              :label="item.name" 
-              :value="item.id" />
+          <el-select
+              v-model="categoryForm.parentId"
+              placeholder="请选择父级分类"
+              style="width: 100%">
+            <el-option :value="0" label="顶级分类"/>
+            <el-option
+                v-for="item in availableParentCategories"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"/>
           </el-select>
         </el-form-item>
         <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="categoryForm.sort" :min="0" :max="9999" />
+          <el-input-number v-model="categoryForm.sort" :max="9999" :min="0"/>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -93,11 +96,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useUserStore } from '@/stores/user'
-import { useAdminCategoryStore } from '@/stores/adminCategory'
-import { InfoFilled } from '@element-plus/icons-vue'
+import {computed, onMounted, ref, watch} from 'vue'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {useUserStore} from '@/stores/user'
+import {useAdminCategoryStore} from '@/stores/adminCategory'
+import {InfoFilled} from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 // 初始化store
@@ -132,14 +135,14 @@ const categoryForm = ref({
 // 表单验证规则
 const categoryRules = {
   name: [
-    { required: true, message: '请输入分类名称', trigger: 'blur' },
-    { min: 2, max: 20, message: '分类名称长度在2-20个字符之间', trigger: 'blur' }
+    {required: true, message: '请输入分类名称', trigger: 'blur'},
+    {min: 2, max: 20, message: '分类名称长度在2-20个字符之间', trigger: 'blur'}
   ],
   parentId: [
-    { required: true, message: '请选择父级分类', trigger: 'change' }
+    {required: true, message: '请选择父级分类', trigger: 'change'}
   ],
   sort: [
-    { required: true, message: '请输入排序值', trigger: 'blur' }
+    {required: true, message: '请输入排序值', trigger: 'blur'}
   ]
 }
 
@@ -148,7 +151,7 @@ const availableParentCategories = computed(() => {
   if (!isEdit.value) {
     return categoryStore.categoryList
   }
-  
+
   // 编辑时，需要过滤掉自己和自己的子类
   return categoryStore.categoryList.filter(item => {
     return item.id !== categoryForm.value.id && !isChildCategory(categoryForm.value.id, item.id)
@@ -161,7 +164,7 @@ const isChildCategory = (parentId, categoryId) => {
   if (children.some(child => child.id === categoryId)) {
     return true
   }
-  
+
   for (const child of children) {
     if (isChildCategory(child.id, categoryId)) {
       return true
@@ -213,13 +216,13 @@ const handleDelete = (row) => {
     ElMessage.warning('您没有管理员权限，无法执行此操作')
     return
   }
-  
+
   // 检查是否有子分类
   if (categoryStore.hasSubCategories(row.id)) {
     ElMessage.warning('该分类下有子分类，不能删除')
     return
   }
-  
+
   ElMessageBox.confirm('确定要删除该分类吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -229,13 +232,14 @@ const handleDelete = (row) => {
     if (result) {
       ElMessage.success('删除成功')
     }
-  }).catch(() => {})
+  }).catch(() => {
+  })
 }
 
 // 提交表单
 const submitForm = async () => {
   if (!categoryFormRef.value) return
-  
+
   await categoryFormRef.value.validate(async (valid) => {
     if (valid) {
       let result
@@ -244,7 +248,7 @@ const submitForm = async () => {
       } else {
         result = await categoryStore.createCategory(categoryForm.value)
       }
-      
+
       if (result) {
         dialogVisible.value = false
         ElMessage.success(isEdit.value ? '编辑成功' : '添加成功')

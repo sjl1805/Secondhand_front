@@ -10,11 +10,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function addCategory(data) {
-  return request({
-    url: '/admin/category/add',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/admin/category/add',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -28,11 +28,11 @@ export function addCategory(data) {
  * @returns {Promise}
  */
 export function updateCategory(data) {
-  return request({
-    url: '/admin/category/update',
-    method: 'put',
-    data
-  })
+    return request({
+        url: '/admin/category/update',
+        method: 'put',
+        data
+    })
 }
 
 /**
@@ -41,10 +41,10 @@ export function updateCategory(data) {
  * @returns {Promise}
  */
 export function deleteCategory(id) {
-  return request({
-    url: `/admin/category/delete/${id}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/admin/category/delete/${id}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -55,15 +55,15 @@ export function deleteCategory(id) {
  * @returns {Promise}
  */
 export function checkCategoryNameExists(name, parentId = 0, excludeId) {
-  return request({
-    url: '/admin/category/check',
-    method: 'get',
-    params: {
-      name,
-      parentId,
-      excludeId
-    }
-  })
+    return request({
+        url: '/admin/category/check',
+        method: 'get',
+        params: {
+            name,
+            parentId,
+            excludeId
+        }
+    })
 }
 
 /**
@@ -71,10 +71,10 @@ export function checkCategoryNameExists(name, parentId = 0, excludeId) {
  * @returns {Promise}
  */
 export function getAllCategories() {
-  return request({
-    url: '/category/list',
-    method: 'get'
-  })
+    return request({
+        url: '/category/list',
+        method: 'get'
+    })
 }
 
 /**
@@ -83,10 +83,10 @@ export function getAllCategories() {
  * @returns {Promise}
  */
 export function getCategoryDetail(categoryId) {
-  return request({
-    url: `/category/${categoryId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/category/${categoryId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -95,10 +95,10 @@ export function getCategoryDetail(categoryId) {
  * @returns {Promise}
  */
 export function getSubCategories(parentId) {
-  return request({
-    url: `/category/sub/${parentId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/category/sub/${parentId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -106,8 +106,8 @@ export function getSubCategories(parentId) {
  * @returns {Promise}
  */
 export function getCategoryTree() {
-  return request({
-    url: '/category/tree',
-    method: 'get'
-  })
+    return request({
+        url: '/category/tree',
+        method: 'get'
+    })
 } 

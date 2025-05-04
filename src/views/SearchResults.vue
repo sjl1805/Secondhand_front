@@ -5,16 +5,16 @@
       <p v-if="total > 0" class="search-count">找到 {{ total }} 个相关商品</p>
       <p v-else-if="!loading" class="search-empty">未找到相关商品，请尝试其他关键词</p>
     </div>
-    
-    <product-list ref="productListRef" :is-search-result="true" />
+
+    <product-list ref="productListRef" :is-search-result="true"/>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import {computed, onMounted, ref, watch} from 'vue'
+import {useRoute} from 'vue-router'
 import ProductList from '@/views/ProductList.vue'
-import { useProductStore } from '@/stores/product'
+import {useProductStore} from '@/stores/product'
 
 const route = useRoute()
 const productStore = useProductStore()
@@ -31,12 +31,12 @@ const loading = computed(() => productStore.loading)
 
 // 监听搜索关键词变化
 watch(
-  () => keyword.value,
-  (newKeyword) => {
-    // 更新页面标题
-    document.title = `搜索: ${newKeyword} - 二手交易平台`
-  },
-  { immediate: true }
+    () => keyword.value,
+    (newKeyword) => {
+      // 更新页面标题
+      document.title = `搜索: ${newKeyword} - 二手交易平台`
+    },
+    {immediate: true}
 )
 
 onMounted(() => {

@@ -2,27 +2,27 @@
   <div class="messages-container">
     <div class="page-header">
       <h2 class="page-title">消息中心</h2>
-      <el-badge :value="messageStore.unreadCount" :hidden="messageStore.unreadCount <= 0" type="danger">
+      <el-badge :hidden="messageStore.unreadCount <= 0" :value="messageStore.unreadCount" type="danger">
         <span>未读消息</span>
       </el-badge>
     </div>
 
-    <div class="messages-content" v-loading="messageStore.loading">
+    <div v-loading="messageStore.loading" class="messages-content">
       <!-- 无消息时的提示 -->
       <el-empty v-if="messageStore.getContactGroups.length === 0" description="暂无消息">
         <template #description>
           <p>您还没有任何消息记录</p>
         </template>
       </el-empty>
-      
+
       <!-- 消息列表 -->
       <div v-else class="message-list">
-        <el-card 
-          v-for="contact in messageStore.getContactGroups" 
-          :key="contact.id" 
-          class="message-item"
-          :class="{'unread': contact.unreadCount > 0}"
-          @click="goToChat(contact)"
+        <el-card
+            v-for="contact in messageStore.getContactGroups"
+            :key="contact.id"
+            :class="{'unread': contact.unreadCount > 0}"
+            class="message-item"
+            @click="goToChat(contact)"
         >
           <div class="contact-info">
             <el-avatar :size="50" :src="getAvatarUrl(contact.avatar)"></el-avatar>
@@ -33,7 +33,7 @@
               </div>
               <div class="message-preview">
                 <p class="message-content">{{ getMessagePreview(contact.latestMessage) }}</p>
-                <el-badge v-if="contact.unreadCount > 0" :value="contact.unreadCount" type="danger" />
+                <el-badge v-if="contact.unreadCount > 0" :value="contact.unreadCount" type="danger"/>
               </div>
               <!-- 调试信息，用于验证消息数据 -->
               <div v-if="showDebugInfo" class="debug-info">
@@ -49,11 +49,11 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useMessageStore } from '@/stores/message'
-import { useFileStore } from '@/stores/file'
-import { formatRelativeTime } from '@/utils/format'
+import {onMounted, onUnmounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useMessageStore} from '@/stores/message'
+import {useFileStore} from '@/stores/file'
+import {formatRelativeTime} from '@/utils/format'
 
 const router = useRouter()
 const messageStore = useMessageStore()
@@ -77,12 +77,12 @@ const goToChat = (contact) => {
 // 获取头像完整URL
 const getAvatarUrl = (path) => {
   if (!path) return defaultAvatar
-  
+
   // 检查是否已经是完整URL
   if (path.startsWith('http')) {
     return path
   }
-  
+
   // 使用fileStore处理头像路径
   return fileStore.getFullUrl(path)
 }
@@ -96,7 +96,7 @@ const formatTime = (time) => {
 // 获取消息预览文本
 const getMessagePreview = (message) => {
   if (!message) return '暂无消息'
-  
+
   // 处理不同类型的消息
   switch (message.type) {
     case 'IMAGE':
@@ -115,7 +115,7 @@ const getMessagePreview = (message) => {
 const startPolling = () => {
   // 获取未读消息数量与消息列表
   messageStore.fetchUnreadCount()
-  
+
   // 设置定时器，每隔一段时间获取未读消息数量和刷新消息列表
   pollTimer = setInterval(() => {
     messageStore.fetchUnreadCount()
@@ -127,7 +127,7 @@ const startPolling = () => {
 onMounted(async () => {
   // 初始化消息数据
   await messageStore.initialize()
-  
+
   // 开始轮询未读消息
   startPolling()
 })

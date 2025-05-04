@@ -1,8 +1,8 @@
 <template>
-  <div class="detail-container" v-loading="store.loading">
-    <el-page-header @back="goBack" content="商品详情" />
-    
-    <el-card class="detail-card" v-if="product">
+  <div v-loading="store.loading" class="detail-container">
+    <el-page-header content="商品详情" @back="goBack"/>
+
+    <el-card v-if="product" class="detail-card">
       <!-- 基本信息 -->
       <div class="section">
         <h3>基本信息</h3>
@@ -23,16 +23,16 @@
       </div>
 
       <!-- 商品图片 -->
-      <div class="section" v-if="product.imageUrls && product.imageUrls.length">
+      <div v-if="product.imageUrls && product.imageUrls.length" class="section">
         <h3>商品图片</h3>
         <div class="images-container">
-          <el-image 
-            v-for="(url, index) in product.imageUrls" 
-            :key="index"
-            :src="fileStore.getFullUrl(url)"
-            :preview-src-list="product.imageUrls.map(img => fileStore.getFullUrl(img))"
-            fit="cover"
-            class="product-image"
+          <el-image
+              v-for="(url, index) in product.imageUrls"
+              :key="index"
+              :preview-src-list="product.imageUrls.map(img => fileStore.getFullUrl(img))"
+              :src="fileStore.getFullUrl(url)"
+              class="product-image"
+              fit="cover"
           />
         </div>
       </div>
@@ -55,11 +55,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAdminProductStore } from '@/stores/adminProduct'
-import { useFileStore } from '@/stores/file'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import {onMounted, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useAdminProductStore} from '@/stores/adminProduct'
+import {useFileStore} from '@/stores/file'
+import {ElMessage, ElMessageBox} from 'element-plus'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -92,7 +92,7 @@ onMounted(async () => {
   try {
     // 设置管理员角色并确保权限
     store.setAdminRole(true)
-    
+
     productId.value = route.params.id
     if (!productId.value) {
       ElMessage.error('商品ID不能为空')
@@ -116,15 +116,18 @@ onMounted(async () => {
 
 // 返回列表
 const goBack = () => {
-  router.push({ name: 'AdminProducts' })
+  router.push({name: 'AdminProducts'})
 }
 
 // 状态标签类型
 const statusTagType = (status) => {
   switch (status) {
-    case 1: return 'success'
-    case 3: return 'danger'
-    default: return 'info'
+    case 1:
+      return 'success'
+    case 3:
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
@@ -144,9 +147,9 @@ const toggleStatus = async () => {
 const handleDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定要永久删除该商品吗？此操作不可恢复！',
-      '警告',
-      { type: 'error', confirmButtonText: '确认删除' }
+        '确定要永久删除该商品吗？此操作不可恢复！',
+        '警告',
+        {type: 'error', confirmButtonText: '确认删除'}
     )
     await store.removeProduct(productId.value)
     ElMessage.success('商品已删除')
@@ -170,7 +173,7 @@ const handleDelete = async () => {
 
 .section {
   margin-bottom: 30px;
-  
+
   h3 {
     margin-bottom: 15px;
     color: #606266;
@@ -202,7 +205,7 @@ const handleDelete = async () => {
 .action-bar {
   margin-top: 30px;
   text-align: right;
-  
+
   .el-button {
     margin-left: 15px;
   }

@@ -3,40 +3,40 @@
     <!-- 搜索过滤 -->
     <div class="filter-container">
       <el-input
-        v-model="listQuery.orderNo"
-        placeholder="订单编号"
-        class="filter-item"
-        style="width: 200px"
-        clearable
-        @keyup.enter="handleFilter"
+          v-model="listQuery.orderNo"
+          class="filter-item"
+          clearable
+          placeholder="订单编号"
+          style="width: 200px"
+          @keyup.enter="handleFilter"
       />
       <el-select
-        v-model="listQuery.status"
-        placeholder="订单状态"
-        clearable
-        class="filter-item"
-        style="width: 120px"
+          v-model="listQuery.status"
+          class="filter-item"
+          clearable
+          placeholder="订单状态"
+          style="width: 120px"
       >
         <el-option
-          v-for="item in store.orderStatusOptions"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
+            v-for="item in store.orderStatusOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
         />
       </el-select>
       <el-date-picker
-        v-model="listQuery.dateRange"
-        type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        class="filter-item"
-        style="width: 250px"
+          v-model="listQuery.dateRange"
+          class="filter-item"
+          end-placeholder="结束日期"
+          range-separator="至"
+          start-placeholder="开始日期"
+          style="width: 250px"
+          type="daterange"
       />
       <el-button
-        type="primary"
-        class="filter-item"
-        @click="handleFilter"
+          class="filter-item"
+          type="primary"
+          @click="handleFilter"
       >
         搜索
       </el-button>
@@ -46,7 +46,7 @@
     <div v-if="selectedOrders.length" class="batch-actions">
       <el-dropdown>
         <el-button type="primary">
-          批量操作（已选{{ selectedOrders.length }}项）<i class="el-icon-arrow-down" />
+          批量操作（已选{{ selectedOrders.length }}项）<i class="el-icon-arrow-down"/>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
@@ -61,22 +61,22 @@
 
     <!-- 订单表格 -->
     <el-table
-      v-loading="store.loading"
-      :data="store.orderList"
-      border
-      fit
-      highlight-current-row
-      @selection-change="handleSelectionChange"
+        v-loading="store.loading"
+        :data="store.orderList"
+        border
+        fit
+        highlight-current-row
+        @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="订单编号" prop="orderNo" width="180" />
+      <el-table-column align="center" type="selection" width="55"/>
+      <el-table-column label="订单编号" prop="orderNo" width="180"/>
       <el-table-column label="商品信息" min-width="200">
         <template #default="{ row }">
           <div class="product-info">
-            <el-image 
-              :src="fileStore.getFullUrl(row.productImage)"
-              fit="cover"
-              class="product-image"
+            <el-image
+                :src="fileStore.getFullUrl(row.productImage)"
+                class="product-image"
+                fit="cover"
             />
             <div class="product-detail">
               <div class="product-title">{{ row.productTitle }}</div>
@@ -88,34 +88,34 @@
       <el-table-column label="买家" width="150">
         <template #default="{ row }">
           <div class="user-info">
-            <el-avatar :src="fileStore.getFullUrl(row.buyerAvatar)" size="small" />
+            <el-avatar :src="fileStore.getFullUrl(row.buyerAvatar)" size="small"/>
             <span>{{ row.buyerNickname || '--' }}</span>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="总金额" width="120" align="center">
+      <el-table-column align="center" label="总金额" width="120">
         <template #default="{ row }">
           ¥{{ row.price }}
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="120" align="center">
+      <el-table-column align="center" label="状态" width="120">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)">
             {{ store.getOrderStatusText(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" width="180" align="center">
+      <el-table-column align="center" label="创建时间" width="180">
         <template #default="{ row }">
           {{ formatDate(row.createTime) }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180" align="center" fixed="right">
+      <el-table-column align="center" fixed="right" label="操作" width="180">
         <template #default="{ row }">
           <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
           <el-dropdown trigger="click">
             <el-button size="small" type="primary">
-              更多<i class="el-icon-arrow-down" />
+              更多<i class="el-icon-arrow-down"/>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -134,22 +134,21 @@
 
     <!-- 分页 -->
     <pagination
-      v-model:current="store.pagination.current"
-      v-model:size="store.pagination.size"
-      :total="store.pagination.total"
-      @change="store.changePage"
-      @size-change="store.changePageSize"
+        v-model:current="store.pagination.current"
+        v-model:size="store.pagination.size"
+        :total="store.pagination.total"
+        @change="store.changePage"
+        @size-change="store.changePageSize"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminOrderStore } from '@/stores/adminOrder'
-import { useFileStore } from '@/stores/file'
+import {onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAdminOrderStore} from '@/stores/adminOrder'
+import {useFileStore} from '@/stores/file'
 import Pagination from '@/components/Pagination/index.vue'
-import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
 
 const router = useRouter()
@@ -166,12 +165,18 @@ const selectedOrders = ref([])
 // 状态标签类型
 const statusTagType = (status) => {
   switch (status) {
-    case 1: return 'warning'  // 待付款
-    case 2: return 'info'     // 待发货
-    case 3: return ''         // 待收货
-    case 4: return 'success'  // 已完成
-    case 5: return 'danger'   // 已取消
-    default: return 'info'
+    case 1:
+      return 'warning'  // 待付款
+    case 2:
+      return 'info'     // 待发货
+    case 3:
+      return ''         // 待收货
+    case 4:
+      return 'success'  // 已完成
+    case 5:
+      return 'danger'   // 已取消
+    default:
+      return 'info'
   }
 }
 
@@ -254,6 +259,7 @@ const deleteOrder = async (id) => {
 
 .filter-container {
   margin-bottom: 20px;
+
   .filter-item {
     margin-right: 10px;
   }

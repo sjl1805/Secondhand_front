@@ -5,10 +5,10 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getUserInfo() {
-  return request({
-    url: '/user/info',
-    method: 'get'
-  })
+    return request({
+        url: '/user/info',
+        method: 'get'
+    })
 }
 
 /**
@@ -22,11 +22,11 @@ export function getUserInfo() {
  * @returns {Promise}
  */
 export function updateUserInfo(data) {
-  return request({
-    url: '/user/info',
-    method: 'put',
-    data
-  })
+    return request({
+        url: '/user/info',
+        method: 'put',
+        data
+    })
 }
 
 /**
@@ -35,10 +35,10 @@ export function updateUserInfo(data) {
  * @returns {Promise}
  */
 export function getSellerInfo(sellerId) {
-  return request({
-    url: `/user/seller/${sellerId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/user/seller/${sellerId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -49,11 +49,11 @@ export function getSellerInfo(sellerId) {
  * @returns {Promise}
  */
 export function updatePassword(data) {
-  return request({
-    url: '/user/password',
-    method: 'put',
-    data
-  })
+    return request({
+        url: '/user/password',
+        method: 'put',
+        data
+    })
 }
 
 /**
@@ -64,11 +64,11 @@ export function updatePassword(data) {
  * @returns {Promise}
  */
 export function bindPhone(data) {
-  return request({
-    url: '/user/bind/phone',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/user/bind/phone',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -79,9 +79,9 @@ export function bindPhone(data) {
  * @returns {Promise}
  */
 export function bindEmail(data) {
-  return request({
-    url: '/user/bind/email',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/user/bind/email',
+        method: 'post',
+        data
+    })
 }

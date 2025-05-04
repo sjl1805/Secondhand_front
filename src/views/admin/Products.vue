@@ -3,31 +3,31 @@
     <!-- 搜索过滤 -->
     <div class="filter-container">
       <el-input
-        v-model="listQuery.keyword"
-        placeholder="搜索商品名称"
-        class="filter-item"
-        style="width: 200px"
-        clearable
-        @keyup.enter="handleFilter"
+          v-model="listQuery.keyword"
+          class="filter-item"
+          clearable
+          placeholder="搜索商品名称"
+          style="width: 200px"
+          @keyup.enter="handleFilter"
       />
       <el-select
-        v-model="listQuery.status"
-        placeholder="商品状态"
-        clearable
-        class="filter-item"
-        style="width: 120px"
+          v-model="listQuery.status"
+          class="filter-item"
+          clearable
+          placeholder="商品状态"
+          style="width: 120px"
       >
         <el-option
-          v-for="item in store.productStatusOptions"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
+            v-for="item in store.productStatusOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
         />
       </el-select>
       <el-button
-        type="primary"
-        class="filter-item"
-        @click="handleFilter"
+          class="filter-item"
+          type="primary"
+          @click="handleFilter"
       >
         搜索
       </el-button>
@@ -37,7 +37,7 @@
     <div v-if="selectedProducts.length" class="batch-actions">
       <el-dropdown>
         <el-button type="primary">
-          批量操作（已选{{ selectedProducts.length }}项）<i class="el-icon-arrow-down" />
+          批量操作（已选{{ selectedProducts.length }}项）<i class="el-icon-arrow-down"/>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
@@ -51,67 +51,69 @@
 
     <!-- 商品表格 -->
     <el-table
-      v-loading="store.loading"
-      :data="store.productList"
-      border
-      fit
-      highlight-current-row
-      @selection-change="handleSelectionChange"
+        v-loading="store.loading"
+        :data="store.productList"
+        border
+        fit
+        highlight-current-row
+        @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="ID" prop="id" width="80" align="center" />
-      <el-table-column label="商品图片" width="120" align="center">
+      <el-table-column align="center" type="selection" width="55"/>
+      <el-table-column align="center" label="ID" prop="id" width="80"/>
+      <el-table-column align="center" label="商品图片" width="120">
         <template #default="{ row }">
-          <el-image 
-            :src="fileStore.getFullUrl(row.imageUrls?.[0])"
-            :preview-src-list="row.imageUrls?.map(url => fileStore.getFullUrl(url))"
-            fit="cover"
-            class="product-image"
-            :hide-on-click-modal="true"
+          <el-image
+              :hide-on-click-modal="true"
+              :preview-src-list="row.imageUrls?.map(url => fileStore.getFullUrl(url))"
+              :src="fileStore.getFullUrl(row.imageUrls?.[0])"
+              class="product-image"
+              fit="cover"
           >
             <template #error>
               <div class="image-error">
-                <el-icon><Picture /></el-icon>
+                <el-icon>
+                  <Picture/>
+                </el-icon>
               </div>
             </template>
           </el-image>
         </template>
       </el-table-column>
-      <el-table-column label="商品名称" prop="title" min-width="180" />
+      <el-table-column label="商品名称" min-width="180" prop="title"/>
       <el-table-column label="卖家" width="120">
         <template #default="{ row }">
           <div class="seller-info">
-            <el-avatar 
-              :size="'small'" 
-              :src="row.avatar ? fileStore.getFullUrl(row.avatar) : ''"
-              @error="() => handleAvatarError(row)"
+            <el-avatar
+                :size="'small'"
+                :src="row.avatar ? fileStore.getFullUrl(row.avatar) : ''"
+                @error="() => handleAvatarError(row)"
             />
             <span class="seller-name">{{ row.nickname || `用户${row.userId}` }}</span>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="分类" prop="categoryName" width="90" align="center" />
-      <el-table-column label="价格" prop="price" width="90" align="center">
+      <el-table-column align="center" label="分类" prop="categoryName" width="90"/>
+      <el-table-column align="center" label="价格" prop="price" width="90">
         <template #default="{ row }">￥{{ row.price }}</template>
       </el-table-column>
-      <el-table-column label="成色" width="90" align="center">
+      <el-table-column align="center" label="成色" width="90">
         <template #default="{ row }">
           {{ getProductQualityText(row.productQuality) }}
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="90" align="center">
+      <el-table-column align="center" label="状态" width="90">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)">
             {{ store.getProductStatusText(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" align="center" fixed="right">
+      <el-table-column align="center" fixed="right" label="操作" width="160">
         <template #default="{ row }">
           <el-button size="small" @click="viewDetail(row.id)">详情</el-button>
           <el-dropdown trigger="click">
             <el-button size="small" type="primary">
-              更多<i class="el-icon-arrow-down" />
+              更多<i class="el-icon-arrow-down"/>
             </el-button>
             <template #dropdown>
               <el-dropdown-menu>
@@ -129,23 +131,23 @@
 
     <!-- 分页 -->
     <pagination
-      v-model:current="store.pagination.current"
-      v-model:size="store.pagination.size"
-      :total="store.pagination.total"
-      @change="store.changePage"
-      @size-change="store.changePageSize"
+        v-model:current="store.pagination.current"
+        v-model:size="store.pagination.size"
+        :total="store.pagination.total"
+        @change="store.changePage"
+        @size-change="store.changePageSize"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAdminProductStore } from '@/stores/adminProduct'
-import { useFileStore } from '@/stores/file'
-import { Picture } from '@element-plus/icons-vue'
+import {onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useAdminProductStore} from '@/stores/adminProduct'
+import {useFileStore} from '@/stores/file'
+import {Picture} from '@element-plus/icons-vue'
 import Pagination from '@/components/Pagination/index.vue'
-import { ElMessageBox, ElMessage } from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
 
 const router = useRouter()
 const store = useAdminProductStore()
@@ -159,9 +161,12 @@ const selectedProducts = ref([])
 // 状态标签类型
 const statusTagType = (status) => {
   switch (status) {
-    case 1: return 'success'
-    case 3: return 'danger'
-    default: return 'info'
+    case 1:
+      return 'success'
+    case 3:
+      return 'danger'
+    default:
+      return 'info'
   }
 }
 
@@ -209,9 +214,9 @@ const handleSelectionChange = (selection) => {
 const batchUpdateStatus = async (status) => {
   try {
     await ElMessageBox.confirm(
-      `确定要批量修改${selectedProducts.value.length}个商品状态吗？`,
-      '确认操作',
-      { type: 'warning' }
+        `确定要批量修改${selectedProducts.value.length}个商品状态吗？`,
+        '确认操作',
+        {type: 'warning'}
     )
     await store.batchUpdateStatus(selectedProducts.value, status)
     selectedProducts.value = []
@@ -226,9 +231,9 @@ const batchUpdateStatus = async (status) => {
 const batchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要永久删除${selectedProducts.value.length}个商品吗？`,
-      '警告',
-      { type: 'error', confirmButtonText: '确认删除' }
+        `确定要永久删除${selectedProducts.value.length}个商品吗？`,
+        '警告',
+        {type: 'error', confirmButtonText: '确认删除'}
     )
     await store.batchRemoveProduct(selectedProducts.value)
     selectedProducts.value = []
@@ -262,9 +267,9 @@ const viewDetail = (id) => {
 const deleteProduct = async (id) => {
   try {
     await ElMessageBox.confirm(
-      '确定要永久删除该商品吗？',
-      '警告',
-      { type: 'error', confirmButtonText: '确认删除' }
+        '确定要永久删除该商品吗？',
+        '警告',
+        {type: 'error', confirmButtonText: '确认删除'}
     )
     await store.removeProduct(id)
   } catch (error) {
@@ -282,6 +287,7 @@ const deleteProduct = async (id) => {
 
 .filter-container {
   margin-bottom: 20px;
+
   .filter-item {
     margin-right: 10px;
   }
@@ -294,6 +300,7 @@ const deleteProduct = async (id) => {
 .el-table {
   margin-top: 20px;
 }
+
 .product-image {
   width: 80px;
   height: 80px;

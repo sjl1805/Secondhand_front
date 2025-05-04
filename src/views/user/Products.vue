@@ -1,55 +1,55 @@
 <template>
   <div class="products-container">
     <h2 class="page-title">我发布的商品</h2>
-    
+
     <div class="products-content">
       <div v-if="loading" class="loading-container">
-        <el-skeleton :rows="5" animated />
+        <el-skeleton :rows="5" animated/>
       </div>
-      
+
       <div v-else-if="userProducts.length === 0" class="empty-container">
-        <el-empty description="您还没有发布任何商品" />
+        <el-empty description="您还没有发布任何商品"/>
         <el-button type="primary" @click="goToPublish">发布商品</el-button>
       </div>
-      
+
       <div v-else>
         <div class="status-tabs">
           <el-tabs v-model="activeTab" @tab-click="handleTabChange">
             <el-tab-pane label="全部" name="all">
-              <el-badge :value="userProducts.length" :hidden="userProducts.length === 0" class="tab-badge" />
+              <el-badge :hidden="userProducts.length === 0" :value="userProducts.length" class="tab-badge"/>
             </el-tab-pane>
             <el-tab-pane label="在售" name="1">
-              <el-badge :value="productStatusCounts[1]" :hidden="productStatusCounts[1] === 0" class="tab-badge" />
+              <el-badge :hidden="productStatusCounts[1] === 0" :value="productStatusCounts[1]" class="tab-badge"/>
             </el-tab-pane>
             <el-tab-pane label="已售" name="2">
-              <el-badge :value="productStatusCounts[2]" :hidden="productStatusCounts[2] === 0" class="tab-badge" />
+              <el-badge :hidden="productStatusCounts[2] === 0" :value="productStatusCounts[2]" class="tab-badge"/>
             </el-tab-pane>
             <el-tab-pane label="已下架" name="3">
-              <el-badge :value="productStatusCounts[3]" :hidden="productStatusCounts[3] === 0" class="tab-badge" />
+              <el-badge :hidden="productStatusCounts[3] === 0" :value="productStatusCounts[3]" class="tab-badge"/>
             </el-tab-pane>
           </el-tabs>
         </div>
-        
+
         <div class="products-list">
           <el-card v-for="product in filteredProducts" :key="product.id" class="product-item">
             <div class="product-info">
               <div class="product-image" @click="goToProductDetail(product.id)">
-                <el-image 
-                  :src="product.imageUrls && product.imageUrls.length > 0 ? fileStore.getFullUrl(product.imageUrls[0]) : defaultImage" 
-                  fit="cover"
-                  :preview-src-list="product.imageUrls ? product.imageUrls.map(img => fileStore.getFullUrl(img)) : []"
+                <el-image
+                    :preview-src-list="product.imageUrls ? product.imageUrls.map(img => fileStore.getFullUrl(img)) : []"
+                    :src="product.imageUrls && product.imageUrls.length > 0 ? fileStore.getFullUrl(product.imageUrls[0]) : defaultImage"
+                    fit="cover"
                 />
               </div>
-              
+
               <div class="product-detail">
                 <h3 class="product-title" @click="goToProductDetail(product.id)">
                   {{ product.title }}
                 </h3>
-                
+
                 <div class="product-price">
                   <span class="current-price">¥{{ product.price }}</span>
                 </div>
-                
+
                 <div class="product-meta">
                   <div class="meta-item">
                     <i class="el-icon-view"></i>
@@ -64,33 +64,33 @@
                     <span>{{ formatTime(product.createTime) }}</span>
                   </div>
                 </div>
-                
+
                 <div class="product-status">
                   <el-tag :type="getStatusType(product.status)">{{ productStatusMap[product.status] }}</el-tag>
                 </div>
               </div>
             </div>
-            
+
             <div class="product-actions">
-              <el-button 
-                type="primary" 
-                size="small" 
-                @click="goToProductDetail(product.id)"
+              <el-button
+                  size="small"
+                  type="primary"
+                  @click="goToProductDetail(product.id)"
               >
                 查看详情
               </el-button>
-              
-              <el-button 
-                v-if="product.status === 1 || product.status === 3" 
-                type="success" 
-                size="small" 
-                @click="goToEditProduct(product.id)"
+
+              <el-button
+                  v-if="product.status === 1 || product.status === 3"
+                  size="small"
+                  type="success"
+                  @click="goToEditProduct(product.id)"
               >
                 编辑商品
               </el-button>
-              
+
               <el-dropdown @command="handleCommand($event, product)">
-                <el-button type="default" size="small">
+                <el-button size="small" type="default">
                   更多操作<i class="el-icon-arrow-down el-icon--right"></i>
                 </el-button>
                 <template #dropdown>
@@ -105,16 +105,16 @@
             </div>
           </el-card>
         </div>
-        
+
         <div class="pagination-container">
           <el-pagination
-            v-model:current-page="userProductPagination.current"
-            v-model:page-size="userProductPagination.size"
-            :page-sizes="[10, 20, 30, 50]"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="userProductPagination.total"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
+              v-model:current-page="userProductPagination.current"
+              v-model:page-size="userProductPagination.size"
+              :page-sizes="[10, 20, 30, 50]"
+              :total="userProductPagination.total"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
           />
         </div>
       </div>
@@ -123,12 +123,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useProductStore } from '@/stores/product'
-import { useFileStore } from '@/stores/file'
-import { formatDateTime } from '@/utils/format'
+import {computed, onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {useProductStore} from '@/stores/product'
+import {useFileStore} from '@/stores/file'
+import {formatDateTime} from '@/utils/format'
 
 const router = useRouter()
 const productStore = useProductStore()
@@ -221,7 +221,8 @@ const markAsSold = (product) => {
     if (result) {
       ElMessage.success('商品已标记为已售出')
     }
-  }).catch(() => {})
+  }).catch(() => {
+  })
 }
 
 // 下架商品
@@ -235,7 +236,8 @@ const markAsOffShelf = (product) => {
     if (result) {
       ElMessage.success('商品已下架')
     }
-  }).catch(() => {})
+  }).catch(() => {
+  })
 }
 
 // 重新上架
@@ -249,7 +251,8 @@ const markAsOnShelf = (product) => {
     if (result) {
       ElMessage.success('商品已重新上架')
     }
-  }).catch(() => {})
+  }).catch(() => {
+  })
 }
 
 // 删除商品
@@ -263,7 +266,8 @@ const deleteProduct = (product) => {
     if (result) {
       ElMessage.success('商品已删除')
     }
-  }).catch(() => {})
+  }).catch(() => {
+  })
 }
 
 // 处理分页大小变化

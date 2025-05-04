@@ -11,11 +11,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function addComment(data) {
-  return request({
-    url: '/comment/add',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/comment/add',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -24,10 +24,10 @@ export function addComment(data) {
  * @returns {Promise}
  */
 export function getCommentDetail(commentId) {
-  return request({
-    url: `/comment/detail/${commentId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/comment/detail/${commentId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -39,11 +39,11 @@ export function getCommentDetail(commentId) {
  * @returns {Promise}
  */
 export function getProductComments(productId, params) {
-  return request({
-    url: `/comment/product/${productId}`,
-    method: 'get',
-    params
-  })
+    return request({
+        url: `/comment/product/${productId}`,
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -55,11 +55,11 @@ export function getProductComments(productId, params) {
  * @returns {Promise}
  */
 export function getUserComments(userId, params) {
-  return request({
-    url: `/comment/user/${userId}`,
-    method: 'get',
-    params
-  })
+    return request({
+        url: `/comment/user/${userId}`,
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -68,10 +68,10 @@ export function getUserComments(userId, params) {
  * @returns {Promise}
  */
 export function deleteComment(commentId) {
-  return request({
-    url: `/comment/delete/${commentId}`,
-    method: 'post'
-  })
+    return request({
+        url: `/comment/delete/${commentId}`,
+        method: 'post'
+    })
 }
 
 /**
@@ -80,10 +80,10 @@ export function deleteComment(commentId) {
  * @returns {Promise}
  */
 export function getProductRating(productId) {
-  return request({
-    url: `/comment/rating/${productId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/comment/rating/${productId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -92,8 +92,8 @@ export function getProductRating(productId) {
  * @returns {Promise}
  */
 export function isOrderCommented(orderId) {
-  return request({
-    url: `/comment/check/${orderId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/comment/check/${orderId}`,
+        method: 'get'
+    })
 } 

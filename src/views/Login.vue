@@ -5,41 +5,41 @@
         <h2>用户登录</h2>
         <p>欢迎回到二手交易平台</p>
       </div>
-      
+
       <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        label-position="top"
-        @keyup.enter="handleLogin"
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="loginRules"
+          label-position="top"
+          @keyup.enter="handleLogin"
       >
         <el-form-item label="用户名" prop="username">
-          <el-input 
-            v-model="loginForm.username" 
-            prefix-icon="User"
-            placeholder="请输入用户名"
-            clearable
+          <el-input
+              v-model="loginForm.username"
+              clearable
+              placeholder="请输入用户名"
+              prefix-icon="User"
           />
         </el-form-item>
-        
+
         <el-form-item label="密码" prop="password">
-          <el-input 
-            v-model="loginForm.password" 
-            prefix-icon="Lock"
-            type="password" 
-            placeholder="请输入密码"
-            show-password
+          <el-input
+              v-model="loginForm.password"
+              placeholder="请输入密码"
+              prefix-icon="Lock"
+              show-password
+              type="password"
           />
         </el-form-item>
-        
+
         <el-form-item label="验证码" prop="captchaCode">
           <div class="captcha-container">
-            <el-input 
-              v-model="loginForm.captchaCode" 
-              placeholder="请输入验证码"
-              clearable
+            <el-input
+                v-model="loginForm.captchaCode"
+                clearable
+                placeholder="请输入验证码"
             />
-            <div class="captcha-img" @click="refreshCaptcha" title="点击刷新验证码">
+            <div class="captcha-img" title="点击刷新验证码" @click="refreshCaptcha">
               <template v-if="captchaImg">
                 <img :src="captchaImg" alt="验证码">
               </template>
@@ -49,36 +49,44 @@
             </div>
           </div>
         </el-form-item>
-        
+
         <div class="remember-forgot">
           <el-checkbox v-model="rememberMe">记住我</el-checkbox>
           <router-link to="/forgot-password">忘记密码?</router-link>
         </div>
-        
+
         <el-form-item>
-          <el-button 
-            type="primary" 
-            class="login-button"
-            :loading="loading"
-            @click="handleLogin"
+          <el-button
+              :loading="loading"
+              class="login-button"
+              type="primary"
+              @click="handleLogin"
           >
             登录
           </el-button>
         </el-form-item>
       </el-form>
-      
+
       <div class="login-footer">
-        <p>还没有账号? <router-link to="/register">立即注册</router-link></p>
+        <p>还没有账号?
+          <router-link to="/register">立即注册</router-link>
+        </p>
         <p>或者使用以下方式登录</p>
         <div class="other-login">
           <el-button circle>
-            <el-icon><HomeFilled /></el-icon>
+            <el-icon>
+              <HomeFilled/>
+            </el-icon>
           </el-button>
           <el-button circle>
-            <el-icon><Message /></el-icon>
+            <el-icon>
+              <Message/>
+            </el-icon>
           </el-button>
           <el-button circle>
-            <el-icon><Iphone /></el-icon>
+            <el-icon>
+              <Iphone/>
+            </el-icon>
           </el-button>
         </div>
       </div>
@@ -87,12 +95,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { getCaptcha } from '@/api/auth'
-import { ElMessage } from 'element-plus'
-import { User, Lock, HomeFilled, Message, Iphone } from '@element-plus/icons-vue'
+import {onMounted, reactive, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useUserStore} from '@/stores/user'
+import {getCaptcha} from '@/api/auth'
+import {ElMessage} from 'element-plus'
+import {HomeFilled, Iphone, Message} from '@element-plus/icons-vue'
 
 // 路由
 const router = useRouter()
@@ -125,16 +133,16 @@ const loginForm = reactive({
 // 表单验证规则
 const loginRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在3到20个字符之间', trigger: 'blur' }
+    {required: true, message: '请输入用户名', trigger: 'blur'},
+    {min: 3, max: 20, message: '用户名长度在3到20个字符之间', trigger: 'blur'}
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度在6到20个字符之间', trigger: 'blur' }
+    {required: true, message: '请输入密码', trigger: 'blur'},
+    {min: 6, max: 20, message: '密码长度在6到20个字符之间', trigger: 'blur'}
   ],
   captchaCode: [
-    { required: true, message: '请输入验证码', trigger: 'blur' },
-    { min: 4, max: 6, message: '验证码长度不正确', trigger: 'blur' }
+    {required: true, message: '请输入验证码', trigger: 'blur'},
+    {min: 4, max: 6, message: '验证码长度不正确', trigger: 'blur'}
   ]
 }
 
@@ -156,12 +164,12 @@ const refreshCaptcha = async () => {
 // 登录处理
 const handleLogin = () => {
   if (!loginFormRef.value) return
-  
+
   loginFormRef.value.validate(async (valid) => {
     if (!valid) return
-    
+
     loading.value = true
-    
+
     try {
       const result = await userStore.userLogin({
         username: loginForm.username,
@@ -169,10 +177,10 @@ const handleLogin = () => {
         captchaKey: loginForm.captchaKey,
         captchaCode: loginForm.captchaCode
       })
-      
+
       if (result && result.code === 200) {
         ElMessage.success('登录成功')
-        
+
         // 如果有重定向地址，跳转到重定向地址
         const redirectUrl = route.query.redirect || '/'
         router.push(redirectUrl)

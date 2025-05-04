@@ -1,35 +1,38 @@
 <template>
-  <div class="product-detail-container" v-loading="loading">
+  <div v-loading="loading" class="product-detail-container">
     <div v-if="product" class="product-detail-wrapper">
       <!-- 商品图片与基本信息 -->
       <div class="product-main">
         <!-- 商品图片展示 -->
         <div class="product-gallery">
-          <el-carousel :interval="4000" type="card" height="400px" indicator-position="outside" v-if="product.images && product.images.length > 0">
+          <el-carousel v-if="product.images && product.images.length > 0" :interval="4000" height="400px" indicator-position="outside"
+                       type="card">
             <el-carousel-item v-for="(image, index) in product.images" :key="index">
-              <el-image 
-                :src="image" 
-                fit="contain"
-                :preview-src-list="product.images"
-                :initial-index="index"
-                class="carousel-image"
+              <el-image
+                  :initial-index="index"
+                  :preview-src-list="product.images"
+                  :src="image"
+                  class="carousel-image"
+                  fit="contain"
               />
             </el-carousel-item>
           </el-carousel>
           <div v-else class="no-image">
-            <el-icon size="48"><Picture /></el-icon>
+            <el-icon size="48">
+              <Picture/>
+            </el-icon>
             <p>暂无图片</p>
           </div>
         </div>
-        
+
         <!-- 商品基本信息 -->
         <div class="product-info">
           <h1 class="product-title">{{ product.title }}</h1>
-          
+
           <div class="product-price-wrapper">
             <span class="product-price">¥{{ formatPrice(product.price) }}</span>
           </div>
-          
+
           <div class="product-meta">
             <div class="meta-item">
               <span class="meta-label">商品分类：</span>
@@ -37,9 +40,9 @@
             </div>
             <div class="meta-item">
               <span class="meta-label">商品状态：</span>
-              <el-tag 
-                size="small" 
-                :type="getStatusTagType(product.status)"
+              <el-tag
+                  :type="getStatusTagType(product.status)"
+                  size="small"
               >
                 {{ product.statusText || getStatusText(product.status) }}
               </el-tag>
@@ -56,14 +59,14 @@
               <span class="meta-label">商品评分：</span>
               <span class="meta-value rating-with-stars">
                 {{ averageRating.toFixed(1) }}
-                <el-rate 
-                  v-model="averageRating" 
-                  disabled 
-                  :max="5"
-                  :colors="['#ffd21e', '#ffd21e', '#ffd21e']" 
-                  :show-text="false"
-                  :show-score="false"
-                  style="display: inline-flex; margin-left: 5px;"
+                <el-rate
+                    v-model="averageRating"
+                    :colors="['#ffd21e', '#ffd21e', '#ffd21e']"
+                    :max="5"
+                    :show-score="false"
+                    :show-text="false"
+                    disabled
+                    style="display: inline-flex; margin-left: 5px;"
                 />
               </span>
             </div>
@@ -72,39 +75,48 @@
               <span class="meta-value">{{ formatDate(product.createTime) }}</span>
             </div>
           </div>
-          
+
           <!-- 卖家信息 -->
-          <div class="seller-info" v-loading="sellerLoading">
+          <div v-loading="sellerLoading" class="seller-info">
             <div class="seller-profile" @click="goToSellerPage(product.userId)">
               <el-avatar :size="40" :src="product.sellerAvatar || defaultAvatar"></el-avatar>
               <div class="seller-detail">
                 <span class="seller-name">{{ product.sellerName || product.nickname }}</span>
-                <span class="seller-date">注册于 {{ sellerInfo?.createTime ? formatDate(sellerInfo.createTime, 'YYYY-MM-DD') : '--' }}</span>
+                <span class="seller-date">注册于 {{
+                    sellerInfo?.createTime ? formatDate(sellerInfo.createTime, 'YYYY-MM-DD') : '--'
+                  }}</span>
               </div>
             </div>
-            
+
             <div class="action-buttons">
-              <el-button 
-                :type="product.isFavorite ? 'danger' : 'default'"
-                :icon="product.isFavorite ? 'Star' : 'StarFilled'"
-                @click="toggleFavorite"
-                :loading="favoriteLoading"
+              <el-button
+                  :icon="product.isFavorite ? 'Star' : 'StarFilled'"
+                  :loading="favoriteLoading"
+                  :type="product.isFavorite ? 'danger' : 'default'"
+                  @click="toggleFavorite"
               >
                 {{ product.isFavorite ? '已收藏' : '收藏' }} ({{ product.favoriteCount || 0 }})
               </el-button>
-              
-              <el-button type="primary" @click="contactSeller" v-if="product.status === 1">
-                <el-icon><ChatDotRound /></el-icon> 联系卖家
+
+              <el-button v-if="product.status === 1" type="primary" @click="contactSeller">
+                <el-icon>
+                  <ChatDotRound/>
+                </el-icon>
+                联系卖家
               </el-button>
-              
-              <el-button type="success" @click="buyProduct" v-if="isLoggedIn && product.status === 1 && product.userId !== userId">
-                <el-icon><ShoppingCart /></el-icon> 立即购买
+
+              <el-button v-if="isLoggedIn && product.status === 1 && product.userId !== userId" type="success"
+                         @click="buyProduct">
+                <el-icon>
+                  <ShoppingCart/>
+                </el-icon>
+                立即购买
               </el-button>
             </div>
           </div>
         </div>
       </div>
-      
+
       <!-- 商品详情和推荐 -->
       <div class="product-content">
         <el-tabs>
@@ -113,16 +125,16 @@
               <h3>商品详情</h3>
               <div class="description-content">
                 <p v-if="product.description">{{ product.description }}</p>
-                <el-empty v-else description="暂无详细描述" />
+                <el-empty v-else description="暂无详细描述"/>
               </div>
             </div>
           </el-tab-pane>
-          
+
           <el-tab-pane label="评价">
             <!-- 评论列表 -->
-            <div class="product-comments" v-loading="commentLoading">
+            <div v-loading="commentLoading" class="product-comments">
               <h3>用户评价 ({{ commentPagination.total || 0 }})</h3>
-              
+
               <div v-if="productComments && productComments.length > 0" class="comment-list">
                 <div v-for="comment in productComments" :key="comment.id" class="comment-item">
                   <div class="comment-header">
@@ -134,72 +146,66 @@
                       </div>
                     </div>
                     <div class="comment-rating">
-                      <el-rate v-model="comment.rating" disabled />
+                      <el-rate v-model="comment.rating" disabled/>
                     </div>
                   </div>
-                  
+
                   <div class="comment-content">
                     {{ comment.content }}
                   </div>
                 </div>
-                
+
                 <!-- 分页 -->
-                <div class="pagination-container" v-if="commentPagination.total > commentPagination.size">
+                <div v-if="commentPagination.total > commentPagination.size" class="pagination-container">
                   <el-pagination
-                    background
-                    layout="prev, pager, next"
-                    :current-page="commentPagination.current"
-                    :page-size="commentPagination.size"
-                    :total="commentPagination.total"
-                    @current-change="handleCommentPageChange"
+                      :current-page="commentPagination.current"
+                      :page-size="commentPagination.size"
+                      :total="commentPagination.total"
+                      background
+                      layout="prev, pager, next"
+                      @current-change="handleCommentPageChange"
                   />
                 </div>
               </div>
-              
-              <el-empty v-else description="暂无评价" />
+
+              <el-empty v-else description="暂无评价"/>
             </div>
           </el-tab-pane>
-          
+
           <el-tab-pane label="同类商品">
-            <div class="similar-products" v-loading="similarLoading">
-              <div class="product-grid" v-if="similarProducts.length > 0">
-                <product-card 
-                  v-for="item in similarProducts" 
-                  :key="item.id" 
-                  :product="item"
+            <div v-loading="similarLoading" class="similar-products">
+              <div v-if="similarProducts.length > 0" class="product-grid">
+                <product-card
+                    v-for="item in similarProducts"
+                    :key="item.id"
+                    :product="item"
                 />
               </div>
-              <el-empty v-else description="暂无同类商品推荐" />
+              <el-empty v-else description="暂无同类商品推荐"/>
             </div>
           </el-tab-pane>
         </el-tabs>
       </div>
     </div>
-    
-    <el-empty v-else-if="!loading" description="商品不存在或已下架" />
+
+    <el-empty v-else-if="!loading" description="商品不存在或已下架"/>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useProductStore } from '@/stores/product'
-import { useFavoriteStore } from '@/stores/favorite'
-import { useUserStore } from '@/stores/user'
-import { useFileStore } from '@/stores/file'
-import { useCommentStore } from '@/stores/comment'
-import { getProductDetail } from '@/api/product'
-import { getSellerInfo } from '@/api/user'
-import { getProductRating } from '@/api/comment'
-import { 
-  Picture, 
-  Star, 
-  StarFilled, 
-  ChatDotRound, 
-  ShoppingCart
-} from '@element-plus/icons-vue'
+import {computed, onMounted, ref, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useProductStore} from '@/stores/product'
+import {useFavoriteStore} from '@/stores/favorite'
+import {useUserStore} from '@/stores/user'
+import {useFileStore} from '@/stores/file'
+import {useCommentStore} from '@/stores/comment'
+import {getProductDetail} from '@/api/product'
+import {getSellerInfo} from '@/api/user'
+import {getProductRating} from '@/api/comment'
+import {ChatDotRound, Picture, ShoppingCart} from '@element-plus/icons-vue'
 import ProductCard from '@/components/product/ProductCard.vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import {ElMessage, ElMessageBox} from 'element-plus'
 import dayjs from 'dayjs'
 
 // 获取路由信息和 store
@@ -282,7 +288,7 @@ const getConditionText = (productQuality) => {
 // 获取商品平均评分
 const fetchAverageRating = async () => {
   if (!productId.value) return
-  
+
   try {
     const res = await getProductRating(productId.value)
     if (res.code === 200) {
@@ -296,7 +302,7 @@ const fetchAverageRating = async () => {
 // 获取商品详情
 const fetchProductDetail = async () => {
   if (!productId.value) return
-  
+
   loading.value = true
   try {
     // 获取详情
@@ -304,33 +310,33 @@ const fetchProductDetail = async () => {
     if (res.code === 200 && res.data) {
       // 处理商品数据
       product.value = productStore.processProductData(res.data)
-      
+
       // 确保productQuality字段存在（向后兼容）
       if (product.value && !product.value.productQuality && product.value.conditions) {
         product.value.productQuality = product.value.conditions
       }
-      
+
       document.title = `${product.value.title} - 二手交易平台`
-      
+
       // 如果用户已登录，检查收藏状态
       if (isLoggedIn.value) {
         checkFavoriteStatus()
       }
-      
+
       // 获取卖家信息
       if (product.value.userId) {
         fetchSellerInfo(product.value.userId)
       }
-      
+
       // 加载同类商品
       fetchSimilarProducts()
-      
+
       // 获取商品评分统计
       fetchProductRating()
-      
+
       // 获取商品平均评分
       fetchAverageRating()
-      
+
       // 获取商品评论列表
       fetchProductComments()
     }
@@ -345,7 +351,7 @@ const fetchProductDetail = async () => {
 // 检查收藏状态
 const checkFavoriteStatus = async () => {
   if (!isLoggedIn.value || !productId.value) return
-  
+
   try {
     const isFavorite = await favoriteStore.checkIsFavorite(productId.value)
     if (product.value) {
@@ -360,10 +366,10 @@ const checkFavoriteStatus = async () => {
 const toggleFavorite = async () => {
   if (!isLoggedIn.value) {
     ElMessage.warning('请先登录')
-    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    router.push({path: '/login', query: {redirect: route.fullPath}})
     return
   }
-  
+
   favoriteLoading.value = true
   try {
     const result = await favoriteStore.toggleFavorite(productId.value)
@@ -386,7 +392,7 @@ const toggleFavorite = async () => {
 // 获取同类商品
 const fetchSimilarProducts = async () => {
   if (!product.value || !product.value.categoryId) return
-  
+
   similarLoading.value = true
   try {
     const params = {
@@ -395,42 +401,42 @@ const fetchSimilarProducts = async () => {
       categoryId: product.value.categoryId,
       status: 1 // 在售状态
     }
-    
+
     const result = await productStore.fetchProductList(params)
     if (result && result.records) {
       // 处理商品数据并过滤当前商品（确保完整处理）
       similarProducts.value = result.records
-        .filter(p => p.id !== productId.value)
-        .map(p => {
-          const processed = productStore.processProductData(p)
-          
-          // 确保图片数据存在
-          if (!processed.images && processed.imageUrls) {
-            processed.images = processed.imageUrls.map(url => fileStore.getFullUrl(url))
-          } else if (!processed.images) {
-            processed.images = []
-          }
-          
-          // 确保封面图片存在
-          if (!processed.coverImage && processed.images && processed.images.length > 0) {
-            processed.coverImage = processed.images[0]
-          } else if (!processed.coverImage) {
-            processed.coverImage = defaultImage
-          }
-          
-          // 确保卖家头像存在
-          if (processed.avatar && !processed.sellerAvatar) {
-            processed.sellerAvatar = fileStore.getFullUrl(processed.avatar)
-          }
-          
-          // 确保productQuality字段存在（向后兼容）
-          if (!processed.productQuality && processed.conditions) {
-            processed.productQuality = processed.conditions
-          }
-          
-          console.log('处理后的同类商品:', processed)
-          return processed
-        })
+          .filter(p => p.id !== productId.value)
+          .map(p => {
+            const processed = productStore.processProductData(p)
+
+            // 确保图片数据存在
+            if (!processed.images && processed.imageUrls) {
+              processed.images = processed.imageUrls.map(url => fileStore.getFullUrl(url))
+            } else if (!processed.images) {
+              processed.images = []
+            }
+
+            // 确保封面图片存在
+            if (!processed.coverImage && processed.images && processed.images.length > 0) {
+              processed.coverImage = processed.images[0]
+            } else if (!processed.coverImage) {
+              processed.coverImage = defaultImage
+            }
+
+            // 确保卖家头像存在
+            if (processed.avatar && !processed.sellerAvatar) {
+              processed.sellerAvatar = fileStore.getFullUrl(processed.avatar)
+            }
+
+            // 确保productQuality字段存在（向后兼容）
+            if (!processed.productQuality && processed.conditions) {
+              processed.productQuality = processed.conditions
+            }
+
+            console.log('处理后的同类商品:', processed)
+            return processed
+          })
     }
   } catch (error) {
     console.error('获取同类商品失败:', error)
@@ -449,18 +455,18 @@ const goToSellerPage = (sellerId) => {
 const contactSeller = () => {
   if (!isLoggedIn.value) {
     ElMessage.warning('请先登录')
-    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    router.push({path: '/login', query: {redirect: route.fullPath}})
     return
   }
-  
+
   if (!product.value || !product.value.userId) return
-  
+
   // 如果是自己的商品
   if (product.value.userId === userId.value) {
     ElMessage.warning('不能给自己发消息')
     return
   }
-  
+
   // 跳转到聊天页面
   router.push(`/user/chat/${product.value.userId}?productId=${productId.value}`)
 }
@@ -469,44 +475,44 @@ const contactSeller = () => {
 const buyProduct = () => {
   if (!isLoggedIn.value) {
     ElMessage.warning('请先登录')
-    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    router.push({path: '/login', query: {redirect: route.fullPath}})
     return
   }
-  
+
   // 确认购买
   ElMessageBox.confirm(
-    `确定要购买商品 "${product.value.title}" 吗？`,
-    '购买确认',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
+      `确定要购买商品 "${product.value.title}" 吗？`,
+      '购买确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
   )
-    .then(() => {
-      // 跳转到结算页
-      router.push(`/checkout/${productId.value}`)
-    })
-    .catch(() => {
-      // 取消操作
-    })
+      .then(() => {
+        // 跳转到结算页
+        router.push(`/checkout/${productId.value}`)
+      })
+      .catch(() => {
+        // 取消操作
+      })
 }
 
 // 获取卖家信息
 const fetchSellerInfo = async (sellerId) => {
   if (!sellerId) return
-  
+
   sellerLoading.value = true
   try {
     const res = await getSellerInfo(sellerId)
     if (res.code === 200 && res.data) {
       sellerInfo.value = res.data
-      
+
       // 处理注册时间格式
       if (sellerInfo.value.createTime) {
         sellerInfo.value.registerTime = sellerInfo.value.createTime
       }
-      
+
       // 如果商品数据中没有卖家头像，使用卖家信息中的头像
       if (product.value && !product.value.sellerAvatar && sellerInfo.value.avatar) {
         product.value.sellerAvatar = fileStore.getFullUrl(sellerInfo.value.avatar)
@@ -523,7 +529,7 @@ const fetchSellerInfo = async (sellerId) => {
 // 获取商品评分统计
 const fetchProductRating = async () => {
   if (!productId.value) return
-  
+
   ratingLoading.value = true
   try {
     const data = await productStore.fetchProductRatingStatistics(productId.value)
@@ -540,10 +546,10 @@ const fetchProductRating = async () => {
 // 计算评分百分比
 const calculateRatingPercentage = (rating) => {
   if (!ratingStats.value) return 0
-  
+
   const totalCount = Object.values(ratingStats.value).reduce((sum, val) => sum + Number(val), 0)
   if (totalCount === 0) return 0
-  
+
   const ratingCount = Number(ratingStats.value[rating] || 0)
   return Math.round((ratingCount / totalCount) * 100)
 }
@@ -563,14 +569,14 @@ const getRatingColor = (rating) => {
 // 获取商品评论
 const fetchProductComments = async () => {
   if (!productId.value) return
-  
+
   commentLoading.value = true
   try {
     const params = {
       page: commentPagination.value.current,
       size: commentPagination.value.size
     }
-    
+
     const result = await commentStore.fetchProductComments(productId.value, params)
     if (result) {
       // 处理评论数据，确保头像URL正确
@@ -581,7 +587,7 @@ const fetchProductComments = async () => {
         }
         return comment
       })
-      
+
       commentPagination.value = {
         current: result.current,
         size: result.size,
@@ -902,7 +908,7 @@ onMounted(() => {
   .product-main {
     grid-template-columns: 1fr;
   }
-  
+
   .product-gallery {
     height: 350px;
   }
@@ -912,16 +918,16 @@ onMounted(() => {
   .action-buttons {
     flex-wrap: wrap;
   }
-  
+
   .rating-overview {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .rating-average {
     min-width: auto;
   }
-  
+
   .comment-header {
     flex-direction: column;
     gap: 10px;
@@ -932,11 +938,11 @@ onMounted(() => {
   .product-gallery {
     height: 280px;
   }
-  
+
   .product-title {
     font-size: 20px;
   }
-  
+
   .product-price {
     font-size: 24px;
   }

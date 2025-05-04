@@ -1,101 +1,101 @@
 <template>
   <div class="product-list-container">
     <!-- 非搜索结果页面时显示面包屑 -->
-    <el-breadcrumb class="breadcrumb" v-if="!isSearchResult">
+    <el-breadcrumb v-if="!isSearchResult" class="breadcrumb">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item v-if="categoryId">{{ categoryName || '分类商品' }}</el-breadcrumb-item>
       <el-breadcrumb-item v-else>全部商品</el-breadcrumb-item>
     </el-breadcrumb>
 
     <!-- 非搜索结果页面时显示标题 -->
-    <div class="product-list-header" v-if="!isSearchResult">
+    <div v-if="!isSearchResult" class="product-list-header">
       <h1 class="page-title">{{ categoryName || (categoryId ? '分类商品' : '全部商品') }}</h1>
-      
+
       <div class="filter-toolbar">
-        <el-select v-model="selectedCategory" placeholder="选择分类" clearable @change="handleCategoryChange">
-          <el-option label="全部分类" value="" />
-          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+        <el-select v-model="selectedCategory" clearable placeholder="选择分类" @change="handleCategoryChange">
+          <el-option label="全部分类" value=""/>
+          <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id"/>
         </el-select>
-      
+
         <el-select v-model="sortOrder" placeholder="排序方式" @change="handleSortChange">
-          <el-option label="最新发布" value="createTime,desc" />
-          <el-option label="价格从低到高" value="price,asc" />
-          <el-option label="价格从高到低" value="price,desc" />
-          <el-option label="浏览量最高" value="viewCount,desc" />
+          <el-option label="最新发布" value="createTime,desc"/>
+          <el-option label="价格从低到高" value="price,asc"/>
+          <el-option label="价格从高到低" value="price,desc"/>
+          <el-option label="浏览量最高" value="viewCount,desc"/>
         </el-select>
-        
+
         <el-select v-model="priceRange" placeholder="价格区间" @change="handlePriceChange">
-          <el-option label="全部价格" value="" />
-          <el-option label="0-100元" value="0,100" />
-          <el-option label="100-500元" value="100,500" />
-          <el-option label="500-1000元" value="500,1000" />
-          <el-option label="1000-5000元" value="1000,5000" />
-          <el-option label="5000元以上" value="5000," />
+          <el-option label="全部价格" value=""/>
+          <el-option label="0-100元" value="0,100"/>
+          <el-option label="100-500元" value="100,500"/>
+          <el-option label="500-1000元" value="500,1000"/>
+          <el-option label="1000-5000元" value="1000,5000"/>
+          <el-option label="5000元以上" value="5000,"/>
         </el-select>
       </div>
     </div>
 
     <!-- 搜索结果页面时也显示筛选工具 -->
-    <div class="filter-toolbar-search" v-if="isSearchResult">
-      <el-select v-model="selectedCategory" placeholder="选择分类" clearable @change="handleCategoryChange">
-        <el-option label="全部分类" value="" />
-        <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id" />
+    <div v-if="isSearchResult" class="filter-toolbar-search">
+      <el-select v-model="selectedCategory" clearable placeholder="选择分类" @change="handleCategoryChange">
+        <el-option label="全部分类" value=""/>
+        <el-option v-for="category in categories" :key="category.id" :label="category.name" :value="category.id"/>
       </el-select>
-    
+
       <el-select v-model="sortOrder" placeholder="排序方式" @change="handleSortChange">
-        <el-option label="最新发布" value="createTime,desc" />
-        <el-option label="价格从低到高" value="price,asc" />
-        <el-option label="价格从高到低" value="price,desc" />
-        <el-option label="浏览量最高" value="viewCount,desc" />
+        <el-option label="最新发布" value="createTime,desc"/>
+        <el-option label="价格从低到高" value="price,asc"/>
+        <el-option label="价格从高到低" value="price,desc"/>
+        <el-option label="浏览量最高" value="viewCount,desc"/>
       </el-select>
-      
+
       <el-select v-model="priceRange" placeholder="价格区间" @change="handlePriceChange">
-        <el-option label="全部价格" value="" />
-        <el-option label="0-100元" value="0,100" />
-        <el-option label="100-500元" value="100,500" />
-        <el-option label="500-1000元" value="500,1000" />
-        <el-option label="1000-5000元" value="1000,5000" />
-        <el-option label="5000元以上" value="5000," />
+        <el-option label="全部价格" value=""/>
+        <el-option label="0-100元" value="0,100"/>
+        <el-option label="100-500元" value="100,500"/>
+        <el-option label="500-1000元" value="500,1000"/>
+        <el-option label="1000-5000元" value="1000,5000"/>
+        <el-option label="5000元以上" value="5000,"/>
       </el-select>
     </div>
 
-    <div class="product-list-body" v-loading="loading">
+    <div v-loading="loading" class="product-list-body">
       <!-- 商品列表 -->
       <div v-if="products.length > 0" class="product-grid">
-        <product-card 
-          v-for="product in products" 
-          :key="product.id" 
-          :product="product"
+        <product-card
+            v-for="product in products"
+            :key="product.id"
+            :product="product"
         />
       </div>
-      
+
       <!-- 空状态 -->
-      <el-empty v-else-if="!loading" description="暂无商品" />
+      <el-empty v-else-if="!loading" description="暂无商品"/>
     </div>
-    
+
     <!-- 分页 -->
-    <div class="pagination-container" v-if="total > 0">
+    <div v-if="total > 0" class="pagination-container">
       <el-pagination
-        background
-        layout="prev, pager, next, sizes, total"
-        :total="total"
-        :page-size="pageSize"
-        :current-page="currentPage"
-        :page-sizes="[12, 24, 36, 48]"
-        @current-change="handlePageChange"
-        @size-change="handleSizeChange"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :page-sizes="[12, 24, 36, 48]"
+          :total="total"
+          background
+          layout="prev, pager, next, sizes, total"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useProductStore } from '@/stores/product'
-import { useCategoryStore } from '@/stores/category'
+import {computed, onMounted, ref, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useProductStore} from '@/stores/product'
+import {useCategoryStore} from '@/stores/category'
 import ProductCard from '@/components/product/ProductCard.vue'
-import { ElMessage } from 'element-plus'
+import {ElMessage} from 'element-plus'
 
 // 定义props
 const props = defineProps({
@@ -153,7 +153,7 @@ const categories = ref([])
 // 获取分类名称
 const fetchCategoryName = async () => {
   if (!categoryId.value) return
-  
+
   try {
     const category = await categoryStore.getCategoryById(categoryId.value)
     if (category) {
@@ -177,24 +177,24 @@ const fetchProducts = async () => {
       size: pageSize.value,
       status: 1 // 只显示在售商品
     }
-    
+
     // 添加分类ID
     if (categoryId.value) {
       params.categoryId = categoryId.value
     }
-    
+
     // 添加关键词
     if (keyword.value) {
       params.keyword = keyword.value
     }
-    
+
     // 添加排序
     if (sortOrder.value) {
       const [field, order] = sortOrder.value.split(',')
       params.sortField = field
       params.sortOrder = order
     }
-    
+
     // 添加价格区间
     if (minPrice.value !== null) {
       params.minPrice = minPrice.value
@@ -202,9 +202,9 @@ const fetchProducts = async () => {
     if (maxPrice.value !== null) {
       params.maxPrice = maxPrice.value
     }
-    
+
     console.log('查询参数:', params)
-    
+
     // 发起请求
     const result = await productStore.fetchProductList(params)
     if (result) {
@@ -221,89 +221,90 @@ const fetchProducts = async () => {
 
 // 监听路由变化
 watch(
-  () => [route.path, route.query],
-  () => {
-    console.log('路由变化', route.path, route.query)
-    
-    // 从URL中获取页码和页面大小
-    if (route.query.page) {
-      currentPage.value = Number(route.query.page)
-    } else {
-      currentPage.value = 1
-    }
-    
-    if (route.query.size) {
-      pageSize.value = Number(route.query.size)
-    }
-    
-    // 从URL同步分类ID
-    if (route.query.categoryId) {
-      selectedCategory.value = Number(route.query.categoryId)
-    } else if (route.name === 'CategoryProducts' && route.params.id) {
-      selectedCategory.value = Number(route.params.id)
-    } else {
-      selectedCategory.value = ''
-    }
-    
-    // 从URL同步排序方式
-    if (route.query.sort) {
-      sortOrder.value = route.query.sort
-    }
-    
-    // 从URL同步价格区间
-    if (route.query.minPrice || route.query.maxPrice) {
-      const min = route.query.minPrice || ''
-      const max = route.query.maxPrice || ''
-      priceRange.value = `${min},${max}`
-      minPrice.value = min ? Number(min) : null
-      maxPrice.value = max ? Number(max) : null
-    } else {
-      priceRange.value = ''
-      minPrice.value = null
-      maxPrice.value = null
-    }
-    
-    // 获取分类名称
-    fetchCategoryName()
-    // 获取商品
-    fetchProducts()
-  },
-  { immediate: true, deep: true }
+    () => [route.path, route.query],
+    () => {
+      console.log('路由变化', route.path, route.query)
+
+      // 从URL中获取页码和页面大小
+      if (route.query.page) {
+        currentPage.value = Number(route.query.page)
+      } else {
+        currentPage.value = 1
+      }
+
+      if (route.query.size) {
+        pageSize.value = Number(route.query.size)
+      }
+
+      // 从URL同步分类ID
+      if (route.query.categoryId) {
+        selectedCategory.value = Number(route.query.categoryId)
+      } else if (route.name === 'CategoryProducts' && route.params.id) {
+        selectedCategory.value = Number(route.params.id)
+      } else {
+        selectedCategory.value = ''
+      }
+
+      // 从URL同步排序方式
+      if (route.query.sort) {
+        sortOrder.value = route.query.sort
+      }
+
+      // 从URL同步价格区间
+      if (route.query.minPrice || route.query.maxPrice) {
+        const min = route.query.minPrice || ''
+        const max = route.query.maxPrice || ''
+        priceRange.value = `${min},${max}`
+        minPrice.value = min ? Number(min) : null
+        maxPrice.value = max ? Number(max) : null
+      } else {
+        priceRange.value = ''
+        minPrice.value = null
+        maxPrice.value = null
+      }
+
+      // 获取分类名称
+      fetchCategoryName()
+      // 获取商品
+      fetchProducts()
+    },
+    {immediate: true, deep: true}
 )
 
 // 更新URL查询参数
 const updateUrlParams = () => {
-  const query = { ...route.query }
-  
+  const query = {...route.query}
+
   // 更新分页参数
   query.page = currentPage.value
   query.size = pageSize.value
-  
+
   // 更新排序参数
   if (sortOrder.value) {
     query.sort = sortOrder.value
   } else {
     delete query.sort
   }
-  
+
   // 更新价格参数
   if (minPrice.value !== null) {
     query.minPrice = minPrice.value
   } else {
     delete query.minPrice
   }
-  
+
   if (maxPrice.value !== null) {
     query.maxPrice = maxPrice.value
   } else {
     delete query.maxPrice
   }
-  
+
   // 使用replace代替push，防止创建新的历史记录
   router.replace({
     path: route.path,
     query
-  }, () => {}, (error) => {
+  }, () => {
+  }, (error) => {
     console.error('Router replace error:', error);
   })
 }
@@ -343,7 +344,7 @@ const handlePriceChange = () => {
     minPrice.value = min ? Number(min) : null
     maxPrice.value = max ? Number(max) : null
   }
-  
+
   currentPage.value = 1 // 重置到第一页
   updateUrlParams()
   fetchProducts()
@@ -354,7 +355,7 @@ const fetchCategories = async () => {
   try {
     await categoryStore.fetchAllCategories()
     categories.value = categoryStore.categories
-    
+
     // 如果当前有分类ID，则设置选中状态
     if (categoryId.value) {
       selectedCategory.value = categoryId.value
@@ -367,24 +368,24 @@ const fetchCategories = async () => {
 // 处理分类变化
 const handleCategoryChange = () => {
   currentPage.value = 1 // 重置到第一页
-  
+
   // 构建新的查询参数对象
-  const query = { ...route.query }
-  
+  const query = {...route.query}
+
   if (selectedCategory.value) {
     query.categoryId = selectedCategory.value
   } else {
     // 如果选择了"全部分类"，则移除分类参数
     delete query.categoryId
   }
-  
+
   // 重置页码
   query.page = 1
-  
+
   // 使用replace代替push
-  router.replace({ 
+  router.replace({
     path: route.path,
-    query 
+    query
   }, () => {
     // 获取商品数据
     fetchProducts()
@@ -399,12 +400,12 @@ const handleCategoryChange = () => {
 onMounted(() => {
   // 获取所有分类
   fetchCategories()
-  
+
   // 设置页面标题（非搜索结果页面）
   if (!props.isSearchResult) {
-    document.title = categoryId.value 
-      ? `${categoryName.value || '分类商品'} - 二手交易平台` 
-      : '全部商品 - 二手交易平台'
+    document.title = categoryId.value
+        ? `${categoryName.value || '分类商品'} - 二手交易平台`
+        : '全部商品 - 二手交易平台'
   }
 })
 </script>
@@ -463,12 +464,12 @@ onMounted(() => {
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .filter-toolbar, .filter-toolbar-search {
     width: 100%;
     flex-wrap: wrap;
   }
-  
+
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;

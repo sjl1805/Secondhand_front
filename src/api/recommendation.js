@@ -6,11 +6,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getUserBasedRecommendations(limit = 10) {
-  return request({
-    url: '/recommendations/user-based',
-    method: 'get',
-    params: { limit }
-  })
+    return request({
+        url: '/recommendations/user-based',
+        method: 'get',
+        params: {limit}
+    })
 }
 
 /**
@@ -19,11 +19,11 @@ export function getUserBasedRecommendations(limit = 10) {
  * @returns {Promise}
  */
 export function getItemBasedRecommendations(limit = 10) {
-  return request({
-    url: '/recommendations/item-based',
-    method: 'get',
-    params: { limit }
-  })
+    return request({
+        url: '/recommendations/item-based',
+        method: 'get',
+        params: {limit}
+    })
 }
 
 /**
@@ -31,8 +31,8 @@ export function getItemBasedRecommendations(limit = 10) {
  * @returns {Promise}
  */
 export function refreshRecommendations() {
-  return request({
-    url: '/recommendations/refresh',
-    method: 'post'
-  })
+    return request({
+        url: '/recommendations/refresh',
+        method: 'post'
+    })
 } 

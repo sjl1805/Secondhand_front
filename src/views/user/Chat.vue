@@ -1,10 +1,10 @@
 <template>
   <div class="chat-container">
     <div class="chat-header">
-      <el-page-header @back="goBack" :title="chatTitle" />
+      <el-page-header :title="chatTitle" @back="goBack"/>
     </div>
-    
-    <div class="chat-content" v-loading="messageStore.loading">
+
+    <div v-loading="messageStore.loading" class="chat-content">
       <!-- 聊天记录为空时的提示 -->
       <div v-if="messageStore.chatHistory.length === 0" class="empty-chat">
         <el-empty description="暂无聊天记录">
@@ -13,92 +13,102 @@
           </template>
         </el-empty>
       </div>
-      
+
       <!-- 聊天记录区域 -->
-      <div v-else class="message-area" ref="messageAreaRef">
+      <div v-else ref="messageAreaRef" class="message-area">
         <div v-for="(group, index) in messageStore.groupedChatHistory" :key="index" class="message-group">
           <div class="date-divider">
             <span>{{ formatMessageDate(group.date) }}</span>
           </div>
-          
+
           <template v-for="message in group.messages" :key="message.id">
-            <div class="message-bubble"
-              :class="{ 'self': message.isSelf, 'other': !message.isSelf }">
-              <el-avatar v-if="!message.isSelf" :size="40" :src="getAvatarUrl(message.senderAvatar)" />
+            <div :class="{ 'self': message.isSelf, 'other': !message.isSelf }"
+                 class="message-bubble">
+              <el-avatar v-if="!message.isSelf" :size="40" :src="getAvatarUrl(message.senderAvatar)"/>
               <div class="message-content">
                 <div v-if="!message.type || message.type === 'TEXT'" class="text-message">{{ message.content }}</div>
-                
+
                 <div v-else-if="message.type === 'IMAGE'" class="image-message">
-                  <el-image :src="getImageUrl(message.content)" :preview-src-list="[getImageUrl(message.content)]"></el-image>
+                  <el-image :preview-src-list="[getImageUrl(message.content)]"
+                            :src="getImageUrl(message.content)"></el-image>
                 </div>
-                
-                <div v-else-if="message.type === 'PRODUCT'" class="product-message" @click="viewProduct(message.relatedProductId)">
-                  <el-card shadow="hover" class="product-card">
+
+                <div v-else-if="message.type === 'PRODUCT'" class="product-message"
+                     @click="viewProduct(message.relatedProductId)">
+                  <el-card class="product-card" shadow="hover">
                     <div class="product-info">
-                      <img v-if="message.productData && message.productData.coverImage" :src="getImageUrl(message.productData.coverImage)" class="product-image">
+                      <img v-if="message.productData && message.productData.coverImage"
+                           :src="getImageUrl(message.productData.coverImage)" class="product-image">
                       <div class="product-details">
-                        <div class="product-title">{{ message.productData ? message.productData.title : '商品信息' }}</div>
+                        <div class="product-title">{{
+                            message.productData ? message.productData.title : '商品信息'
+                          }}
+                        </div>
                         <div class="product-price">¥{{ message.productData ? message.productData.price : '0.00' }}</div>
                       </div>
                     </div>
                   </el-card>
                 </div>
-                
-                <div v-else-if="message.type === 'ORDER'" class="order-message" @click="viewOrder(message.relatedOrderId)">
-                  <el-card shadow="hover" class="order-card">
+
+                <div v-else-if="message.type === 'ORDER'" class="order-message"
+                     @click="viewOrder(message.relatedOrderId)">
+                  <el-card class="order-card" shadow="hover">
                     <div class="order-info">
-                      <div class="order-title">订单: {{ message.orderData ? message.orderData.orderNo : '订单信息' }}</div>
+                      <div class="order-title">订单: {{
+                          message.orderData ? message.orderData.orderNo : '订单信息'
+                        }}
+                      </div>
                       <div class="order-status">{{ message.orderData ? message.orderData.statusText : '' }}</div>
                     </div>
                   </el-card>
                 </div>
-                
+
                 <div class="message-time">
                   {{ formatMessageTime(message.createTime) }}
                   <el-icon v-if="message.isSelf" :class="{ 'read': message.isRead }">
-                    <Check />
+                    <Check/>
                   </el-icon>
                 </div>
               </div>
-              <el-avatar v-if="message.isSelf" :size="40" :src="getAvatarUrl(message.senderAvatar)" />
+              <el-avatar v-if="message.isSelf" :size="40" :src="getAvatarUrl(message.senderAvatar)"/>
             </div>
           </template>
         </div>
       </div>
-      
+
       <!-- 输入区域 -->
       <div class="input-area">
 
-        
+
         <div class="message-editor">
           <el-input
-            v-model="messageInput"
-            type="textarea"
-            :rows="3"
-            placeholder="输入消息..."
-            resize="none"
-            @keydown.enter.prevent="sendMessage"
+              v-model="messageInput"
+              :rows="3"
+              placeholder="输入消息..."
+              resize="none"
+              type="textarea"
+              @keydown.enter.prevent="sendMessage"
           ></el-input>
-          <el-button type="primary" @click="sendMessage" :disabled="!messageInput.trim()">发送</el-button>
+          <el-button :disabled="!messageInput.trim()" type="primary" @click="sendMessage">发送</el-button>
         </div>
       </div>
     </div>
-    
+
 
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useMessageStore } from '@/stores/message'
-import { useUserStore } from '@/stores/user'
-import { useProductStore } from '@/stores/product'
-import { useOrderStore } from '@/stores/order'
-import { useFileStore } from '@/stores/file'
-import { formatDateTime } from '@/utils/format'
-import { ElMessage } from 'element-plus'
-import { Picture, ShoppingCart, Document, Check, Plus } from '@element-plus/icons-vue'
+import {computed, nextTick, onMounted, onUnmounted, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useMessageStore} from '@/stores/message'
+import {useUserStore} from '@/stores/user'
+import {useProductStore} from '@/stores/product'
+import {useOrderStore} from '@/stores/order'
+import {useFileStore} from '@/stores/file'
+import {formatDateTime} from '@/utils/format'
+import {ElMessage} from 'element-plus'
+import {Check} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -154,12 +164,12 @@ let pollTimer = null
 // 获取头像完整URL
 const getAvatarUrl = (path) => {
   if (!path) return defaultAvatar
-  
+
   // 检查是否已经是完整URL
   if (path.startsWith('http')) {
     return path
   }
-  
+
   // 使用fileStore处理头像路径
   return fileStore.getFullUrl(path)
 }
@@ -167,12 +177,12 @@ const getAvatarUrl = (path) => {
 // 获取图片完整URL
 const getImageUrl = (path) => {
   if (!path) return defaultProductImage
-  
+
   // 检查是否已经是完整URL
   if (path.startsWith('http')) {
     return path
   }
-  
+
   // 使用fileStore处理图片路径
   return fileStore.getFullUrl(path)
 }
@@ -186,7 +196,7 @@ const goBack = () => {
 const formatMessageDate = (date) => {
   const today = new Date().toLocaleDateString()
   const yesterday = new Date(Date.now() - 86400000).toLocaleDateString()
-  
+
   if (date === today) return '今天'
   if (date === yesterday) return '昨天'
   return date
@@ -200,17 +210,17 @@ const formatMessageTime = (time) => {
 // 发送文本消息
 const sendMessage = async () => {
   if (!messageInput.value.trim()) return
-  
+
   try {
     await messageStore.sendNewMessage({
       receiverId: targetUserId.value,
       content: messageInput.value.trim(),
       type: 'TEXT'
     })
-    
+
     // 清空输入框
     messageInput.value = ''
-    
+
     // 滚动到底部
     scrollToBottom()
   } catch (error) {
@@ -229,15 +239,15 @@ const openUploadImage = () => {
 const beforeImageUpload = (file) => {
   const isImage = file.type.startsWith('image/')
   const isLt2M = file.size / 1024 / 1024 < 2
-  
+
   if (!isImage) {
     ElMessage.error('只能上传图片文件!')
   }
-  
+
   if (!isLt2M) {
     ElMessage.error('图片大小不能超过 2MB!')
   }
-  
+
   return isImage && isLt2M
 }
 
@@ -253,17 +263,17 @@ const handleImageSuccess = (response) => {
 // 发送图片消息
 const sendImageMessage = async () => {
   if (!imageUrl.value) return
-  
+
   try {
     await messageStore.sendNewMessage({
       receiverId: targetUserId.value,
       content: imageUrl.value,
       type: 'IMAGE'
     })
-    
+
     // 关闭对话框
     imageUploadVisible.value = false
-    
+
     // 滚动到底部
     scrollToBottom()
   } catch (error) {
@@ -276,7 +286,7 @@ const sendImageMessage = async () => {
 const openProductSelector = async () => {
   productsLoading.value = true
   productSelectVisible.value = true
-  
+
   try {
     const result = await productStore.fetchUserProducts()
     userProducts.value = result?.records || []
@@ -302,10 +312,10 @@ const selectProduct = async (product) => {
       type: 'PRODUCT',
       relatedProductId: product.id
     })
-    
+
     // 关闭对话框
     productSelectVisible.value = false
-    
+
     // 滚动到底部
     scrollToBottom()
   } catch (error) {
@@ -318,7 +328,7 @@ const selectProduct = async (product) => {
 const openOrderSelector = async () => {
   ordersLoading.value = true
   orderSelectVisible.value = true
-  
+
   try {
     const result = await orderStore.fetchBuyerOrders()
     userOrders.value = result?.records || []
@@ -344,10 +354,10 @@ const selectOrder = async (order) => {
       type: 'ORDER',
       relatedOrderId: order.id
     })
-    
+
     // 关闭对话框
     orderSelectVisible.value = false
-    
+
     // 滚动到底部
     scrollToBottom()
   } catch (error) {
@@ -419,20 +429,20 @@ const loadTargetUserInfo = async () => {
 // 组件挂载时初始化
 onMounted(async () => {
   // 设置当前聊天用户
-  messageStore.setCurrentChatUser({ id: targetUserId.value })
-  
+  messageStore.setCurrentChatUser({id: targetUserId.value})
+
   // 加载聊天历史
   await messageStore.fetchChatHistory(targetUserId.value)
-  
+
   // 加载目标用户信息
   await loadTargetUserInfo()
-  
+
   // 标记所有消息为已读
   await messageStore.markAllMessagesAsRead(targetUserId.value)
-  
+
   // 开始轮询聊天记录
   startChatPolling()
-  
+
   // 滚动到底部
   scrollToBottom()
 })
@@ -444,7 +454,7 @@ onUnmounted(() => {
     clearInterval(pollTimer)
     pollTimer = null
   }
-  
+
   // 重置当前聊天用户
   messageStore.setCurrentChatUser(null)
 })

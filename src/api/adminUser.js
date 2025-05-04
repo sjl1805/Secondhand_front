@@ -9,11 +9,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getAdminUserList(params) {
-  return request({
-    url: '/admin/user/users',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/user/users',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -23,11 +23,11 @@ export function getAdminUserList(params) {
  * @returns {Promise}
  */
 export function searchUser(params) {
-  return request({
-    url: '/admin/user/search',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/user/user/search',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -36,10 +36,10 @@ export function searchUser(params) {
  * @returns {Promise}
  */
 export function getUserById(userId) {
-  return request({
-    url: `/admin/user/users/${userId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/admin/user/users/${userId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -51,11 +51,11 @@ export function getUserById(userId) {
  * @returns {Promise}
  */
 export function updateAdminUserStatus(userId, params) {
-  return request({
-    url: `/admin/user/users/${userId}/status`,
-    method: 'put',
-    params
-  })
+    return request({
+        url: `/admin/user/users/${userId}/status`,
+        method: 'put',
+        params
+    })
 }
 
 /**
@@ -64,10 +64,10 @@ export function updateAdminUserStatus(userId, params) {
  * @returns {Promise}
  */
 export function deleteAdminUser(userId) {
-  return request({
-    url: `/admin/user/users/${userId}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/admin/user/users/${userId}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -78,11 +78,11 @@ export function deleteAdminUser(userId) {
  * @returns {Promise}
  */
 export function resetAdminUserPassword(userId, params) {
-  return request({
-    url: `/admin/user/users/${userId}/password`,
-    method: 'put',
-    params
-  })
+    return request({
+        url: `/admin/user/users/${userId}/password`,
+        method: 'put',
+        params
+    })
 }
 
 /**
@@ -90,8 +90,8 @@ export function resetAdminUserPassword(userId, params) {
  * @returns {Promise}
  */
 export function getAdminList() {
-  return request({
-    url: '/admin/user/admins',
-    method: 'get'
-  })
-}
+    return request({
+        url: '/admin/user/admins',
+        method: 'get'
+    })
+} 

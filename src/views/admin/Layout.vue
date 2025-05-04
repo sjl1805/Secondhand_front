@@ -1,100 +1,128 @@
 <template>
-  <div class="admin-layout" v-if="isAdmin">
+  <div v-if="isAdmin" class="admin-layout">
     <!-- 顶部导航栏 -->
     <el-header class="admin-header">
       <div class="header-left">
         <div class="logo-container">
-          <el-icon class="toggle-icon" @click="toggleSidebar"><Fold v-if="!isCollapse" /><Expand v-else /></el-icon>
+          <el-icon class="toggle-icon" @click="toggleSidebar">
+            <Fold v-if="!isCollapse"/>
+            <Expand v-else/>
+          </el-icon>
           <div class="logo">二手交易平台 · 管理后台</div>
         </div>
       </div>
       <div class="header-right">
         <div class="admin-actions">
           <el-tooltip content="返回前台" placement="bottom">
-            <el-button circle @click="$router.push('/')" type="primary" text>
-              <el-icon><HomeFilled /></el-icon>
+            <el-button circle text type="primary" @click="$router.push('/')">
+              <el-icon>
+                <HomeFilled/>
+              </el-icon>
             </el-button>
           </el-tooltip>
-          
+
           <el-tooltip content="通知中心" placement="bottom">
-            <el-badge :is-dot="unreadCount > 0" :hidden="unreadCount <= 0">
-              <el-button circle @click="$router.push('/user/notifications')" type="primary" text>
-                <el-icon><Bell /></el-icon>
+            <el-badge :hidden="unreadCount <= 0" :is-dot="unreadCount > 0">
+              <el-button circle text type="primary" @click="$router.push('/user/notifications')">
+                <el-icon>
+                  <Bell/>
+                </el-icon>
               </el-button>
             </el-badge>
           </el-tooltip>
         </div>
-        
+
         <el-dropdown trigger="click">
           <div class="avatar-container">
-            <el-avatar :src="userAvatar" :size="36"></el-avatar>
-            <span class="admin-username">{{ nickname || username }} <el-icon><ArrowDown /></el-icon></span>
+            <el-avatar :size="36" :src="userAvatar"></el-avatar>
+            <span class="admin-username">{{ nickname || username }} <el-icon><ArrowDown/></el-icon></span>
           </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item @click="$router.push('/')">
-                <el-icon><HomeFilled /></el-icon> 返回前台
+                <el-icon>
+                  <HomeFilled/>
+                </el-icon>
+                返回前台
               </el-dropdown-item>
               <el-dropdown-item @click="$router.push('/user/profile')">
-                <el-icon><UserFilled /></el-icon> 个人中心
+                <el-icon>
+                  <UserFilled/>
+                </el-icon>
+                个人中心
               </el-dropdown-item>
               <el-dropdown-item @click="$router.push('/user/notifications')">
-                <el-icon><Bell /></el-icon> 
+                <el-icon>
+                  <Bell/>
+                </el-icon>
                 系统通知
-                <el-badge v-if="unreadCount > 0" :value="unreadCount" type="danger" />
+                <el-badge v-if="unreadCount > 0" :value="unreadCount" type="danger"/>
               </el-dropdown-item>
               <el-dropdown-item divided @click="handleLogout">
-                <el-icon><SwitchButton /></el-icon> 退出登录
+                <el-icon>
+                  <SwitchButton/>
+                </el-icon>
+                退出登录
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
       </div>
     </el-header>
-    
+
     <el-container class="admin-container">
       <!-- 侧边栏 -->
       <el-aside :width="isCollapse ? '64px' : '220px'" class="admin-sidebar">
         <el-menu
-          :default-active="activeMenu"
-          class="admin-menu"
-          router
-          :collapse="isCollapse"
-          background-color="#304156"
-          text-color="#bfcbd9"
-          active-text-color="#409EFF"
+            :collapse="isCollapse"
+            :default-active="activeMenu"
+            active-text-color="#409EFF"
+            background-color="#304156"
+            class="admin-menu"
+            router
+            text-color="#bfcbd9"
         >
           <el-menu-item index="/admin/dashboard">
-            <el-icon><Grid /></el-icon>
+            <el-icon>
+              <Grid/>
+            </el-icon>
             <template #title>控制面板</template>
           </el-menu-item>
-          
+
           <el-menu-item index="/admin/users">
-            <el-icon><User /></el-icon>
+            <el-icon>
+              <User/>
+            </el-icon>
             <template #title>用户管理</template>
           </el-menu-item>
-          
+
           <el-sub-menu index="product-menu">
             <template #title>
-              <el-icon><Goods /></el-icon>
+              <el-icon>
+                <Goods/>
+              </el-icon>
               <span>商品管理</span>
             </template>
             <el-menu-item index="/admin/products">商品列表</el-menu-item>
             <el-menu-item index="/admin/categories">分类管理</el-menu-item>
           </el-sub-menu>
-          
+
           <el-menu-item index="/admin/orders">
-            <el-icon><List /></el-icon>
+            <el-icon>
+              <List/>
+            </el-icon>
             <template #title>订单管理</template>
           </el-menu-item>
-          
+
           <el-menu-item index="/admin/notifications">
-            <el-icon><Bell /></el-icon>
+            <el-icon>
+              <Bell/>
+            </el-icon>
             <template #title>通知管理</template>
           </el-menu-item>
         </el-menu>
       </el-aside>
-      
+
       <!-- 主内容区 -->
       <el-main class="admin-main">
         <el-breadcrumb v-if="breadcrumbs.length > 0" class="admin-breadcrumb">
@@ -102,22 +130,24 @@
             {{ item.title }}
           </el-breadcrumb-item>
         </el-breadcrumb>
-        
-        <div class="admin-content" ref="contentRef">
-          <keep-alive>
-            <router-view v-if="isAdmin && !isRouteChanging"></router-view>
-          </keep-alive>
+
+        <div ref="contentRef" class="admin-content">
+          <router-view v-slot="{ Component }">
+            <keep-alive>
+              <component :is="Component" v-if="isAdmin && !isRouteChanging"/>
+            </keep-alive>
+          </router-view>
         </div>
       </el-main>
     </el-container>
   </div>
-  
+
   <!-- 非管理员重定向 -->
   <div v-else class="unauthorized">
     <el-result
-      icon="error"
-      title="访问受限"
-      sub-title="您没有权限访问管理后台"
+        icon="error"
+        sub-title="您没有权限访问管理后台"
+        title="访问受限"
     >
       <template #extra>
         <el-button type="primary" @click="$router.push('/')">返回首页</el-button>
@@ -127,17 +157,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useUserStore } from '@/stores/user'
-import { useFileStore } from '@/stores/file'
-import { useNotificationStore } from '@/stores/notification'
-import { 
-  HomeFilled, UserFilled, SwitchButton, Grid, User, 
-  Goods, List, Setting, Histogram, Message, Bell,
-  Fold, Expand, ArrowDown
+import {computed, nextTick, onMounted, ref, watch} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useUserStore} from '@/stores/user'
+import {useFileStore} from '@/stores/file'
+import {useNotificationStore} from '@/stores/notification'
+import {
+  ArrowDown,
+  Bell,
+  Expand,
+  Fold,
+  Goods,
+  Grid,
+  HomeFilled,
+  List,
+  SwitchButton,
+  User,
+  UserFilled
 } from '@element-plus/icons-vue'
-import { ElMessageBox } from 'element-plus'
+import {ElMessageBox} from 'element-plus'
 
 // 路由实例
 const router = useRouter()
@@ -145,7 +183,7 @@ const route = useRoute()
 
 // 用户状态
 const userStore = useUserStore()
-const { isLoggedIn, username, nickname, avatar, role, logout } = userStore
+const {isLoggedIn, username, nickname, avatar, role, logout} = userStore
 
 // 文件存储
 const fileStore = useFileStore()
@@ -172,19 +210,19 @@ const breadcrumbs = computed(() => {
   // 根据路由生成面包屑
   const paths = route.path.split('/').filter(Boolean)
   const result = []
-  
+
   if (paths.length > 0) {
-    result.push({ title: '管理后台', path: '/admin/dashboard' })
-    
+    result.push({title: '管理后台', path: '/admin/dashboard'})
+
     // 根据路径生成面包屑
     let currentPath = ''
     for (let i = 1; i < paths.length; i++) {
       const path = paths[i]
-      currentPath += `/${paths[i-1]}/${path}`
-      
+      currentPath += `/${paths[i - 1]}/${path}`
+
       // 根据路径设置标题
       let title = path.charAt(0).toUpperCase() + path.slice(1)
-      
+
       // 特殊处理一些路径
       if (path === 'dashboard') title = '控制面板'
       else if (path === 'users') title = '用户管理'
@@ -194,11 +232,11 @@ const breadcrumbs = computed(() => {
       else if (path === 'order') title = '订单详情'
       else if (path === 'categories') title = '分类管理'
       else if (path === 'notifications') title = '通知管理'
-      
-      result.push({ title, path: currentPath })
+
+      result.push({title, path: currentPath})
     }
   }
-  
+
   return result
 })
 
@@ -263,7 +301,7 @@ watch(() => route.path, (newPath, oldPath) => {
   // 处理路由变化时的过渡
   if (newPath !== oldPath) {
     isRouteChanging.value = true
-    
+
     // 短暂延迟后重新显示视图
     setTimeout(() => {
       nextTick(() => {
@@ -396,7 +434,7 @@ watch(() => route.path, (newPath, oldPath) => {
   width: 100%;
   height: calc(100% - 60px);
   position: relative;
-  overflow: auto;  /* 允许内容滚动 */
+  overflow: auto; /* 允许内容滚动 */
   display: flex;
   flex-direction: column;
 }

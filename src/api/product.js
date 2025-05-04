@@ -12,11 +12,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getAdminProductList(params) {
-  return request({
-    url: '/admin/product/list',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/product/list',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -25,10 +25,10 @@ export function getAdminProductList(params) {
  * @returns {Promise}
  */
 export function getAdminProductDetail(id) {
-  return request({
-    url: `/admin/product/${id}`,
-    method: 'get'
-  })
+    return request({
+        url: `/admin/product/${id}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -38,11 +38,11 @@ export function getAdminProductDetail(id) {
  * @returns {Promise}
  */
 export function updateAdminProductStatus(id, status) {
-  return request({
-    url: `/admin/product/${id}/status`,
-    method: 'put',
-    params: { status }
-  })
+    return request({
+        url: `/admin/product/${id}/status`,
+        method: 'put',
+        params: {status}
+    })
 }
 
 /**
@@ -51,10 +51,10 @@ export function updateAdminProductStatus(id, status) {
  * @returns {Promise}
  */
 export function deleteAdminProduct(id) {
-  return request({
-    url: `/admin/product/${id}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/admin/product/${id}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -64,12 +64,12 @@ export function deleteAdminProduct(id) {
  * @returns {Promise}
  */
 export function batchUpdateAdminProductStatus(productIds, status) {
-  return request({
-    url: '/admin/product/batch/status',
-    method: 'put',
-    data: productIds,
-    params: { status }
-  })
+    return request({
+        url: '/admin/product/batch/status',
+        method: 'put',
+        data: productIds,
+        params: {status}
+    })
 }
 
 /**
@@ -78,11 +78,11 @@ export function batchUpdateAdminProductStatus(productIds, status) {
  * @returns {Promise}
  */
 export function batchDeleteAdminProduct(productIds) {
-  return request({
-    url: '/admin/product/batch',
-    method: 'delete',
-    data: productIds
-  })
+    return request({
+        url: '/admin/product/batch',
+        method: 'delete',
+        data: productIds
+    })
 }
 
 /**
@@ -98,11 +98,11 @@ export function batchDeleteAdminProduct(productIds) {
  * @returns {Promise}
  */
 export function publishProduct(data) {
-  return request({
-    url: '/product',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/product',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -119,11 +119,11 @@ export function publishProduct(data) {
  * @returns {Promise}
  */
 export function getProductList(params) {
-  return request({
-    url: '/product/list',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/product/list',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -138,14 +138,14 @@ export function getProductList(params) {
  * @returns {Promise}
  */
 export function getProductsByCategory(categoryId, params) {
-  return request({
-    url: '/product/list',
-    method: 'get',
-    params: {
-      ...params,
-      categoryId
-    }
-  })
+    return request({
+        url: '/product/list',
+        method: 'get',
+        params: {
+            ...params,
+            categoryId
+        }
+    })
 }
 
 /**
@@ -158,15 +158,15 @@ export function getProductsByCategory(categoryId, params) {
  * @returns {Promise}
  */
 export function getSellerProducts(params) {
-  return request({
-    url: `/product/seller/${params.userId}`,
-    method: 'get',
-    params: {
-      page: params.page,
-      size: params.size,
-      status: params.status
-    }
-  })
+    return request({
+        url: `/product/seller/${params.userId}`,
+        method: 'get',
+        params: {
+            page: params.page,
+            size: params.size,
+            status: params.status
+        }
+    })
 }
 
 /**
@@ -175,10 +175,10 @@ export function getSellerProducts(params) {
  * @returns {Promise}
  */
 export function getProductDetail(productId) {
-  return request({
-    url: `/product/${productId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/product/${productId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -189,11 +189,11 @@ export function getProductDetail(productId) {
  * @returns {Promise}
  */
 export function getUserProducts(params) {
-  return request({
-    url: '/product/user',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/product/user',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -203,11 +203,11 @@ export function getUserProducts(params) {
  * @returns {Promise}
  */
 export function updateProductStatus(productId, status) {
-  return request({
-    url: `/product/${productId}/status`,
-    method: 'put',
-    params: { status }
-  })
+    return request({
+        url: `/product/${productId}/status`,
+        method: 'put',
+        params: {status}
+    })
 }
 
 /**
@@ -216,10 +216,10 @@ export function updateProductStatus(productId, status) {
  * @returns {Promise}
  */
 export function deleteProduct(productId) {
-  return request({
-    url: `/product/${productId}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/product/${productId}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -237,11 +237,11 @@ export function deleteProduct(productId) {
  * @returns {Promise}
  */
 export function advancedSearchProducts(params) {
-  return request({
-    url: '/product/advanced-search',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/product/advanced-search',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -250,10 +250,10 @@ export function advancedSearchProducts(params) {
  * @returns {Promise}
  */
 export function incrementViewCount(productId) {
-  return request({
-    url: `/product/${productId}/view`,
-    method: 'put'
-  })
+    return request({
+        url: `/product/${productId}/view`,
+        method: 'put'
+    })
 }
 
 /**
@@ -270,11 +270,11 @@ export function incrementViewCount(productId) {
  * @returns {Promise}
  */
 export function updateProduct(productId, data) {
-  return request({
-    url: `/product/${productId}`,
-    method: 'put',
-    data
-  })
+    return request({
+        url: `/product/${productId}`,
+        method: 'put',
+        data
+    })
 }
 
 /**
@@ -283,8 +283,8 @@ export function updateProduct(productId, data) {
  * @returns {Promise}
  */
 export function getProductRatingStatistics(productId) {
-  return request({
-    url: `/product/${productId}/rating`,
-    method: 'get'
-  })
+    return request({
+        url: `/product/${productId}/rating`,
+        method: 'get'
+    })
 }

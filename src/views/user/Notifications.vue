@@ -3,7 +3,7 @@
     <div class="page-header">
       <h1>系统通知</h1>
       <div class="header-actions">
-        <el-button type="primary" :disabled="notificationStore.unreadCount <= 0" @click="markAllAsRead">
+        <el-button :disabled="notificationStore.unreadCount <= 0" type="primary" @click="markAllAsRead">
           全部标为已读
         </el-button>
       </div>
@@ -12,85 +12,85 @@
     <!-- 切换标签 -->
     <el-tabs v-model="activeTab" @tab-change="handleTabChange">
       <el-tab-pane label="全部通知" name="all">
-        <div class="notifications-list" v-loading="notificationStore.loading">
+        <div v-loading="notificationStore.loading" class="notifications-list">
           <!-- 无通知时显示 -->
-          <el-empty v-if="notificationStore.notifications.length === 0" description="暂无通知" />
-          
+          <el-empty v-if="notificationStore.notifications.length === 0" description="暂无通知"/>
+
           <!-- 通知列表 -->
           <div v-else class="notification-items">
             <div
-              v-for="notification in notificationStore.notifications"
-              :key="notification.id"
-              class="notification-item"
-              :class="{ unread: notification.isRead === 0 }"
-              @click="viewNotification(notification)"
+                v-for="notification in notificationStore.notifications"
+                :key="notification.id"
+                :class="{ unread: notification.isRead === 0 }"
+                class="notification-item"
+                @click="viewNotification(notification)"
             >
               <div class="notification-icon">
                 <el-badge :is-dot="notification.isRead === 0" type="danger">
                   <el-icon :size="20">
-                    <component :is="getNotificationIcon(notification.type)" />
+                    <component :is="getNotificationIcon(notification.type)"/>
                   </el-icon>
                 </el-badge>
               </div>
-              
+
               <div class="notification-content">
                 <div class="notification-title">{{ notification.title }}</div>
                 <div class="notification-brief">{{ notification.content }}</div>
                 <div class="notification-time">{{ formatTime(notification.createTime) }}</div>
               </div>
-              
+
               <div class="notification-action">
-                <el-button 
-                  v-if="notification.isRead === 0" 
-                  size="small" 
-                  @click.stop="markAsRead(notification.id)"
+                <el-button
+                    v-if="notification.isRead === 0"
+                    size="small"
+                    @click.stop="markAsRead(notification.id)"
                 >
                   标记已读
                 </el-button>
               </div>
             </div>
           </div>
-          
+
           <!-- 分页 -->
-          <div class="pagination" v-if="notificationStore.pagination.total > 0">
+          <div v-if="notificationStore.pagination.total > 0" class="pagination">
             <el-pagination
-              v-model:current-page="notificationStore.pagination.current"
-              :page-size="notificationStore.pagination.size"
-              :total="notificationStore.pagination.total"
-              layout="prev, pager, next"
-              @current-change="handlePageChange"
+                v-model:current-page="notificationStore.pagination.current"
+                :page-size="notificationStore.pagination.size"
+                :total="notificationStore.pagination.total"
+                layout="prev, pager, next"
+                @current-change="handlePageChange"
             />
           </div>
         </div>
       </el-tab-pane>
-      
+
       <el-tab-pane label="未读通知" name="unread">
-        <div class="notifications-list" v-loading="notificationStore.loading">
+        <div v-loading="notificationStore.loading" class="notifications-list">
           <!-- 无通知时显示 -->
-          <el-empty v-if="notificationStore.unreadNotifications.length === 0" description="没有未读通知" />
-          
+          <el-empty v-if="notificationStore.unreadNotifications.length === 0" description="没有未读通知"/>
+
           <!-- 未读通知列表 -->
           <div v-else class="notification-items">
             <div
-              v-for="notification in notificationStore.unreadNotifications"
-              :key="notification.id"
-              class="notification-item unread"
-              @click="viewNotification(notification)"
+                v-for="notification in notificationStore.unreadNotifications"
+                :key="notification.id"
+                class="notification-item unread"
+                @click="viewNotification(notification)"
             >
               <div class="notification-icon">
                 <el-badge is-dot type="danger">
                   <el-icon :size="20">
-                    <component :is="getNotificationIcon(notification.type)" />
+                    <component :is="getNotificationIcon(notification.type)"/>
                   </el-icon>
                 </el-badge>
               </div>
-              
+
               <div class="notification-content">
                 <div class="notification-title">{{ notification.title }}</div>
                 <div class="notification-brief">{{ notification.content }}</div>
                 <div class="notification-time">{{ formatTime(notification.createTime) }}</div>
               </div>
-              
+
               <div class="notification-action">
                 <el-button size="small" @click.stop="markAsRead(notification.id)">
                   标记已读
@@ -98,27 +98,27 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 分页 -->
-          <div class="pagination" v-if="notificationStore.unreadPagination.total > 0">
+          <div v-if="notificationStore.unreadPagination.total > 0" class="pagination">
             <el-pagination
-              v-model:current-page="notificationStore.unreadPagination.current"
-              :page-size="notificationStore.unreadPagination.size"
-              :total="notificationStore.unreadPagination.total"
-              layout="prev, pager, next"
-              @current-change="handleUnreadPageChange"
+                v-model:current-page="notificationStore.unreadPagination.current"
+                :page-size="notificationStore.unreadPagination.size"
+                :total="notificationStore.unreadPagination.total"
+                layout="prev, pager, next"
+                @current-change="handleUnreadPageChange"
             />
           </div>
         </div>
       </el-tab-pane>
     </el-tabs>
-    
+
     <!-- 通知详情对话框 -->
-    <el-dialog 
-      v-model="detailDialogVisible" 
-      title="通知详情" 
-      width="600px"
-      class="notification-detail-dialog"
+    <el-dialog
+        v-model="detailDialogVisible"
+        class="notification-detail-dialog"
+        title="通知详情"
+        width="600px"
     >
       <div v-if="notificationStore.currentNotification" class="notification-detail">
         <h2 class="notification-detail-title">
@@ -128,17 +128,17 @@
           <span class="notification-detail-time">
             {{ formatTime(notificationStore.currentNotification.createTime) }}
           </span>
-          <el-tag 
-            v-if="notificationStore.currentNotification.isRead === 0" 
-            size="small" 
-            type="danger"
+          <el-tag
+              v-if="notificationStore.currentNotification.isRead === 0"
+              size="small"
+              type="danger"
           >
             未读
           </el-tag>
-          <el-tag 
-            v-else 
-            size="small" 
-            type="info"
+          <el-tag
+              v-else
+              size="small"
+              type="info"
           >
             已读
           </el-tag>
@@ -146,12 +146,12 @@
         <div class="notification-detail-content">
           {{ notificationStore.currentNotification.content }}
         </div>
-        
+
         <!-- 添加订单/商品等相关链接 -->
         <div v-if="hasRelatedLink" class="notification-related-action">
-          <el-button 
-            type="primary" 
-            @click="navigateToRelated"
+          <el-button
+              type="primary"
+              @click="navigateToRelated"
           >
             {{ getRelatedActionText() }}
           </el-button>
@@ -162,11 +162,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useNotificationStore } from '@/stores/notification'
-import { Bell, ShoppingCart, InfoFilled, Warning } from '@element-plus/icons-vue'
-import { formatDateTime } from '@/utils/format'
+import {computed, onMounted, ref} from 'vue'
+import {useRouter} from 'vue-router'
+import {useNotificationStore} from '@/stores/notification'
+import {Bell, InfoFilled, ShoppingCart, Warning} from '@element-plus/icons-vue'
+import {formatDateTime} from '@/utils/format'
 
 const router = useRouter()
 const notificationStore = useNotificationStore()
@@ -208,7 +208,7 @@ const viewNotification = async (notification) => {
   try {
     await notificationStore.fetchNotificationDetail(notification.id)
     detailDialogVisible.value = true
-    
+
     // 如果是未读通知，自动标记为已读
     if (notification.isRead === 0) {
       markAsRead(notification.id)
@@ -250,16 +250,16 @@ const getNotificationIcon = (type) => {
 // 是否有相关链接
 const hasRelatedLink = computed(() => {
   if (!notificationStore.currentNotification) return false
-  
-  const { relatedId, type } = notificationStore.currentNotification
+
+  const {relatedId, type} = notificationStore.currentNotification
   return relatedId && (type === 2 || type === 3) // 订单或商品通知
 })
 
 // 获取操作文本
 const getRelatedActionText = () => {
   if (!notificationStore.currentNotification) return ''
-  
-  const { type } = notificationStore.currentNotification
+
+  const {type} = notificationStore.currentNotification
   if (type === 2) return '查看订单'
   if (type === 3) return '查看商品'
   return '查看详情'
@@ -268,9 +268,9 @@ const getRelatedActionText = () => {
 // 跳转到相关页面
 const navigateToRelated = () => {
   if (!notificationStore.currentNotification) return
-  
-  const { relatedId, type } = notificationStore.currentNotification
-  
+
+  const {relatedId, type} = notificationStore.currentNotification
+
   if (type === 2) {
     // 订单通知
     router.push(`/user/order/${relatedId}`)
@@ -278,7 +278,7 @@ const navigateToRelated = () => {
     // 商品通知
     router.push(`/product/${relatedId}`)
   }
-  
+
   detailDialogVisible.value = false
 }
 </script>

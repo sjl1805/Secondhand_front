@@ -1,82 +1,82 @@
 <template>
   <div class="favorites-container">
     <h2 class="page-title">我的收藏</h2>
-    
+
     <div class="favorites-content">
       <div v-if="loading" class="loading-container">
-        <el-skeleton :rows="5" animated />
+        <el-skeleton :rows="5" animated/>
       </div>
-      
+
       <div v-else-if="favoriteList.length === 0" class="empty-container">
-        <el-empty description="暂无收藏" />
+        <el-empty description="暂无收藏"/>
         <el-button type="primary" @click="goToProductList">去逛逛</el-button>
       </div>
-      
+
       <div v-else class="favorites-list">
         <el-card v-for="item in favoriteList" :key="item.id" class="favorite-item">
           <div class="favorite-info">
             <div class="product-image" @click="goToProductDetail(item.id)">
-              <el-image 
-                :src="item.imageUrls && item.imageUrls.length > 0 ? fileStore.getFullUrl(item.imageUrls[0]) : defaultImage" 
-                fit="cover"
-                :preview-src-list="item.imageUrls ? item.imageUrls.map(img => fileStore.getFullUrl(img)) : []"
+              <el-image
+                  :preview-src-list="item.imageUrls ? item.imageUrls.map(img => fileStore.getFullUrl(img)) : []"
+                  :src="item.imageUrls && item.imageUrls.length > 0 ? fileStore.getFullUrl(item.imageUrls[0]) : defaultImage"
+                  fit="cover"
               />
             </div>
-            
+
             <div class="product-info">
               <h3 class="product-title" @click="goToProductDetail(item.id)">
                 {{ item.title || '商品信息不可用' }}
               </h3>
-              
+
               <div class="product-price">
                 <span class="current-price">¥{{ item.price || '--' }}</span>
               </div>
-              
+
               <div class="product-meta">
                 <span class="publish-time">发布于：{{ formatTime(item.createTime) }}</span>
                 <span v-if="item.status === 0" class="sold-tag">已售出</span>
                 <span v-else-if="item.status === 2" class="off-shelf-tag">已下架</span>
               </div>
-              
+
               <div class="product-seller">
                 <span>卖家：{{ item.nickname || '--' }}</span>
               </div>
-              
+
               <div class="product-stat">
                 <span>浏览量：{{ item.viewCount || 0 }}</span>
                 <span>收藏数：{{ item.favoriteCount || 0 }}</span>
               </div>
             </div>
           </div>
-          
+
           <div class="favorite-actions">
-            <el-button 
-              type="primary" 
-              size="small" 
-              :disabled="item.status !== 1"
-              @click="goToProductDetail(item.id)"
+            <el-button
+                :disabled="item.status !== 1"
+                size="small"
+                type="primary"
+                @click="goToProductDetail(item.id)"
             >
               查看详情
             </el-button>
-            <el-button 
-              type="danger" 
-              size="small" 
-              @click="handleRemoveFavorite(item.id)"
+            <el-button
+                size="small"
+                type="danger"
+                @click="handleRemoveFavorite(item.id)"
             >
               取消收藏
             </el-button>
           </div>
         </el-card>
-        
+
         <div class="pagination-container">
           <el-pagination
-            v-model:current-page="pagination.current"
-            v-model:page-size="pagination.size"
-            :page-sizes="[10, 20, 30, 50]"
-            layout="total, sizes, prev, pager, next, jumper"
-            :total="pagination.total"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
+              v-model:current-page="pagination.current"
+              v-model:page-size="pagination.size"
+              :page-sizes="[10, 20, 30, 50]"
+              :total="pagination.total"
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
           />
         </div>
       </div>
@@ -85,12 +85,12 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useFavoriteStore } from '@/stores/favorite'
-import { useFileStore } from '@/stores/file'
-import { formatDateTime } from '@/utils/format'
+import {computed, onMounted} from 'vue'
+import {useRouter} from 'vue-router'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {useFavoriteStore} from '@/stores/favorite'
+import {useFileStore} from '@/stores/file'
+import {formatDateTime} from '@/utils/format'
 
 const router = useRouter()
 const favoriteStore = useFavoriteStore()
@@ -130,7 +130,8 @@ const handleRemoveFavorite = (productId) => {
     if (result) {
       ElMessage.success('取消收藏成功')
     }
-  }).catch(() => {})
+  }).catch(() => {
+  })
 }
 
 // 处理分页大小变化
@@ -303,16 +304,16 @@ onMounted(() => {
   .favorite-info {
     flex-direction: column;
   }
-  
+
   .product-image {
     width: 100%;
     height: 180px;
   }
-  
+
   .product-info {
     padding: 10px 0;
   }
-  
+
   .favorite-actions {
     justify-content: space-between;
   }

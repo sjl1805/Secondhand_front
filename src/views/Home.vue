@@ -1,106 +1,115 @@
 <template>
   <div class="home-container">
-    
+
     <!-- 推荐商品 -->
-    <div class="recommend-section container" v-if="isLoggedIn">
+    <div v-if="isLoggedIn" class="recommend-section container">
       <div class="section-header">
         <h2 class="section-title">为您推荐</h2>
-        <el-button 
-          type="primary" 
-          plain 
-          size="small" 
-          @click="refreshRecommendations"
-          :loading="refreshing"
+        <el-button
+            :loading="refreshing"
+            plain
+            size="small"
+            type="primary"
+            @click="refreshRecommendations"
         >
-          <el-icon><Refresh /></el-icon> 刷新推荐
+          <el-icon>
+            <Refresh/>
+          </el-icon>
+          刷新推荐
         </el-button>
       </div>
-      
-      <el-skeleton v-if="recommendLoading" animated :count="4">
+
+      <el-skeleton v-if="recommendLoading" :count="4" animated>
         <template #template>
           <div style="display: flex; flex-wrap: wrap; gap: 20px;">
             <div v-for="i in 4" :key="i" style="width: calc(25% - 15px);">
-              <el-skeleton-item variant="image" style="width: 100%; height: 200px;" />
+              <el-skeleton-item style="width: 100%; height: 200px;" variant="image"/>
               <div style="padding: 10px;">
-                <el-skeleton-item variant="p" style="width: 80%; height: 20px;" />
-                <el-skeleton-item variant="text" style="width: 60%; margin-top: 10px;" />
+                <el-skeleton-item style="width: 80%; height: 20px;" variant="p"/>
+                <el-skeleton-item style="width: 60%; margin-top: 10px;" variant="text"/>
               </div>
             </div>
           </div>
         </template>
       </el-skeleton>
-      
+
       <div v-else class="product-grid">
         <product-card
-          v-for="product in userBasedProducts"
-          :key="product.id"
-          :product="product"
+            v-for="product in userBasedProducts"
+            :key="product.id"
+            :product="product"
         />
       </div>
-      
-      <el-empty v-if="!recommendLoading && userBasedProducts.length === 0" description="暂无推荐商品" />
+
+      <el-empty v-if="!recommendLoading && userBasedProducts.length === 0" description="暂无推荐商品"/>
     </div>
-    
+
     <!-- 新品上架 -->
     <div class="new-products-section container">
       <div class="section-header">
         <h2 class="section-title">新品上架</h2>
-        <router-link to="/products" class="view-more">
-          查看更多 <el-icon><ArrowRight /></el-icon>
+        <router-link class="view-more" to="/products">
+          查看更多
+          <el-icon>
+            <ArrowRight/>
+          </el-icon>
         </router-link>
       </div>
-      
-      <el-skeleton v-if="loading" animated :count="4">
+
+      <el-skeleton v-if="loading" :count="4" animated>
         <template #template>
           <div style="display: flex; flex-wrap: wrap; gap: 20px;">
             <div v-for="i in 4" :key="i" style="width: calc(25% - 15px);">
-              <el-skeleton-item variant="image" style="width: 100%; height: 200px;" />
+              <el-skeleton-item style="width: 100%; height: 200px;" variant="image"/>
               <div style="padding: 10px;">
-                <el-skeleton-item variant="p" style="width: 80%; height: 20px;" />
-                <el-skeleton-item variant="text" style="width: 60%; margin-top: 10px;" />
+                <el-skeleton-item style="width: 80%; height: 20px;" variant="p"/>
+                <el-skeleton-item style="width: 60%; margin-top: 10px;" variant="text"/>
               </div>
             </div>
           </div>
         </template>
       </el-skeleton>
-      
+
       <div v-else class="product-grid">
         <product-card
-          v-for="product in newProducts"
-          :key="product.id"
-          :product="product"
+            v-for="product in newProducts"
+            :key="product.id"
+            :product="product"
         />
       </div>
     </div>
-    
+
     <!-- 热门商品 -->
     <div class="popular-section container">
       <div class="section-header">
         <h2 class="section-title">热门商品</h2>
-        <router-link to="/products?sort=viewCount" class="view-more">
-          查看更多 <el-icon><ArrowRight /></el-icon>
+        <router-link class="view-more" to="/products?sort=viewCount">
+          查看更多
+          <el-icon>
+            <ArrowRight/>
+          </el-icon>
         </router-link>
       </div>
-      
-      <el-skeleton v-if="loading" animated :count="4">
+
+      <el-skeleton v-if="loading" :count="4" animated>
         <template #template>
           <div style="display: flex; flex-wrap: wrap; gap: 20px;">
             <div v-for="i in 4" :key="i" style="width: calc(25% - 15px);">
-              <el-skeleton-item variant="image" style="width: 100%; height: 200px;" />
+              <el-skeleton-item style="width: 100%; height: 200px;" variant="image"/>
               <div style="padding: 10px;">
-                <el-skeleton-item variant="p" style="width: 80%; height: 20px;" />
-                <el-skeleton-item variant="text" style="width: 60%; margin-top: 10px;" />
+                <el-skeleton-item style="width: 80%; height: 20px;" variant="p"/>
+                <el-skeleton-item style="width: 60%; margin-top: 10px;" variant="text"/>
               </div>
             </div>
           </div>
         </template>
       </el-skeleton>
-      
+
       <div v-else class="product-grid">
         <product-card
-          v-for="product in popularProducts"
-          :key="product.id"
-          :product="product"
+            v-for="product in popularProducts"
+            :key="product.id"
+            :product="product"
         />
       </div>
     </div>
@@ -108,14 +117,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useProductStore } from '@/stores/product'
-import { useCategoryStore } from '@/stores/category'
-import { useRecommendationStore } from '@/stores/recommendation'
-import { useUserStore } from '@/stores/user'
-import { useFileStore } from '@/stores/file'
+import {computed, onMounted, ref} from 'vue'
+import {useProductStore} from '@/stores/product'
+import {useCategoryStore} from '@/stores/category'
+import {useRecommendationStore} from '@/stores/recommendation'
+import {useUserStore} from '@/stores/user'
+import {useFileStore} from '@/stores/file'
 import ProductCard from '@/components/product/ProductCard.vue'
-import { ArrowRight, Refresh } from '@element-plus/icons-vue'
+import {ArrowRight, Refresh} from '@element-plus/icons-vue'
 
 // Store
 const productStore = useProductStore()
@@ -157,7 +166,7 @@ const fetchNewProducts = async () => {
     sort: 'createTime,desc',
     status: 1 // 在售状态
   }
-  
+
   const result = await productStore.fetchProductList(params)
   if (result && result.records) {
     newProducts.value = result.records
@@ -172,7 +181,7 @@ const fetchPopularProducts = async () => {
     sort: 'viewCount,desc',
     status: 1 // 在售状态
   }
-  
+
   const result = await productStore.fetchProductList(params)
   if (result && result.records) {
     popularProducts.value = result.records
@@ -185,12 +194,12 @@ const initCategoryDisplay = async () => {
   if (topCategories.value.length === 0) {
     await categoryStore.fetchCategoryTree()
   }
-  
+
   // 从顶级分类中选择部分进行展示
   if (topCategories.value.length > 0) {
     // 最多显示3个分类
     displayCategories.value = topCategories.value.slice(0, 3)
-    
+
     // 获取每个展示分类的商品
     for (const category of displayCategories.value) {
       fetchCategoryProducts(category.id)
@@ -206,7 +215,7 @@ const fetchCategoryProducts = async (categoryId) => {
     categoryId,
     status: 1 // 在售状态
   }
-  
+
   const result = await productStore.fetchProductList(params)
   if (result && result.records) {
     categoryProducts.value = {
@@ -224,7 +233,7 @@ onMounted(async () => {
     fetchPopularProducts(),
     initCategoryDisplay()
   ])
-  
+
   // 如果用户已登录，获取推荐
   if (isLoggedIn.value) {
     const recommendations = await recommendationStore.fetchUserBasedRecommendations()
@@ -379,15 +388,15 @@ onMounted(async () => {
   .banner-content h2 {
     font-size: 22px;
   }
-  
+
   .banner-content p {
     font-size: 14px;
   }
-  
+
   .category-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   }
-  
+
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   }
@@ -398,11 +407,11 @@ onMounted(async () => {
     text-align: center;
     max-width: 100%;
   }
-  
+
   .category-grid {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   }
-  
+
   .product-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }

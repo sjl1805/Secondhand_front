@@ -6,10 +6,10 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function addFavorite(productId) {
-  return request({
-    url: `/favorite/${productId}`,
-    method: 'post'
-  })
+    return request({
+        url: `/favorite/${productId}`,
+        method: 'post'
+    })
 }
 
 /**
@@ -18,10 +18,10 @@ export function addFavorite(productId) {
  * @returns {Promise}
  */
 export function cancelFavorite(productId) {
-  return request({
-    url: `/favorite/${productId}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/favorite/${productId}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -30,10 +30,10 @@ export function cancelFavorite(productId) {
  * @returns {Promise}
  */
 export function checkFavorite(productId) {
-  return request({
-    url: `/favorite/check/${productId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/favorite/check/${productId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -44,11 +44,11 @@ export function checkFavorite(productId) {
  * @returns {Promise}
  */
 export function getFavoriteList(params) {
-  return request({
-    url: '/favorite/list',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/favorite/list',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -57,8 +57,8 @@ export function getFavoriteList(params) {
  * @returns {Promise}
  */
 export function getFavoriteCount(productId) {
-  return request({
-    url: `/favorite/count/${productId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/favorite/count/${productId}`,
+        method: 'get'
+    })
 } 

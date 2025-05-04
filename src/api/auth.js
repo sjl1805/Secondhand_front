@@ -10,11 +10,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function login(data) {
-  return request({
-    url: '/auth/login',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/auth/login',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -29,11 +29,11 @@ export function login(data) {
  * @returns {Promise}
  */
 export function register(data) {
-  return request({
-    url: '/auth/register',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/auth/register',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -41,8 +41,8 @@ export function register(data) {
  * @returns {Promise}
  */
 export function getCaptcha() {
-  return request({
-    url: '/auth/captcha',
-    method: 'get'
-  })
+    return request({
+        url: '/auth/captcha',
+        method: 'get'
+    })
 } 

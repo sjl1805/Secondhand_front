@@ -1,14 +1,16 @@
 <template>
   <div class="comment-form">
     <div v-if="product" class="product-brief">
-      <el-image 
-        :src="product.coverImage || product.imageUrl || defaultImage" 
-        class="product-image"
-        fit="cover"
+      <el-image
+          :src="product.coverImage || product.imageUrl || defaultImage"
+          class="product-image"
+          fit="cover"
       >
         <template #error>
           <div class="image-error">
-            <el-icon><Picture /></el-icon>
+            <el-icon>
+              <Picture/>
+            </el-icon>
             <span>加载失败</span>
           </div>
         </template>
@@ -18,30 +20,31 @@
         <p>¥{{ product.price ? product.price.toFixed(2) : '0.00' }}</p>
       </div>
     </div>
-    
+
     <div class="rating-section">
       <span class="rating-label">商品评分：</span>
-      <el-rate v-model="localRating" :colors="['#FF9900', '#FF9900', '#FF9900']" :show-text="false" @change="updateRating" />
+      <el-rate v-model="localRating" :colors="['#FF9900', '#FF9900', '#FF9900']" :show-text="false"
+               @change="updateRating"/>
       <span class="rating-text">{{ ratingText }}</span>
     </div>
-    
+
     <div class="content-section">
       <el-input
-        v-model="localContent"
-        type="textarea"
-        :rows="4"
-        placeholder="请输入评价内容，分享您的使用体验"
-        maxlength="500"
-        show-word-limit
-        @input="updateContent"
+          v-model="localContent"
+          :rows="4"
+          maxlength="500"
+          placeholder="请输入评价内容，分享您的使用体验"
+          show-word-limit
+          type="textarea"
+          @input="updateContent"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { Picture, Plus } from '@element-plus/icons-vue'
+import {computed, ref, watch} from 'vue'
+import {Picture} from '@element-plus/icons-vue'
 
 // 定义属性
 const props = defineProps({

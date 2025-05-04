@@ -12,11 +12,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getAdminOrderList(params) {
-  return request({
-    url: '/admin/order/list',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/order/list',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -25,10 +25,10 @@ export function getAdminOrderList(params) {
  * @returns {Promise}
  */
 export function getAdminOrderDetail(id) {
-  return request({
-    url: `/admin/order/${id}`,
-    method: 'get'
-  })
+    return request({
+        url: `/admin/order/${id}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -38,11 +38,11 @@ export function getAdminOrderDetail(id) {
  * @returns {Promise}
  */
 export function updateAdminOrderStatus(id, status) {
-  return request({
-    url: `/admin/order/${id}/status`,
-    method: 'put',
-    params: { status }
-  })
+    return request({
+        url: `/admin/order/${id}/status`,
+        method: 'put',
+        params: {status}
+    })
 }
 
 /**
@@ -51,10 +51,10 @@ export function updateAdminOrderStatus(id, status) {
  * @returns {Promise}
  */
 export function deleteAdminOrder(id) {
-  return request({
-    url: `/admin/order/${id}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/admin/order/${id}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -64,12 +64,12 @@ export function deleteAdminOrder(id) {
  * @returns {Promise}
  */
 export function batchUpdateAdminOrderStatus(orderIds, status) {
-  return request({
-    url: '/admin/order/batch/status',
-    method: 'put',
-    data: orderIds,
-    params: { status }
-  })
+    return request({
+        url: '/admin/order/batch/status',
+        method: 'put',
+        data: orderIds,
+        params: {status}
+    })
 }
 
 /**
@@ -78,11 +78,11 @@ export function batchUpdateAdminOrderStatus(orderIds, status) {
  * @returns {Promise}
  */
 export function batchDeleteAdminOrder(orderIds) {
-  return request({
-    url: '/admin/order/batch',
-    method: 'delete',
-    data: orderIds
-  })
+    return request({
+        url: '/admin/order/batch',
+        method: 'delete',
+        data: orderIds
+    })
 }
 
 /**
@@ -95,11 +95,11 @@ export function batchDeleteAdminOrder(orderIds) {
  * @returns {Promise}
  */
 export function createOrder(data) {
-  return request({
-    url: '/order',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/order',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -108,10 +108,10 @@ export function createOrder(data) {
  * @returns {Promise}
  */
 export function getOrderDetail(orderId) {
-  return request({
-    url: `/order/${orderId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/order/${orderId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -121,11 +121,11 @@ export function getOrderDetail(orderId) {
  * @returns {Promise}
  */
 export function updateOrderStatus(orderId, status) {
-  return request({
-    url: `/order/${orderId}/status`,
-    method: 'put',
-    params: { status }
-  })
+    return request({
+        url: `/order/${orderId}/status`,
+        method: 'put',
+        params: {status}
+    })
 }
 
 /**
@@ -134,10 +134,10 @@ export function updateOrderStatus(orderId, status) {
  * @returns {Promise}
  */
 export function cancelOrder(orderId) {
-  return request({
-    url: `/order/${orderId}/cancel`,
-    method: 'put'
-  })
+    return request({
+        url: `/order/${orderId}/cancel`,
+        method: 'put'
+    })
 }
 
 /**
@@ -149,11 +149,11 @@ export function cancelOrder(orderId) {
  * @returns {Promise}
  */
 export function getBuyerOrders(params) {
-  return request({
-    url: '/order/buyer',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/order/buyer',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -165,11 +165,11 @@ export function getBuyerOrders(params) {
  * @returns {Promise}
  */
 export function getSellerOrders(params) {
-  return request({
-    url: '/order/seller',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/order/seller',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -178,10 +178,10 @@ export function getSellerOrders(params) {
  * @returns {Promise}
  */
 export function shipOrder(orderId) {
-  return request({
-    url: `/order/${orderId}/ship`,
-    method: 'put'
-  })
+    return request({
+        url: `/order/${orderId}/ship`,
+        method: 'put'
+    })
 }
 
 /**
@@ -190,10 +190,10 @@ export function shipOrder(orderId) {
  * @returns {Promise}
  */
 export function receiveOrder(orderId) {
-  return request({
-    url: `/order/${orderId}/receive`,
-    method: 'put'
-  })
+    return request({
+        url: `/order/${orderId}/receive`,
+        method: 'put'
+    })
 }
 
 /**
@@ -207,11 +207,11 @@ export function receiveOrder(orderId) {
  * @returns {Promise}
  */
 export function payOrder(orderId, data) {
-  return request({
-    url: `/order/${orderId}/payment`,
-    method: 'post',
-    data
-  })
+    return request({
+        url: `/order/${orderId}/payment`,
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -220,8 +220,8 @@ export function payOrder(orderId, data) {
  * @returns {Promise}
  */
 export function getPaymentStatus(orderId) {
-  return request({
-    url: `/order/${orderId}/payment/status`,
-    method: 'get'
-  })
+    return request({
+        url: `/order/${orderId}/payment/status`,
+        method: 'get'
+    })
 } 

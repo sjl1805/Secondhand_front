@@ -9,11 +9,11 @@ import request from '@/utils/request'
  * @returns {Promise}
  */
 export function getAdminNotificationList(params) {
-  return request({
-    url: '/admin/notification/list',
-    method: 'get',
-    params
-  })
+    return request({
+        url: '/admin/notification/list',
+        method: 'get',
+        params
+    })
 }
 
 /**
@@ -22,10 +22,10 @@ export function getAdminNotificationList(params) {
  * @returns {Promise}
  */
 export function getAdminNotificationDetail(notificationId) {
-  return request({
-    url: `/admin/notification/${notificationId}`,
-    method: 'get'
-  })
+    return request({
+        url: `/admin/notification/${notificationId}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -35,14 +35,14 @@ export function getAdminNotificationDetail(notificationId) {
  * @returns {Promise}
  */
 export function sendNotification(content, userId) {
-  return request({
-    url: '/admin/notification/send',
-    method: 'post',
-    params: {
-      content,
-      userId
-    }
-  })
+    return request({
+        url: '/admin/notification/send',
+        method: 'post',
+        params: {
+            content,
+            userId
+        }
+    })
 }
 
 /**
@@ -51,13 +51,13 @@ export function sendNotification(content, userId) {
  * @returns {Promise}
  */
 export function broadcastNotification(content) {
-  return request({
-    url: '/admin/notification/broadcast',
-    method: 'post',
-    params: {
-      content
-    }
-  })
+    return request({
+        url: '/admin/notification/broadcast',
+        method: 'post',
+        params: {
+            content
+        }
+    })
 }
 
 /**
@@ -66,10 +66,10 @@ export function broadcastNotification(content) {
  * @returns {Promise}
  */
 export function deleteAdminNotification(notificationId) {
-  return request({
-    url: `/admin/notification/${notificationId}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/admin/notification/${notificationId}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -78,9 +78,9 @@ export function deleteAdminNotification(notificationId) {
  * @returns {Promise}
  */
 export function batchDeleteAdminNotifications(notificationIds) {
-  return request({
-    url: '/admin/notification/batch',
-    method: 'delete',
-    data: notificationIds
-  })
+    return request({
+        url: '/admin/notification/batch',
+        method: 'delete',
+        data: notificationIds
+    })
 } 

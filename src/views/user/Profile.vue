@@ -1,64 +1,64 @@
 <template>
   <div class="profile-container">
     <h2 class="page-title">个人资料</h2>
-    
+
     <el-card class="profile-card">
       <el-form
-        ref="profileFormRef"
-        :model="profileForm"
-        :rules="profileRules"
-        label-width="100px"
+          ref="profileFormRef"
+          :model="profileForm"
+          :rules="profileRules"
+          label-width="100px"
       >
         <div class="avatar-upload">
-          <el-avatar 
-            :size="100" 
-            :src="avatarUrl || defaultAvatar" 
-            class="user-avatar"
+          <el-avatar
+              :size="100"
+              :src="avatarUrl || defaultAvatar"
+              class="user-avatar"
           />
           <el-upload
-            class="avatar-uploader"
-            :http-request="uploadAvatar"
-            :show-file-list="false"
-            accept="image/jpeg,image/png,image/gif"
-            :before-upload="beforeAvatarUpload"
+              :before-upload="beforeAvatarUpload"
+              :http-request="uploadAvatar"
+              :show-file-list="false"
+              accept="image/jpeg,image/png,image/gif"
+              class="avatar-uploader"
           >
-            <el-button type="primary" class="upload-button">更换头像</el-button>
+            <el-button class="upload-button" type="primary">更换头像</el-button>
           </el-upload>
         </div>
-        
+
         <el-form-item label="用户名">
-          <el-input v-model="username" disabled />
+          <el-input v-model="username" disabled/>
           <span class="form-tip">用户名不可修改</span>
         </el-form-item>
-        
+
         <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="profileForm.nickname" placeholder="请输入昵称" />
+          <el-input v-model="profileForm.nickname" placeholder="请输入昵称"/>
         </el-form-item>
-        
+
         <el-form-item label="手机号" prop="phone">
-          <el-input v-model="profileForm.phone" placeholder="请输入手机号" />
+          <el-input v-model="profileForm.phone" placeholder="请输入手机号"/>
           <span class="form-tip">手机号用于接收重要通知</span>
         </el-form-item>
-        
+
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="profileForm.email" placeholder="请输入邮箱" />
+          <el-input v-model="profileForm.email" placeholder="请输入邮箱"/>
         </el-form-item>
-        
+
         <el-form-item label="个人简介" prop="bio">
           <el-input
-            v-model="profileForm.bio"
-            type="textarea"
-            :rows="4"
-            placeholder="介绍一下自己吧"
-            maxlength="200"
-            show-word-limit
+              v-model="profileForm.bio"
+              :rows="4"
+              maxlength="200"
+              placeholder="介绍一下自己吧"
+              show-word-limit
+              type="textarea"
           />
         </el-form-item>
-        
+
         <el-form-item>
-          <el-button type="primary" @click="saveProfile" :loading="loading">保存修改</el-button>
+          <el-button :loading="loading" type="primary" @click="saveProfile">保存修改</el-button>
           <el-button @click="resetForm">重置</el-button>
-          <el-button @click="goToPassword" type="warning">修改密码</el-button>
+          <el-button type="warning" @click="goToPassword">修改密码</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -66,11 +66,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
-import { useFileStore } from '@/stores/file'
-import { useRouter } from 'vue-router'
+import {computed, onMounted, reactive, ref} from 'vue'
+import {ElMessage} from 'element-plus'
+import {useUserStore} from '@/stores/user'
+import {useFileStore} from '@/stores/file'
+import {useRouter} from 'vue-router'
 
 const userStore = useUserStore()
 const fileStore = useFileStore()
@@ -102,17 +102,17 @@ const profileForm = reactive({
 // 表单验证规则
 const profileRules = {
   nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度在2-20个字符之间', trigger: 'blur' }
+    {required: true, message: '请输入昵称', trigger: 'blur'},
+    {min: 2, max: 20, message: '昵称长度在2-20个字符之间', trigger: 'blur'}
   ],
   email: [
-    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+    {type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur'}
   ],
   phone: [
-    { pattern: /^1[3456789]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }
+    {pattern: /^1[3456789]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur'}
   ],
   bio: [
-    { max: 200, message: '个人简介不能超过200个字符', trigger: 'blur' }
+    {max: 200, message: '个人简介不能超过200个字符', trigger: 'blur'}
   ]
 }
 
@@ -125,12 +125,12 @@ const beforeAvatarUpload = (file) => {
     ElMessage.error('上传头像图片只能是图片格式!')
     return false
   }
-  
+
   if (!isLt2M) {
     ElMessage.error('上传头像图片大小不能超过 2MB!')
     return false
   }
-  
+
   return true
 }
 
@@ -139,7 +139,7 @@ const uploadAvatar = async (options) => {
   try {
     const file = options.file
     const result = await fileStore.uploadAvatar(file)
-    
+
     if (result && result.path) {
       profileForm.avatar = result.path
       ElMessage.success('头像上传成功')
@@ -155,10 +155,10 @@ const saveProfile = async () => {
   try {
     // 表单验证
     await profileFormRef.value.validate()
-    
+
     loading.value = true
     const result = await userStore.updateProfile(profileForm)
-    
+
     if (result.code === 200) {
       ElMessage.success('个人资料更新成功')
     }
@@ -177,7 +177,7 @@ const resetForm = () => {
   profileForm.phone = userStore.phone || ''
   profileForm.bio = userStore.bio || ''
   profileForm.avatar = userStore.avatar || ''
-  
+
   // 清除表单验证结果
   if (profileFormRef.value) {
     profileFormRef.value.resetFields()

@@ -1,14 +1,14 @@
 <template>
   <div class="pagination-container">
     <el-pagination
-      background
-      :current-page="current"
-      :page-size="size"
-      :page-sizes="[10, 20, 50, 100]"
-      :total="total"
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="$emit('size-change', $event)"
-      @current-change="$emit('change', $event)"
+        :current-page="current"
+        :page-size="size"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        background
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="$emit('size-change', $event)"
+        @current-change="$emit('change', $event)"
     />
   </div>
 </template>

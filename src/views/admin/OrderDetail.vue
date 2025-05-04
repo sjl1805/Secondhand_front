@@ -1,8 +1,8 @@
 <template>
-  <div class="order-detail-container" v-loading="store.loading">
-    <el-page-header @back="goBack" content="订单详情" />
+  <div v-loading="store.loading" class="order-detail-container">
+    <el-page-header content="订单详情" @back="goBack"/>
 
-    <div class="order-info" v-if="store.currentOrder">
+    <div v-if="store.currentOrder" class="order-info">
       <!-- 订单基本信息 -->
       <el-card class="box-card">
         <template #header>
@@ -53,20 +53,22 @@
           </div>
         </template>
         <div class="product-info">
-          <el-image 
-            :src="fileStore.getFullUrl(store.currentOrder.productImage)"
-            fit="cover"
-            class="product-image"
+          <el-image
+              :src="fileStore.getFullUrl(store.currentOrder.productImage)"
+              class="product-image"
+              fit="cover"
           >
             <template #error>
               <div class="image-error">
-                <el-icon><picture-filled /></el-icon>
+                <el-icon>
+                  <picture-filled/>
+                </el-icon>
               </div>
             </template>
           </el-image>
           <div class="product-detail">
             <h3>{{ store.currentOrder.productTitle }}</h3>
-            <div class="product-quality" v-if="store.currentOrder.productQuality">
+            <div v-if="store.currentOrder.productQuality" class="product-quality">
               成色：{{ getProductQualityText(store.currentOrder.productQuality) }}
             </div>
             <div class="price">¥{{ store.currentOrder.price }}</div>
@@ -85,12 +87,14 @@
               </div>
             </template>
             <div class="user-info">
-              <el-avatar 
-                :src="fileStore.getFullUrl(store.currentOrder.buyerAvatar)"
-                :size="50"
+              <el-avatar
+                  :size="50"
+                  :src="fileStore.getFullUrl(store.currentOrder.buyerAvatar)"
               >
                 <template #error>
-                  <el-icon><user-filled /></el-icon>
+                  <el-icon>
+                    <user-filled/>
+                  </el-icon>
                 </template>
               </el-avatar>
               <div class="user-detail">
@@ -100,7 +104,7 @@
             </div>
           </el-card>
         </el-col>
-        
+
         <!-- 卖家信息 -->
         <el-col :span="12">
           <el-card class="box-card">
@@ -110,12 +114,14 @@
               </div>
             </template>
             <div class="user-info">
-              <el-avatar 
-                :src="fileStore.getFullUrl(store.currentOrder.sellerAvatar)"
-                :size="50"
+              <el-avatar
+                  :size="50"
+                  :src="fileStore.getFullUrl(store.currentOrder.sellerAvatar)"
               >
                 <template #error>
-                  <el-icon><user-filled /></el-icon>
+                  <el-icon>
+                    <user-filled/>
+                  </el-icon>
                 </template>
               </el-avatar>
               <div class="user-detail">
@@ -147,7 +153,7 @@
             <span class="label">收货地址：</span>
             <span class="value">{{ store.currentOrder.address }}</span>
           </div>
-          <div class="info-item" v-if="store.currentOrder.message">
+          <div v-if="store.currentOrder.message" class="info-item">
             <span class="label">买家留言：</span>
             <span class="value">{{ store.currentOrder.message }}</span>
           </div>
@@ -156,23 +162,23 @@
 
       <!-- 操作按钮 -->
       <div class="action-buttons">
-        <el-button 
-          type="primary" 
-          @click="changeStatus(2)"
-          v-if="store.currentOrder.status === 1"
+        <el-button
+            v-if="store.currentOrder.status === 1"
+            type="primary"
+            @click="changeStatus(2)"
         >
           设为待发货
         </el-button>
-        <el-button 
-          type="success" 
-          @click="changeStatus(4)"
-          v-if="store.currentOrder.status === 3"
+        <el-button
+            v-if="store.currentOrder.status === 3"
+            type="success"
+            @click="changeStatus(4)"
         >
           设为已完成
         </el-button>
-        <el-button 
-          type="danger" 
-          @click="deleteOrder"
+        <el-button
+            type="danger"
+            @click="deleteOrder"
         >
           删除订单
         </el-button>
@@ -182,12 +188,12 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAdminOrderStore } from '@/stores/adminOrder'
-import { useFileStore } from '@/stores/file'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { PictureFilled, UserFilled } from '@element-plus/icons-vue'
+import {onMounted} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
+import {useAdminOrderStore} from '@/stores/adminOrder'
+import {useFileStore} from '@/stores/file'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {PictureFilled, UserFilled} from '@element-plus/icons-vue'
 import dayjs from 'dayjs'
 
 const route = useRoute()
@@ -198,12 +204,18 @@ const fileStore = useFileStore()
 // 状态标签类型
 const statusTagType = (status) => {
   switch (status) {
-    case 1: return 'warning'  // 待付款
-    case 2: return 'info'     // 待发货
-    case 3: return ''         // 待收货
-    case 4: return 'success'  // 已完成
-    case 5: return 'danger'   // 已取消
-    default: return 'info'
+    case 1:
+      return 'warning'  // 待付款
+    case 2:
+      return 'info'     // 待发货
+    case 3:
+      return ''         // 待收货
+    case 4:
+      return 'success'  // 已完成
+    case 5:
+      return 'danger'   // 已取消
+    default:
+      return 'info'
   }
 }
 
@@ -267,9 +279,9 @@ const changeStatus = async (status) => {
 const deleteOrder = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除该订单吗？此操作不可恢复',
-      '警告',
-      { type: 'error', confirmButtonText: '确认删除' }
+        '确定要删除该订单吗？此操作不可恢复',
+        '警告',
+        {type: 'error', confirmButtonText: '确认删除'}
     )
     await store.removeOrder(store.currentOrder.id)
     ElMessage.success('订单删除成功')

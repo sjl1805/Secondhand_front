@@ -5,10 +5,10 @@ import request from '@/utils/request'
  * @returns {Promise} - 返回地址列表
  */
 export function getAddressList() {
-  return request({
-    url: '/address/list',
-    method: 'get'
-  })
+    return request({
+        url: '/address/list',
+        method: 'get'
+    })
 }
 
 /**
@@ -17,10 +17,10 @@ export function getAddressList() {
  * @returns {Promise} - 返回地址详情
  */
 export function getAddressDetail(id) {
-  return request({
-    url: `/address/${id}`,
-    method: 'get'
-  })
+    return request({
+        url: `/address/${id}`,
+        method: 'get'
+    })
 }
 
 /**
@@ -29,11 +29,11 @@ export function getAddressDetail(id) {
  * @returns {Promise} - 返回添加结果
  */
 export function addAddress(data) {
-  return request({
-    url: '/address',
-    method: 'post',
-    data
-  })
+    return request({
+        url: '/address',
+        method: 'post',
+        data
+    })
 }
 
 /**
@@ -42,11 +42,11 @@ export function addAddress(data) {
  * @returns {Promise} - 返回更新结果
  */
 export function updateAddress(data) {
-  return request({
-    url: '/address',
-    method: 'put',
-    data
-  })
+    return request({
+        url: '/address',
+        method: 'put',
+        data
+    })
 }
 
 /**
@@ -55,10 +55,10 @@ export function updateAddress(data) {
  * @returns {Promise} - 返回删除结果
  */
 export function deleteAddress(id) {
-  return request({
-    url: `/address/${id}`,
-    method: 'delete'
-  })
+    return request({
+        url: `/address/${id}`,
+        method: 'delete'
+    })
 }
 
 /**
@@ -67,8 +67,8 @@ export function deleteAddress(id) {
  * @returns {Promise} - 返回设置结果
  */
 export function setDefaultAddress(id) {
-  return request({
-    url: `/address/${id}/default`,
-    method: 'put'
-  })
+    return request({
+        url: `/address/${id}/default`,
+        method: 'put'
+    })
 } 

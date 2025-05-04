@@ -12,7 +12,7 @@ export const REQUEST_TIMEOUT = 30000
  * 文件类型配置
  */
 export const FILE_TYPES = {
-  PRODUCT: 'products',
-  AVATAR: 'avatars',
-  OTHER: 'others'
+    PRODUCT: 'products',
+    AVATAR: 'avatars',
+    OTHER: 'others'
 } 

@@ -1,10 +1,8 @@
 <script setup>
-import { RouterView } from 'vue-router'
-import { ref, provide, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElLoading } from 'element-plus'
-import { useUserStore } from '@/stores/user'
-import { useCategoryStore } from '@/stores/category'
+import {RouterView, useRouter} from 'vue-router'
+import {onMounted, provide, ref} from 'vue'
+import {useUserStore} from '@/stores/user'
+import {useCategoryStore} from '@/stores/category'
 
 // 路由实例
 const router = useRouter()
@@ -22,12 +20,12 @@ provide('handleError', handleError)
 // 初始化时加载全局数据
 onMounted(async () => {
   isLoading.value = true
-  
+
   try {
     // 预加载分类数据
     const categoryStore = useCategoryStore()
     await categoryStore.fetchCategoryTree()
-    
+
     // 初始化用户信息（如果有）
     const userStore = useUserStore()
     if (userStore.token) {
@@ -44,8 +42,8 @@ onMounted(async () => {
 <template>
   <div class="app-wrapper">
     <RouterView v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
+      <transition mode="out-in" name="fade">
+        <component :is="Component"/>
       </transition>
     </RouterView>
   </div>
